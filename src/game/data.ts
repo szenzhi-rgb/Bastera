@@ -1,0 +1,1219 @@
+import type {
+  BiomeId,
+  BossDef,
+  InventoryItem,
+  OrbId,
+  SkillDef,
+  SkillId,
+  StandDef,
+  StandId,
+  WeaponDef,
+  WeaponId,
+} from './types';
+
+export const TOTAL_BOSSES = 120;
+export const BOSSES_PER_BIOME = 40;
+export const TOTAL_HIDDEN_PASSAGES = 108;
+export const ORB_DROP_CHANCE = 0.08;
+export const ORB_IDS: OrbId[] = ['orb_flame', 'orb_wind', 'orb_electric'];
+
+export const WEAPONS: Record<WeaponId, WeaponDef> = {
+  claymore: {
+    id: 'claymore',
+    name: "Abandoned Knight's Claymore",
+    styleName: 'Vanguard Style',
+    description: 'Wide sweeping arc with heavy poise break and royal cleave.',
+    sarcasticNote: 'Slightly rusted, smells like old monarchy, hits like a carriage.',
+    damage: 28,
+    range: 38,
+    arcHeight: 30,
+    windup: 0.1,
+    active: 0.14,
+    recovery: 0.15,
+    comboHits: 3,
+    knockback: 145,
+    color: '#e2e8f0',
+    accentColor: '#d97706',
+    visualLength: 21,
+    visualWidth: 3,
+    specialEffect: 'none',
+    specialLabel: 'Balanced Steel Edge',
+    unlockedByDefault: true,
+    shopPrice: 0,
+  },
+  rapier: {
+    id: 'rapier',
+    name: 'Gilded Court Rapier',
+    styleName: 'Duelist Style',
+    description: 'Rapid precision thrusts with sleek golden reach.',
+    sarcasticNote: 'For poking aristocratic monsters politely between the ribs.',
+    damage: 19,
+    range: 42,
+    arcHeight: 16,
+    windup: 0.05,
+    active: 0.09,
+    recovery: 0.08,
+    comboHits: 3,
+    knockback: 80,
+    color: '#fef08a',
+    accentColor: '#eab308',
+    visualLength: 23,
+    visualWidth: 2,
+    specialEffect: 'none',
+    specialLabel: 'Swift Precision Lunge',
+    unlockedByDefault: true,
+    shopPrice: 0,
+  },
+  crescent: {
+    id: 'crescent',
+    name: 'Twin Crescent Sabers',
+    styleName: 'Tempest Style',
+    description: 'Cobalt-azure spinning blades unleashing cutting wind gusts.',
+    sarcasticNote: 'Twice the blades, half the impulse control.',
+    damage: 22,
+    range: 34,
+    arcHeight: 34,
+    windup: 0.06,
+    active: 0.12,
+    recovery: 0.1,
+    comboHits: 3,
+    knockback: 105,
+    color: '#93c5fd',
+    accentColor: '#3b82f6',
+    visualLength: 18,
+    visualWidth: 3,
+    specialEffect: 'wind_wave',
+    specialLabel: 'Gale Crescent Wave',
+    unlockedByDefault: false,
+    craftCost: { resourceId: 'royal_ember', amount: 3 },
+    shopPrice: 480,
+  },
+  runeblade: {
+    id: 'runeblade',
+    name: 'Shattered Throne Greatsword',
+    styleName: 'Arcane Breaker Style',
+    description: 'Massive crimson greatsword shaking the dungeon floor on impact.',
+    sarcasticNote: 'Forged from a melted chandelier and pure spite.',
+    damage: 40,
+    range: 44,
+    arcHeight: 38,
+    windup: 0.14,
+    active: 0.16,
+    recovery: 0.18,
+    comboHits: 3,
+    knockback: 210,
+    color: '#fca5a5',
+    accentColor: '#dc2626',
+    visualLength: 25,
+    visualWidth: 5,
+    specialEffect: 'seismic',
+    specialLabel: 'Seismic Shockwave',
+    unlockedByDefault: false,
+    craftCost: { resourceId: 'ruin_shard', amount: 4 },
+    shopPrice: 740,
+  },
+  katana: {
+    id: 'katana',
+    name: 'Obsidian Void Katana',
+    styleName: 'Iaido Flash Style',
+    description: 'Long curved amethyst blade drawing enemies inward with void slashes.',
+    sarcasticNote: 'Nothing personal, just a very dramatic horizontal line.',
+    damage: 34,
+    range: 48,
+    arcHeight: 24,
+    windup: 0.04,
+    active: 0.1,
+    recovery: 0.11,
+    comboHits: 3,
+    knockback: 130,
+    color: '#c4b5fd',
+    accentColor: '#7c3aed',
+    visualLength: 25,
+    visualWidth: 2,
+    specialEffect: 'void_pull',
+    specialLabel: 'Void Rift Pull',
+    unlockedByDefault: false,
+    craftCost: { resourceId: 'magma_core', amount: 3 },
+    shopPrice: 700,
+  },
+  fire_sword: {
+    id: 'fire_sword',
+    name: 'Fire Sword',
+    styleName: '2x Infernal Overlord Style',
+    description: 'OP hidden blade — unleashes roaring red-orange flame arcs with 2x total damage & burn!',
+    sarcasticNote: 'Broke three dungeon seals and every single boss health bar.',
+    damage: 38,
+    damageMultiplier: 2,
+    range: 54,
+    arcHeight: 40,
+    windup: 0.06,
+    active: 0.14,
+    recovery: 0.11,
+    comboHits: 3,
+    knockback: 225,
+    color: '#fb923c',
+    accentColor: '#dc2626',
+    visualLength: 27,
+    visualWidth: 4,
+    specialEffect: 'burn',
+    specialLabel: '2x Inferno + Scorch Burn',
+    unlockedByDefault: false,
+    shopPrice: 1680,
+  },
+  venom_twinblade: {
+    id: 'venom_twinblade',
+    name: 'Viperfang Twinblade',
+    styleName: 'Acid Fang Style',
+    description: 'Compact neon-emerald dagger blade inflicting stacking venom poison.',
+    sarcasticNote: 'Small, sharp, and technically violates three guild alchemy treaties.',
+    damage: 25,
+    range: 33,
+    arcHeight: 26,
+    windup: 0.04,
+    active: 0.09,
+    recovery: 0.08,
+    comboHits: 3,
+    knockback: 75,
+    color: '#84cc16',
+    accentColor: '#15803d',
+    visualLength: 16,
+    visualWidth: 3,
+    specialEffect: 'venom',
+    specialLabel: 'Toxic Venom DoT',
+    unlockedByDefault: false,
+    shopPrice: 300,
+  },
+  azure_glaive: {
+    id: 'azure_glaive',
+    name: 'Glacier Halberd Glaive',
+    styleName: 'Frostbite Reach Style',
+    description: 'Extra-long frost-cyan polearm that chills enemies and cuts movement speed.',
+    sarcasticNote: 'Like social distancing, except sharper and -20 degrees Celsius.',
+    damage: 31,
+    range: 56,
+    arcHeight: 30,
+    windup: 0.08,
+    active: 0.13,
+    recovery: 0.12,
+    comboHits: 3,
+    knockback: 140,
+    color: '#38bdf8',
+    accentColor: '#0284c7',
+    visualLength: 29,
+    visualWidth: 3,
+    specialEffect: 'frost',
+    specialLabel: 'Frost Chill Slow',
+    unlockedByDefault: false,
+    shopPrice: 520,
+  },
+  emerald_zephyr: {
+    id: 'emerald_zephyr',
+    name: 'Emerald Zephyr Lance',
+    styleName: 'Tempest Gale Style',
+    description: 'Slender jade wind-blade firing piercing wind crescents on combo swings.',
+    sarcasticNote: 'Slices both goblins and their aerodynamic alibis.',
+    damage: 33,
+    range: 52,
+    arcHeight: 26,
+    windup: 0.05,
+    active: 0.11,
+    recovery: 0.09,
+    comboHits: 3,
+    knockback: 120,
+    color: '#34d399',
+    accentColor: '#059669',
+    visualLength: 27,
+    visualWidth: 2,
+    specialEffect: 'wind_wave',
+    specialLabel: 'Gale Wind Projectile',
+    unlockedByDefault: false,
+    shopPrice: 640,
+  },
+  crimson_reaper: {
+    id: 'crimson_reaper',
+    name: 'Bloodmoon Heavy Scythe',
+    styleName: 'Sanguine Harvest Style',
+    description: 'Wide ruby curved scythe-blade draining 15% of damage dealt back as HP.',
+    sarcasticNote: 'Saves so much gold on Crimson Vials.',
+    damage: 36,
+    range: 49,
+    arcHeight: 38,
+    windup: 0.09,
+    active: 0.14,
+    recovery: 0.12,
+    comboHits: 3,
+    knockback: 155,
+    color: '#f43f5e',
+    accentColor: '#9f1239',
+    visualLength: 24,
+    visualWidth: 5,
+    specialEffect: 'lifesteal',
+    specialLabel: '15% Blood Lifesteal',
+    unlockedByDefault: false,
+    shopPrice: 860,
+  },
+  thunder_odachi: {
+    id: 'thunder_odachi',
+    name: 'Raijin Thunder Odachi',
+    styleName: 'Stormbreaker Style',
+    description: 'Colossal gold-blue greatsword chaining electric lightning arcs onto nearby foes.',
+    sarcasticNote: 'Longer than a tavern table and noisier than a storm cloud.',
+    damage: 42,
+    range: 58,
+    arcHeight: 34,
+    windup: 0.08,
+    active: 0.13,
+    recovery: 0.12,
+    comboHits: 3,
+    knockback: 165,
+    color: '#facc15',
+    accentColor: '#0284c7',
+    visualLength: 31,
+    visualWidth: 4,
+    specialEffect: 'lightning',
+    specialLabel: 'Chain Lightning Arc',
+    unlockedByDefault: false,
+    shopPrice: 1120,
+  },
+  solar_excalibur: {
+    id: 'solar_excalibur',
+    name: 'Solar Excalibur Claymore',
+    styleName: 'Radiant Sovereign Style',
+    description: 'Giant golden-white sacred blade blasting radiant holy sunbeams across the arena.',
+    sarcasticNote: 'Certified Demon-King eraser. Sunglasses sold separately.',
+    damage: 48,
+    damageMultiplier: 1.35,
+    range: 60,
+    arcHeight: 42,
+    windup: 0.07,
+    active: 0.14,
+    recovery: 0.11,
+    comboHits: 3,
+    knockback: 210,
+    color: '#fef08a',
+    accentColor: '#f59e0b',
+    visualLength: 30,
+    visualWidth: 5,
+    specialEffect: 'holy_beam',
+    specialLabel: 'Sacred Sunbeam +35% Power',
+    unlockedByDefault: false,
+    shopPrice: 1440,
+  },
+};
+
+export const SKILLS: Record<SkillId, SkillDef> = {
+  blade_dash: {
+    id: 'blade_dash',
+    name: 'Phantom Lunge',
+    shortTag: 'DASH',
+    description: 'Invulnerable dash through enemies leaving a blade trail.',
+    cooldown: 2.2,
+    staminaCost: 18,
+    damageMultiplier: 1.4,
+    color: '#fbbf24',
+  },
+  parry_guard: {
+    id: 'parry_guard',
+    name: 'Royal Deflect',
+    shortTag: 'PARRY',
+    description: 'Raise stance for 0.45s; blocks blows and counters with gold shockwave.',
+    cooldown: 3.0,
+    staminaCost: 12,
+    damageMultiplier: 1.8,
+    color: '#f59e0b',
+  },
+  candlefire_wave: {
+    id: 'candlefire_wave',
+    name: 'Candlefire Arc',
+    shortTag: 'WAVE',
+    description: 'Unleash a blazing wax-fire projectile across the corridor.',
+    cooldown: 2.8,
+    staminaCost: 22,
+    damageMultiplier: 1.5,
+    color: '#f97316',
+  },
+  chrono_freeze: {
+    id: 'chrono_freeze',
+    name: 'Stopped Second',
+    shortTag: 'TIME',
+    description: 'Freeze nearby monsters & projectiles in emerald time for 2.2s.',
+    cooldown: 7.5,
+    staminaCost: 30,
+    damageMultiplier: 1.1,
+    color: '#34d399',
+  },
+  stand_rush: {
+    id: 'stand_rush',
+    name: 'ORA ORA',
+    shortTag: 'ORA ORA',
+    description: 'Summon a Bastera-themed Star Platinum spirit that punches enemies rapidly for 2.5s.',
+    cooldown: 5.5,
+    staminaCost: 24,
+    damageMultiplier: 2.5,
+    color: '#a78bfa',
+  },
+  sunburst_cleave: {
+    id: 'sunburst_cleave',
+    name: 'Hamon Sunburst',
+    shortTag: 'SOLAR',
+    description: 'Golden ripple slam dealing heavy radial damage around you.',
+    cooldown: 5.5,
+    staminaCost: 28,
+    damageMultiplier: 2.1,
+    color: '#fde047',
+  },
+};
+
+export const INITIAL_INVENTORY: InventoryItem[] = [
+  {
+    id: 'crimson_vial',
+    name: 'Crimson Candle Vial',
+    category: 'potion',
+    description: 'Restores 45 HP immediately.',
+    sarcasticQuote: 'Tastes like fermented raspberries and questionable alchemy.',
+    count: 3,
+    color: '#ef4444',
+    healAmount: 45,
+    shopPrice: 100,
+  },
+  {
+    id: 'hi_ruby_potion',
+    name: 'Greater Ruby Elixir',
+    category: 'potion',
+    description: 'Restores 120 HP immediately.',
+    sarcasticQuote: 'Double-distilled in glowing crystal vats.',
+    count: 0,
+    color: '#f43f5e',
+    healAmount: 120,
+    shopPrice: 220,
+  },
+  {
+    id: 'royal_elixir_hp',
+    name: 'Sovereign Vita Flask',
+    category: 'potion',
+    description: 'Restores 260 HP immediately.',
+    sarcasticQuote: 'Shimmers like liquid gold. Cures almost everything.',
+    count: 0,
+    color: '#10b981',
+    healAmount: 260,
+    shopPrice: 440,
+  },
+  {
+    id: 'fury_draught',
+    name: 'Berserker Fury Draught',
+    category: 'potion',
+    description: 'Damage-Boost Potion: Grants +35% all attack & skill damage for 30s!',
+    sarcasticQuote: 'Glows neon amethyst. Side effects include aggressive sword combos.',
+    count: 0,
+    color: '#a855f7',
+    attackBoostMult: 1.35,
+    boostDuration: 30,
+    shopPrice: 260,
+  },
+  {
+    id: 'titan_crimson_tonic',
+    name: 'Titan Overdrive Tonic',
+    category: 'potion',
+    description: 'Damage-Boost Potion: Grants +60% all attack & skill damage for 45s!',
+    sarcasticQuote: 'Pure glowing cyan-gold lightning in a flask.',
+    count: 0,
+    color: '#06b6d4',
+    attackBoostMult: 1.6,
+    boostDuration: 45,
+    shopPrice: 500,
+  },
+  {
+    id: 'royal_ember',
+    name: 'Royal Ember',
+    category: 'resource',
+    description: 'Warm wax-infused cinder from Castle guards and chests.',
+    sarcasticQuote: 'Never melts, still somehow burns your pockets.',
+    count: 1,
+    color: '#f59e0b',
+  },
+  {
+    id: 'ruin_shard',
+    name: 'Ancient Ruin Shard',
+    category: 'resource',
+    description: 'Moss-etched rune crystal from enchanted corridors.',
+    sarcasticQuote: 'Glows ominously whenever you make poor life choices.',
+    count: 0,
+    color: '#34d399',
+  },
+  {
+    id: 'magma_core',
+    name: 'Volcano Magma Core',
+    category: 'resource',
+    description: 'Superheated obsidian heart from hellish champions.',
+    sarcasticQuote: 'Warm enough to brew tea, dangerous enough to melt your sword.',
+    count: 0,
+    color: '#f97316',
+  },
+  {
+    id: 'velvet_crest',
+    name: 'Velvet Crest Relic',
+    category: 'relic',
+    description: 'Passively boosts Max HP by +15 while carried.',
+    sarcasticQuote: 'A royal monogram that says "do not die on the good carpet."',
+    count: 1,
+    color: '#d97706',
+    maxHpBonus: 15,
+  },
+  {
+    id: 'orb_flame',
+    name: 'Flame Orb',
+    category: 'orb',
+    description: 'Bossfight item: Deals 25% of the enemy total Max HP as blazing burst damage.',
+    sarcasticQuote: 'Bottled volcano fury—handles diplomatic immunity with fire.',
+    count: 0,
+    color: '#f97316',
+  },
+  {
+    id: 'orb_wind',
+    name: 'Wind Orb',
+    category: 'orb',
+    description: 'Bossfight item: Shrouds the boss in gales so they receive +30% extra damage.',
+    sarcasticQuote: 'Turns a smug Stand user into an aerodynamic target.',
+    count: 0,
+    color: '#2dd4bf',
+  },
+  {
+    id: 'orb_electric',
+    name: 'Electrical Orb',
+    category: 'orb',
+    description: 'Bossfight item: Unleashes high-voltage shockwaves, stunning the boss for 1 turn.',
+    sarcasticQuote: 'Even time-stoppers skip a beat at ten thousand volts.',
+    count: 0,
+    color: '#facc15',
+  },
+];
+
+export const POTION_SHOP_IDS = [
+  'crimson_vial',
+  'hi_ruby_potion',
+  'royal_elixir_hp',
+  'fury_draught',
+  'titan_crimson_tonic',
+] as const;
+
+export const WEAPON_SHOP_ORDER: WeaponId[] = [
+  'venom_twinblade',
+  'crescent',
+  'azure_glaive',
+  'emerald_zephyr',
+  'katana',
+  'runeblade',
+  'crimson_reaper',
+  'thunder_odachi',
+  'solar_excalibur',
+  'fire_sword',
+];
+
+export const STANDS: Record<StandId, StandDef> = {
+  star_platinum: {
+    id: 'star_platinum',
+    name: 'Star Platinum · Giant Bastera',
+    jjbaUser: 'Jotaro Kujo',
+    roleTag: 'Colossal ORA Barrage',
+    costStarStones: 0,
+    primaryColor: '#7c3aed',
+    secondaryColor: '#c4b5fd',
+    accentColor: '#fbbf24',
+    abilityName: 'Mega ORA ORA ORA',
+    description:
+      'Enlarged ~1.65x violet-gold guardian spirit. Unleashes massive heavy-impact rapid ORA fist storms across a wide 116x72 zone.',
+  },
+  the_hand: {
+    id: 'the_hand',
+    name: 'The Hand',
+    jjbaUser: 'Okuyasu Nijimura',
+    roleTag: 'Spatial Swipe Pull',
+    costStarStones: 3,
+    primaryColor: '#2563eb',
+    secondaryColor: '#f8fafc',
+    accentColor: '#fde047',
+    abilityName: 'Space Scrape Teleport',
+    description:
+      'Erases space with its right palm to teleport the nearest enemy directly in front of you and STUN them cleanly for 2.0 seconds!',
+  },
+  scary_monsters: {
+    id: 'scary_monsters',
+    name: 'Dinostand (Scary Monsters)',
+    jjbaUser: 'Diego Brando',
+    roleTag: '4s Raptor Shift',
+    costStarStones: 4,
+    primaryColor: '#16a34a',
+    secondaryColor: '#84cc16',
+    accentColor: '#facc15',
+    abilityName: 'Dinosaur Slash Frenzy (4s)',
+    description:
+      'Transforms you into a razor-clawed pixel Dinosaur for 4.0 seconds with +45% attack speed and wide emerald claw slashes!',
+  },
+  chili_pepper: {
+    id: 'chili_pepper',
+    name: 'Red Hot Chili Pepper',
+    jjbaUser: 'Akira Otoishi',
+    roleTag: '4s Electric Ally',
+    costStarStones: 4,
+    primaryColor: '#facc15',
+    secondaryColor: '#fef08a',
+    accentColor: '#38bdf8',
+    abilityName: 'Overdrive Voltage Partner (4s)',
+    description:
+      'Manifests a crackling electrical JJBA entity beside you for 4.0 seconds that dashes and fires high-voltage lightning bolts with every attack!',
+  },
+  gyro_ball: {
+    id: 'gyro_ball',
+    name: 'Gyro Steel Ball',
+    jjbaUser: 'Gyro Zeppeli',
+    roleTag: 'Sword Replacement',
+    costStarStones: 5,
+    primaryColor: '#22c55e',
+    secondaryColor: '#86efac',
+    accentColor: '#fde047',
+    abilityName: 'Golden Spin Boomerang [J]',
+    description:
+      'PASSIVE WEAPON SWAP: Replaces sword swings [J] with a huge, ultra-fast glowing Steel Ball that blasts enemies back and boomerangs to your hand!',
+  },
+  crazy_diamond: {
+    id: 'crazy_diamond',
+    name: 'Crazy Diamond',
+    jjbaUser: 'Josuke Higashikata',
+    roleTag: 'DORA + Restore',
+    costStarStones: 4,
+    primaryColor: '#ec4899',
+    secondaryColor: '#93c5fd',
+    accentColor: '#f9a8d4',
+    abilityName: 'DORA Restoration Rush',
+    description:
+      'Unleashes a glittering pink-cyan DORA punch rush while restoring 28% Max HP to yourself and nearby allies!',
+  },
+  killer_queen: {
+    id: 'killer_queen',
+    name: 'Killer Queen',
+    jjbaUser: 'Yoshikage Kira',
+    roleTag: 'Explosive Detonation',
+    costStarStones: 5,
+    primaryColor: '#c084fc',
+    secondaryColor: '#f472b6',
+    accentColor: '#18181b',
+    abilityName: 'Primary Bomb + Sheer Heart',
+    description:
+      'Hurls a homing pink skull bomb that detonates on impact in a heavy purple-gold blast for massive burst damage!',
+  },
+  golden_experience: {
+    id: 'golden_experience',
+    name: 'Golden Experience',
+    jjbaUser: 'Giorno Giovanna',
+    roleTag: 'MUDA + Life Shot',
+    costStarStones: 6,
+    primaryColor: '#f59e0b',
+    secondaryColor: '#fef08a',
+    accentColor: '#22c55e',
+    abilityName: 'Seven-Page Life Surge',
+    description:
+      'Fires radiant golden life-energy blasts + heals 22% Max HP while infusing your strikes with overflowing Resolve.',
+  },
+  king_crimson: {
+    id: 'king_crimson',
+    name: 'King Crimson',
+    jjbaUser: 'Diavolo',
+    roleTag: 'Time-Erase Ambush',
+    costStarStones: 7,
+    primaryColor: '#dc2626',
+    secondaryColor: '#fecdd3',
+    accentColor: '#ffffff',
+    abilityName: 'Epitaph Time-Skip Chop',
+    description:
+      'Erases 0.5s of time—turns you briefly invulnerable, teleports behind your target, and delivers an unavoidable 3.2x Crimson Chop!',
+  },
+  silver_chariot: {
+    id: 'silver_chariot',
+    name: 'Silver Chariot',
+    jjbaUser: 'Jean Pierre Polnareff',
+    roleTag: 'Armor-Off Volley',
+    costStarStones: 5,
+    primaryColor: '#e2e8f0',
+    secondaryColor: '#94a3b8',
+    accentColor: '#38bdf8',
+    abilityName: 'Million Prick Needle Fan',
+    description:
+      'Sheds heavy armor for extreme speed and fires a 5-needle piercing silver rapier fan that shreds crowds at long range!',
+  },
+};
+
+export const STAND_ORDER: StandId[] = [
+  'star_platinum',
+  'the_hand',
+  'scary_monsters',
+  'chili_pepper',
+  'gyro_ball',
+  'crazy_diamond',
+  'killer_queen',
+  'golden_experience',
+  'king_crimson',
+  'silver_chariot',
+];
+
+export const STAND_SKILL_TAGS: Record<StandId, string> = {
+  star_platinum: 'ORA ORA',
+  the_hand: 'THE HAND',
+  scary_monsters: 'DINO FORM',
+  chili_pepper: 'CHILI VOLT',
+  gyro_ball: 'STEEL BALL',
+  crazy_diamond: 'DORA HEAL',
+  killer_queen: 'KILLER BMB',
+  golden_experience: 'LIFE SURGE',
+  king_crimson: 'ERASE TIME',
+  silver_chariot: 'CHARIOT',
+};
+
+export function getStarStoneRewardForJjkEnemy(challengerId: string): number {
+  if (
+    challengerId === 'satoru_gojo' ||
+    challengerId === 'ryomen_sukuna' ||
+    challengerId === 'yuta_okkotsu' ||
+    challengerId === 'kenjaku' ||
+    challengerId === 'toji_fushiguro'
+  ) {
+    return 3;
+  }
+  return 2;
+}
+
+export function getBiomeForBossIndex(bossNumber: number): BiomeId {
+  if (bossNumber <= BOSSES_PER_BIOME) return 'castle';
+  if (bossNumber <= BOSSES_PER_BIOME * 2) return 'volcano';
+  return 'forest';
+}
+
+export function getBossDifficultyMultiplier(bossNumber: number): number {
+  const tier = Math.floor((Math.max(1, bossNumber) - 1) / 10);
+  return Number((1 + tier * 0.4).toFixed(2));
+}
+
+export function getBiomeDisplayName(biome: BiomeId): string {
+  if (biome === 'castle') return 'Abandoned Royal Castle';
+  if (biome === 'volcano') return 'Volcano Hell Citadel';
+  return 'Enchanted Ruins Forest';
+}
+
+const JOJO_PREFIXES = [
+  'Lord',
+  'Baron',
+  'Count',
+  'Viceroy',
+  'Sir',
+  'Archduke',
+  'Maestro',
+  'Cardinal',
+  'Warden',
+  'Emperor',
+  'Marquis',
+  'Dread',
+  'Grand',
+  'Inquisitor',
+  'Knight',
+  'Sovereign',
+];
+
+const JOJO_NAMES = [
+  'Dio Brando',
+  'Karsius',
+  'Esidisius',
+  'Wamuu',
+  'Zeppelio',
+  'Kira-Vane',
+  'Diavolo',
+  'Puccini',
+  'Valentino',
+  'Tooru-Vex',
+  'Polnarex',
+  'Avdolis',
+  'Kakyoinor',
+  'Okuyas',
+  'Rohanor',
+  'Risotto',
+  'Prosciutto',
+  'Ghiaccio',
+  'Cioccolata',
+  'Weather',
+  'Petshop',
+  'D’Arby',
+  'N’Doul',
+  'Vanilla Ice',
+  'Otomo',
+  'Pesci',
+  'Formaggio',
+  'Illuso',
+  'Melone',
+  'Secco',
+  'Ringo',
+  'Blackmore',
+];
+
+const STAND_ADJECTIVES = [
+  'Crimson',
+  'Golden',
+  'Silver',
+  'Starlight',
+  'Killer',
+  'Sticky',
+  'Crazy',
+  'Made-in',
+  'Dirty',
+  'Wonder',
+  'Purple',
+  'Metallica',
+  'Echoing',
+  'Hierophant',
+  'Stone',
+  'Magician',
+  'Black',
+  'White',
+  'Hermit',
+  'Scary',
+];
+
+const STAND_NOUNS = [
+  'World',
+  'Queen',
+  'King',
+  'Moon',
+  'Train',
+  'Phantom',
+  'Requiem',
+  'Chariot',
+  'Diamond',
+  'Experience',
+  'Heaven',
+  'Calamity',
+  'Valkyrie',
+  'Pendulum',
+  'Sovereign',
+  'Haze',
+  'Sabbath',
+  'Cream',
+  'Album',
+  'Emperor',
+];
+
+const BOSS_CLIMATES: {
+  id: BossDef['climate'];
+  label: string;
+  skyTop: string;
+  skyBottom: string;
+  particle: string;
+}[] = [
+  { id: 'blood_moon_ash', label: 'Blood Moon Ashfall', skyTop: '#16040a', skyBottom: '#3d0b1a', particle: '#fb7185' },
+  { id: 'crimson_thunder', label: 'Crimson Lightning Storm', skyTop: '#0d0618', skyBottom: '#3b0d24', particle: '#fde047' },
+  { id: 'blizzard_frost', label: 'Absolute Zero Blizzard', skyTop: '#041224', skyBottom: '#13314d', particle: '#bae6fd' },
+  { id: 'arcane_eclipse', label: 'Violet Solar Eclipse', skyTop: '#0a041a', skyBottom: '#2d114d', particle: '#c084fc' },
+  { id: 'acid_spore_mist', label: 'Venomous Spore Fog', skyTop: '#06140c', skyBottom: '#163b22', particle: '#a3e635' },
+  { id: 'emerald_monsoon', label: 'Emerald Tempest Gale', skyTop: '#041718', skyBottom: '#0f3d38', particle: '#34d399' },
+  { id: 'magma_emberstorm', label: 'Infernal Ember Hurricane', skyTop: '#1c0403', skyBottom: '#59160a', particle: '#fb923c' },
+  { id: 'void_time_fracture', label: 'Shattered Chrono Rift', skyTop: '#070914', skyBottom: '#1b2042', particle: '#38bdf8' },
+  { id: 'solar_mirage', label: 'Blinding Hamon Zenith', skyTop: '#1c1104', skyBottom: '#4f2c09', particle: '#fef08a' },
+  { id: 'obsidian_sandstorm', label: 'Obsidian Shard Squall', skyTop: '#120b0d', skyBottom: '#331d21', particle: '#cbd5e1' },
+  { id: 'phantom_fog', label: 'Wraith Candle Mist', skyTop: '#0e0a14', skyBottom: '#291b38', particle: '#e9d5ff' },
+  { id: 'starlight_aurora', label: 'Astral Requiem Aurora', skyTop: '#040e1c', skyBottom: '#122f47', particle: '#5eead4' },
+];
+
+const HAT_STYLES: BossDef['hatStyle'][] = [
+  'crown',
+  'pompadour',
+  'tophat',
+  'visor',
+  'hood',
+  'horns',
+  'halo_spikes',
+  'samurai_crest',
+];
+
+const COAT_STYLES: BossDef['coatStyle'][] = [
+  'cape',
+  'trench',
+  'armor',
+  'vest',
+  'robes',
+  'spiked_mantle',
+];
+
+const STAND_SHAPES: BossDef['standShape'][] = [
+  'brawler',
+  'reaper',
+  'knight',
+  'clockwork',
+  'serpent',
+  'sovereign',
+];
+
+const EMBLEMS: BossDef['emblem'][] = [
+  'star',
+  'clock',
+  'skull',
+  'diamond',
+  'eye',
+  'flame',
+];
+
+const ATTACK_SYSTEMS: {
+  pattern: BossDef['attackPattern'];
+  name: string;
+  shoutVerb: string;
+}[] = [
+  { pattern: 'time_knives', name: 'Chrono Knife Barrage', shoutVerb: 'freeze time and unleash a hundred silver knives' },
+  { pattern: 'stand_barrage', name: 'MUDA Overdrive Flurry', shoutVerb: 'pulverize your armor in a hundred fists' },
+  { pattern: 'pillar_slam', name: 'Royal Pillar Cataclysm', shoutVerb: 'crack the cathedral floor beneath you' },
+  { pattern: 'gravity_orb', name: 'C-Moon Singularity Crush', shoutVerb: 'invert gravity until your ribs sing' },
+  { pattern: 'blood_scythe', name: 'Crimson Crescent Sever', shoutVerb: 'slice your shadow clean off the carpet' },
+  { pattern: 'lightning_overdrive', name: 'Red Stone Thunder Arc', shoutVerb: 'strike with a million volts of Stand lightning' },
+  { pattern: 'magma_eruption', name: 'Magician Flare Eruption', shoutVerb: 'incinerate this hall in volcanic fire' },
+  { pattern: 'chrono_shear', name: 'King Erase Dimensional Cut', shoutVerb: 'erase the next two seconds and cut right through' },
+];
+
+const VOICE_OPENERS = [
+  'KONO {NAME} DA!',
+  'Yare yare daze...',
+  'WRYYYYY! Behold {STAND}!',
+  'Oh? You approach {NAME}?',
+  'Dojyaaan! Welcome to {CLIMATE}!',
+  'Arrivederci, little knight!',
+  'Hoho! Even here in {CLIMATE}?!',
+  'NANI?! Someone survived to floor {IDX}?',
+  'Listen well to {STAND}!',
+  'Muda, muda, MUDA!',
+];
+
+const VOICE_BODIES = [
+  'My {STAND} shall {VERB}!',
+  'Not even 108 hidden passages can save you from {STAND}’s {ATTACK}!',
+  'Under the {CLIMATE}, {STAND}’s power grows tenfold!',
+  'Step one inch closer to Floor {IDX} and witness {ATTACK}!',
+  'Your tiny sword style cannot out-pose {STAND}!',
+  'Three centuries on Floor {IDX} end with {ATTACK}!',
+  'The air itself bows to {STAND} in {CLIMATE}!',
+  'Even your three skill slots will shatter against {STAND}’s {ATTACK}!',
+  'I, {NAME}, already foresaw your next slash—now taste {ATTACK}!',
+  'Bow before Floor {IDX}, or be erased by {STAND}!',
+  'Your candle flickers out the instant {STAND} unleashes {ATTACK}!',
+  'No escape, no mercy—only {STAND} and {CLIMATE}!',
+];
+
+const DEFEAT_LINES = [
+  'NANI?! {STAND} shattered against a dungeon knight?!',
+  'Impossible! How did you break through my {ATTACK}?!',
+  'Curse you... the {CLIMATE} fades with my pride...',
+  'Yare yare... {NAME} acknowledges your blade on Floor {IDX}.',
+  'WRYYY... my glorious crown... ruined in front of {STAND}!',
+  'Wait—did you actually parry {ATTACK}?! Unbelievable!',
+  'Take the loot, warrior... tell the next bosses {NAME} went down posing!',
+  'Even in {CLIMATE}, my Stand could not stop your resolve!',
+];
+
+const SCALES = [
+  [0, 2, 3, 5, 7, 8, 11], // Harmonic minor
+  [0, 1, 4, 5, 7, 8, 10], // Phrygian dominant
+  [0, 2, 4, 6, 7, 9, 11], // Lydian
+  [0, 3, 5, 6, 7, 10],    // Blues minor
+  [0, 1, 3, 5, 7, 8, 10], // Phrygian
+];
+
+function hslHex(h: number, s: number, l: number): string {
+  const hue = ((h % 360) + 360) % 360;
+  const sat = Math.max(0, Math.min(100, s)) / 100;
+  const lig = Math.max(0, Math.min(100, l)) / 100;
+  const k = (n: number) => (n + hue / 30) % 12;
+  const a = sat * Math.min(lig, 1 - lig);
+  const f = (n: number) => lig - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = (x: number) =>
+    Math.round(x * 255)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
+export const BOSS_DEFEATED_SCALING_BASE = 1.9;
+
+export function getBossDefeatedMultiplier(bossesDefeated: number): number {
+  return Number(Math.pow(BOSS_DEFEATED_SCALING_BASE, Math.max(0, bossesDefeated)).toFixed(4));
+}
+
+export function calculateCitadelBossHalfAtk(playerAttackDamage: number, multiplier = 1): number {
+  return Math.max(3, Math.round(Math.max(1, playerAttackDamage) * 0.5 * multiplier));
+}
+
+export const JOJO_SKILL_DIALOGUES: Record<
+  'Ram n Charge' | 'Stand Barrage' | 'Burst Crush!',
+  string[]
+> = {
+  'Ram n Charge': [
+    'Oh, so you ARE approaching me? Let me introduce my shoulder to your ribs at Mach speed!',
+    'Nice footing, knight—be a shame if someone tackled you straight back to Floor 1!',
+    'RAM N CHARGE! Blocking? Please, physics didn’t file a complaint when I ruined the last wall!',
+  ],
+  'Stand Barrage': [
+    'Bending the knee? No, charging my Stand—hope you packed sunscreen for this flaming barrage!',
+    'Aww, your cute little Star Platinum punches fast? Watch how a REAL Stand sets the room on fire!',
+    'STAND BARRAGE! Bigger flames, wider arcs, and zero mercy for your armor polish!',
+  ],
+  'Burst Crush!': [
+    'One, two... keep standing still like a training dummy and watch what punch #3 buys you!',
+    'Yare yare... three hits in a row? Congratulations, you just won a free trip INTO THE FLOOR!',
+    'BURST CRUSH! Wait—did those cobblestones look too tidy? Let me redecorate them with your helmet!',
+  ],
+};
+
+export function pickJoJoSkillDialogue(
+  skillName: 'Ram n Charge' | 'Stand Barrage' | 'Burst Crush!',
+  bossName: string,
+  standName: string,
+  stepSeed = 0,
+): string {
+  const pool = JOJO_SKILL_DIALOGUES[skillName];
+  const raw = pool[Math.abs(stepSeed) % pool.length];
+  return `${bossName} [${standName}]: "${raw}"`;
+}
+
+export function getBossDef(bossIndex: number, bossesDefeated = 0): BossDef {
+  const safeIndex = Math.max(1, bossIndex);
+  const zero = safeIndex - 1;
+  const biome = getBiomeForBossIndex((zero % TOTAL_BOSSES) + 1);
+
+  const prefix = JOJO_PREFIXES[(zero * 5 + 3) % JOJO_PREFIXES.length];
+  const baseName = JOJO_NAMES[(zero * 7 + Math.floor(zero / 12)) % JOJO_NAMES.length];
+  const numeral =
+    zero >= JOJO_NAMES.length
+      ? ` ${['II', 'III', 'IV', 'V', 'VI', 'VII'][Math.floor(zero / JOJO_NAMES.length) % 6]}`
+      : '';
+  const name = `${prefix} ${baseName}${numeral}`;
+
+  const standAdj = STAND_ADJECTIVES[(zero * 3 + 1) % STAND_ADJECTIVES.length];
+  const standNoun = STAND_NOUNS[(zero * 11 + 5) % STAND_NOUNS.length];
+  const standName = `${standAdj} ${standNoun}`;
+
+  // Unique climate per boss (combining 12 climates + unique hue-shifted sky tints!)
+  const climateBase = BOSS_CLIMATES[(zero * 5 + Math.floor(zero / 12)) % BOSS_CLIMATES.length];
+  const hue = (zero * 137 + (biome === 'castle' ? 345 : biome === 'forest' ? 145 : 15)) % 360;
+  const primaryColor = hslHex(hue, 72, 42);
+  const secondaryColor = hslHex(hue + 42, 85, 62);
+  const auraColor = hslHex(hue + 195, 88, 66);
+
+  const attackSys = ATTACK_SYSTEMS[(zero * 3 + Math.floor(zero / 8)) % ATTACK_SYSTEMS.length];
+  const opener = VOICE_OPENERS[(zero * 7 + Math.floor(zero / 10)) % VOICE_OPENERS.length];
+  const body = VOICE_BODIES[(zero * 11 + Math.floor(zero / 12)) % VOICE_BODIES.length];
+  const defeatTpl = DEFEAT_LINES[(zero * 5 + 2) % DEFEAT_LINES.length];
+
+  const fillTokens = (tpl: string) =>
+    tpl
+      .replace(/\{NAME\}/g, name)
+      .replace(/\{STAND\}/g, standName)
+      .replace(/\{CLIMATE\}/g, climateBase.label)
+      .replace(/\{ATTACK\}/g, attackSys.name)
+      .replace(/\{VERB\}/g, attackSys.shoutVerb)
+      .replace(/\{IDX\}/g, String(safeIndex));
+
+  const rawVoice = fillTokens(`${opener} ${body}`);
+  const voiceLine = rawVoice.includes(String(safeIndex))
+    ? rawVoice
+    : `${rawVoice} [Floor ${safeIndex}]`;
+  const battleShout = fillTokens(`${standName}—${attackSys.name}!`);
+  const defeatLine = fillTokens(defeatTpl);
+
+  const rootNotes = [110, 123.47, 130.81, 146.83, 164.81, 174.61, 196];
+  const rootHz = rootNotes[(zero * 3) % rootNotes.length];
+  const scale =
+    SCALES[(zero * 2 + (biome === 'volcano' ? 4 : biome === 'forest' ? 2 : 0)) % SCALES.length];
+  const bpm = 124 + ((zero * 9) % 44);
+  const waves: BossDef['music']['leadWave'][] = ['sawtooth', 'square', 'triangle'];
+
+  const bossTitles =
+    biome === 'castle'
+      ? ['Phantom Sentinel', 'Crimson Baron', 'Royal Usurper', 'Sovereign Duelist']
+      : biome === 'forest'
+        ? ['Ancient Hierophant', 'Emerald Warden', 'Ruin Reaper', 'Moss Overlord']
+        : ['Hellfire Tyrant', 'Calamity King', 'Obsidian Archon', 'Magma Requiem'];
+  const epithet = bossTitles[(zero + Math.floor(zero / 4)) % bossTitles.length];
+
+  const diffMult = getBossDifficultyMultiplier(safeIndex);
+  const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
+  const baseMaxHp = Math.round((115 + zero * 14) * diffMult);
+
+  return {
+    index: safeIndex,
+    name,
+    title: `Floor ${safeIndex} · ${epithet}`,
+    standName,
+    biome,
+    climate: climateBase.id,
+    climateLabel: `${climateBase.label} · Ch.${safeIndex}`,
+    climateSkyTop: hslHex(hue, 45, 7),
+    climateSkyBottom: hslHex(hue + 18, 52, 18),
+    climateParticleColor: climateBase.particle,
+    maxHp: Math.round(baseMaxHp * defeatedScale),
+    baseMaxHp,
+    difficultyMultiplier: Number((diffMult * defeatedScale).toFixed(4)),
+    defeatedScale,
+    primaryColor,
+    secondaryColor,
+    auraColor,
+    skinColor: zero % 5 === 0 ? '#d8b4fe' : zero % 4 === 0 ? '#fde68a' : '#fed7aa',
+    hatStyle: HAT_STYLES[(zero * 3 + Math.floor(zero / 8)) % HAT_STYLES.length],
+    coatStyle: COAT_STYLES[(zero * 5 + Math.floor(zero / 6)) % COAT_STYLES.length],
+    standShape: STAND_SHAPES[(zero * 7 + Math.floor(zero / 10)) % STAND_SHAPES.length],
+    emblem: EMBLEMS[(zero * 11 + 2) % EMBLEMS.length],
+    scaleFactor: Number((1.42 + (zero % 5) * 0.08).toFixed(2)),
+    voiceLine,
+    battleShout,
+    defeatLine,
+    attackPattern: attackSys.pattern,
+    attackName: attackSys.name,
+    music: {
+      bpm,
+      rootHz,
+      scale,
+      leadWave: waves[zero % waves.length],
+      bassPattern: [0, 0, 7, 0, 5, 3, 2, 0].map((v, i) => (v + ((zero + i) % 3)) % 8),
+      motifSeed: safeIndex * 97 + 13,
+    },
+  };
+}
+
+export const GYRO_EMOTES = [
+  '*Tips feathered brimmed hat* "Nyo-ho~! Ready for Lesson 5, knight?"',
+  '*Spins emerald Steel Ball on fingertip* "Look closely at the Golden Rectangle!"',
+  '*Flashes GO! GO! ZEPPELI gold teeth grin* "Pizza Mozzarella~ rella rella!"',
+  '*Snaps leather holster cape* "The shortest route was always a detour!"',
+];
+
+export function createGyroZeppeliBossDef(
+  playerMaxHp: number,
+  playerAttack: number,
+  bossesDefeated = 0,
+): BossDef {
+  const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
+  const baseMaxHp = Math.max(300, Math.round(playerMaxHp * 3));
+  const targetHp = Math.round(baseMaxHp * defeatedScale);
+  const exactAtk = Math.max(1, Math.round(playerAttack * defeatedScale));
+  return {
+    index: 101,
+    name: 'Gyro Zeppeli',
+    title: 'FINAL BOSS · MASTER OF THE GOLDEN SPIN',
+    standName: 'BALL BREAKER',
+    biome: 'forest',
+    climate: 'emerald_monsoon',
+    climateLabel: 'Golden Spin Tempest · Floor 101',
+    climateSkyTop: '#031912',
+    climateSkyBottom: '#0b3d28',
+    climateParticleColor: '#4ade80',
+    maxHp: targetHp,
+    baseMaxHp,
+    difficultyMultiplier: Number((getBossDifficultyMultiplier(101) * defeatedScale).toFixed(4)),
+    defeatedScale,
+    primaryColor: '#4c1d95',
+    secondaryColor: '#22c55e',
+    auraColor: '#4ade80',
+    skinColor: '#fed7aa',
+    isGyroBoss: true,
+    gyroAttackDamage: exactAtk,
+    emotes: [...GYRO_EMOTES],
+    megaSkills: [
+      {
+        id: 'gyro_emerald_spin',
+        name: 'Emerald Flame Steel Ball',
+        animStyle: 'gyro_green_ball',
+        palette: ['#22c55e', '#86efac', '#fde047'],
+        damageMult: 1,
+        shout: 'Nyo-ho! Feel the green-flaming Steel Ball spin right through your guard!',
+      },
+      {
+        id: 'gyro_scan_throw',
+        name: 'Scan Vortex Gyro Throw',
+        animStyle: 'gyro_green_ball',
+        palette: ['#16a34a', '#4ade80', '#ffffff'],
+        damageMult: 1,
+        shout: 'Lesson 4! Spinning emerald flames lock onto every heartbeat!',
+      },
+      {
+        id: 'gyro_ball_breaker',
+        name: 'Ball Breaker · Golden Ratio',
+        animStyle: 'gyro_green_ball',
+        palette: ['#15803d', '#bef264', '#facc15'],
+        damageMult: 1,
+        shout: 'LESSON 5! Ball Breaker unleashes infinite emerald flame rotation!',
+      },
+    ],
+    hatStyle: 'gyro_hat',
+    coatStyle: 'trench',
+    standShape: 'sovereign',
+    emblem: 'star',
+    scaleFactor: 2.35,
+    voiceLine:
+      'Nyo-ho~! You cleared 100 Citadel Bosses! Now face Gyro Zeppeli and the Golden Spin!',
+    battleShout: 'NYO-HO! GREEN-FLAMING STEEL BALL — SPIN ON!',
+    defeatLine:
+      'Arigato, knight... The portal to a bright new world awaits beyond the Spin!',
+    attackPattern: 'gyro_spin',
+    attackName: 'Emerald Flame Steel Ball',
+    music: {
+      bpm: 156,
+      rootHz: 146.83,
+      scale: [0, 2, 4, 6, 7, 9, 11],
+      leadWave: 'sawtooth',
+      bassPattern: [0, 0, 5, 7, 4, 2, 0, 7],
+      motifSeed: 7777,
+    },
+  };
+}
+
+export const SARCASTIC_OBJECT_DIALOGUES = {
+  throne: [
+    [
+      'An ornate velvet throne. Whoever ruled here forgot to hire a dusting wizard.',
+      'You sit for half a second. Still no dental plan. Back to escaping.',
+    ],
+    [
+      'The Royal Seat of Eternal Taxes. Surprisingly comfy, suspiciously sticky.',
+      'Even abandoned monarchs apparently refused to leave cushions behind.',
+    ],
+    [
+      'A gilded throne with gold tassels. A ghost probably claims it as an Airbnb.',
+    ],
+  ],
+  broken_brick: [
+    [
+      'Cracked masonry! Either ancient siege damage or a boss punched it for dramatic effect.',
+      'Pro tip: hitting suspiciously cracked bricks might reveal one of 108 hidden passages.',
+    ],
+    [
+      'Bricks held together by centuries of moss and pure architectural stubbornness.',
+    ],
+  ],
+  candle: [
+    [
+      'These candles have burned for 400 years without dripping. Truly terrifying wax budget.',
+    ],
+  ],
+  checkpoint: [
+    [
+      'Royal Checkpoint Brazier lit! Your miserable progress has been politely notarized.',
+      'HP and Stamina restored. Try not to immediately walk into a Stand barrage.',
+    ],
+  ],
+  chest: [
+    [
+      'A royal coffer left unguarded. Either a trap or terrible castle security.',
+    ],
+  ],
+  tapestry: [
+    [
+      'A faded crimson tapestry depicting a king tripping down these exact stairs.',
+      'Wait—there is a draft coming from behind the fabric!',
+    ],
+  ],
+  escape_gate: [
+    [
+      'The Grand Escape Gate of Bastera! Sunlight—or at least slightly less cursed air—awaits!',
+    ],
+  ],
+};

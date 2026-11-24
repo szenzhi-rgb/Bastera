@@ -1,0 +1,240 @@
+{
+  "autosave": {
+    "version": 1,
+    "saveId": "autosave",
+    "playerName": "BasteraKnight",
+    "savedAt": "2026-11-24T13:18:00.818Z",
+    "biome": "castle",
+    "player": {
+      "x": 310,
+      "y": 200,
+      "vx": 0,
+      "vy": 0,
+      "w": 16,
+      "h": 26,
+      "facing": 1,
+      "onGround": false,
+      "coyoteTimer": 0,
+      "jumpBufferTimer": 0,
+      "hp": 115,
+      "maxHp": 115,
+      "stamina": 100,
+      "maxStamina": 100,
+      "gold": 25,
+      "equippedWeapon": "claymore",
+      "unlockedWeapons": [
+        "claymore",
+        "rapier"
+      ],
+      "skillSlots": [
+        "blade_dash",
+        "candlefire_wave",
+        "stand_rush"
+      ],
+      "skillCooldowns": [
+        0,
+        0,
+        0
+      ],
+      "dashCooldown": 0,
+      "attackPhase": "none",
+      "attackTimer": 0,
+      "comboStep": 0,
+      "comboSubStep": 0,
+      "comboSubTimer": 0,
+      "comboWindowTimer": 0,
+      "isSpinDashAttack": false,
+      "spinDashTimer": 0,
+      "damageBoostMultiplier": 1,
+      "damageBoostTimer": 0,
+      "invulnTimer": 0,
+      "parryTimer": 0,
+      "chronoFreezeTimer": 0,
+      "hitFlash": 0,
+      "squashX": 1,
+      "squashY": 1,
+      "walkCycle": 0,
+      "idleTimer": 0,
+      "bossesDefeated": 0,
+      "monstersSlain": 0,
+      "secretsFound": 0,
+      "level": 1,
+      "statPoints": 0,
+      "stats": {
+        "skillDmg": 0,
+        "attack": 0,
+        "hp": 0,
+        "speed": 0
+      },
+      "customization": {
+        "cloakColor": "#be123c",
+        "armorColor": "#cbd5e1",
+        "visorColor": "#38bdf8",
+        "plumeColor": "#fbbf24"
+      },
+      "highestCheckpointX": 68,
+      "highestCheckpointIndex": 0,
+      "starStones": 0,
+      "equippedStand": "star_platinum",
+      "unlockedStands": [
+        "star_platinum"
+      ],
+      "dinoFormTimer": 0
+    },
+    "inventory": [
+      {
+        "id": "crimson_vial",
+        "name": "Crimson Candle Vial",
+        "category": "potion",
+        "description": "Restores 45 HP immediately.",
+        "sarcasticQuote": "Tastes like fermented raspberries and questionable alchemy.",
+        "count": 4,
+        "color": "#ef4444",
+        "healAmount": 45,
+        "shopPrice": 100
+      },
+      {
+        "id": "hi_ruby_potion",
+        "name": "Greater Ruby Elixir",
+        "category": "potion",
+        "description": "Restores 120 HP immediately.",
+        "sarcasticQuote": "Double-distilled in glowing crystal vats.",
+        "count": 0,
+        "color": "#f43f5e",
+        "healAmount": 120,
+        "shopPrice": 220
+      },
+      {
+        "id": "royal_elixir_hp",
+        "name": "Sovereign Vita Flask",
+        "category": "potion",
+        "description": "Restores 260 HP immediately.",
+        "sarcasticQuote": "Shimmers like liquid gold. Cures almost everything.",
+        "count": 0,
+        "color": "#10b981",
+        "healAmount": 260,
+        "shopPrice": 440
+      },
+      {
+        "id": "fury_draught",
+        "name": "Berserker Fury Draught",
+        "category": "potion",
+        "description": "Damage-Boost Potion: Grants +35% all attack & skill damage for 30s!",
+        "sarcasticQuote": "Glows neon amethyst. Side effects include aggressive sword combos.",
+        "count": 0,
+        "color": "#a855f7",
+        "attackBoostMult": 1.35,
+        "boostDuration": 30,
+        "shopPrice": 260
+      },
+      {
+        "id": "titan_crimson_tonic",
+        "name": "Titan Overdrive Tonic",
+        "category": "potion",
+        "description": "Damage-Boost Potion: Grants +60% all attack & skill damage for 45s!",
+        "sarcasticQuote": "Pure glowing cyan-gold lightning in a flask.",
+        "count": 0,
+        "color": "#06b6d4",
+        "attackBoostMult": 1.6,
+        "boostDuration": 45,
+        "shopPrice": 500
+      },
+      {
+        "id": "royal_ember",
+        "name": "Royal Ember",
+        "category": "resource",
+        "description": "Warm wax-infused cinder from Castle guards and chests.",
+        "sarcasticQuote": "Never melts, still somehow burns your pockets.",
+        "count": 1,
+        "color": "#f59e0b"
+      },
+      {
+        "id": "ruin_shard",
+        "name": "Ancient Ruin Shard",
+        "category": "resource",
+        "description": "Moss-etched rune crystal from enchanted corridors.",
+        "sarcasticQuote": "Glows ominously whenever you make poor life choices.",
+        "count": 0,
+        "color": "#34d399"
+      },
+      {
+        "id": "magma_core",
+        "name": "Volcano Magma Core",
+        "category": "resource",
+        "description": "Superheated obsidian heart from hellish champions.",
+        "sarcasticQuote": "Warm enough to brew tea, dangerous enough to melt your sword.",
+        "count": 0,
+        "color": "#f97316"
+      },
+      {
+        "id": "velvet_crest",
+        "name": "Velvet Crest Relic",
+        "category": "relic",
+        "description": "Passively boosts Max HP by +15 while carried.",
+        "sarcasticQuote": "A royal monogram that says \"do not die on the good carpet.\"",
+        "count": 1,
+        "color": "#d97706",
+        "maxHpBonus": 15
+      },
+      {
+        "id": "orb_flame",
+        "name": "Flame Orb",
+        "category": "orb",
+        "description": "Bossfight item: Deals 25% of the enemy total Max HP as blazing burst damage.",
+        "sarcasticQuote": "Bottled volcano fury—handles diplomatic immunity with fire.",
+        "count": 0,
+        "color": "#f97316"
+      },
+      {
+        "id": "orb_wind",
+        "name": "Wind Orb",
+        "category": "orb",
+        "description": "Bossfight item: Shrouds the boss in gales so they receive +30% extra damage.",
+        "sarcasticQuote": "Turns a smug Stand user into an aerodynamic target.",
+        "count": 0,
+        "color": "#2dd4bf"
+      },
+      {
+        "id": "orb_electric",
+        "name": "Electrical Orb",
+        "category": "orb",
+        "description": "Bossfight item: Unleashes high-voltage shockwaves, stunning the boss for 1 turn.",
+        "sarcasticQuote": "Even time-stoppers skip a beat at ten thousand volts.",
+        "count": 0,
+        "color": "#facc15"
+      },
+      {
+        "id": "rank_badge_f",
+        "name": "F-Rank Guild Badge",
+        "category": "key",
+        "description": "Porcelain tag proving your fresh registration at the Kingdom Adventurer Guild.",
+        "sarcasticQuote": "From 100-boss slayer back to fetching goblin ears. Classic isekai paperwork.",
+        "count": 1,
+        "color": "#cbd5e1"
+      }
+    ],
+    "defeatedBosses": [],
+    "discoveredSecrets": [],
+    "openedChests": [],
+    "volcanoBridgeFallTriggered": false,
+    "darkSanctumDiscovered": false,
+    "bossFoughtStreak": 0,
+    "bossCooldownSeconds": 0,
+    "realm": "isekai_town",
+    "guildRank": "F",
+    "rankMissionsCompleted": 0,
+    "bRankEscortsCompleted": 0,
+    "acceptedMissionId": null,
+    "isekaiClockSeconds": 0,
+    "arenaWins": 0,
+    "unlockedWardrobe": [
+      "outfit_knight_plate",
+      "hat_helm"
+    ],
+    "foughtIsekaiEnemies": [],
+    "crownUnlocked": false,
+    "gyroDefeated": false,
+    "isekaiCompleted": false,
+    "townRaidTimer": 1200
+  }
+}
