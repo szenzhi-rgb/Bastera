@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { createGyroZeppeliBossDef, getBossDef } from '../game/data';
+import { TOTAL_BOSSES, createGyroZeppeliBossDef, getBossDef } from '../game/data';
 import { createMegaBossDef } from '../game/megaBoss';
 import {
   AnimeExpression,
@@ -38,10 +38,10 @@ export const PixelBossPortrait: React.FC<BossPortraitProps> = ({
     if (!ctx) return;
     ctx.clearRect(0, 0, 48, 48);
     const def =
-      isGyroBoss || bossIndex === 101
+      isGyroBoss || bossIndex === TOTAL_BOSSES + 1
         ? createGyroZeppeliBossDef(115, 28)
         : megaArchetype
-          ? createMegaBossDef(megaArchetype, Math.max(1, bossIndex % 100), 'castle')
+          ? createMegaBossDef(megaArchetype, Math.max(1, bossIndex % TOTAL_BOSSES), 'castle')
           : getBossDef(bossIndex);
     drawBossPortrait(ctx, def, expression, 48);
   }, [bossIndex, megaArchetype, isGyroBoss, expression]);
@@ -115,14 +115,14 @@ export const PixelItemIcon: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 32, 32);
-    ctx.drawImage(getBakedItemIcon(itemId), 0, 0);
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.drawImage(getBakedItemIcon(itemId), 0, 0, 64, 64);
   }, [itemId]);
   return (
     <canvas
       ref={ref}
-      width={32}
-      height={32}
+      width={64}
+      height={64}
       style={{ width: size, height: size }}
       className={`pixel-canvas shrink-0 border border-amber-500/60 bg-[#120a0e] ${className}`}
       aria-label={`${itemId} icon`}
@@ -142,14 +142,14 @@ export const PixelWeaponIcon: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 32, 32);
-    ctx.drawImage(getBakedWeaponIcon(weaponId), 0, 0);
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.drawImage(getBakedWeaponIcon(weaponId), 0, 0, 64, 64);
   }, [weaponId]);
   return (
     <canvas
       ref={ref}
-      width={32}
-      height={32}
+      width={64}
+      height={64}
       style={{ width: size, height: size }}
       className={`pixel-canvas shrink-0 border border-amber-500/60 bg-[#120a0e] ${className}`}
       aria-label={`${weaponId} weapon icon`}
@@ -169,14 +169,14 @@ export const PixelSkillIcon: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 32, 32);
-    ctx.drawImage(getBakedSkillIcon(skillId), 0, 0);
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.drawImage(getBakedSkillIcon(skillId), 0, 0, 64, 64);
   }, [skillId]);
   return (
     <canvas
       ref={ref}
-      width={32}
-      height={32}
+      width={64}
+      height={64}
       style={{ width: size, height: size }}
       className={`pixel-canvas shrink-0 border border-amber-500/50 bg-[#100a14] ${className}`}
       aria-label={`${skillId} skill icon`}
@@ -196,14 +196,14 @@ export const PixelStandPortrait: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, 32, 32);
-    drawStandPortrait(ctx, standId, 32);
+    ctx.clearRect(0, 0, 64, 64);
+    drawStandPortrait(ctx, standId, 64);
   }, [standId]);
   return (
     <canvas
       ref={ref}
-      width={32}
-      height={32}
+      width={64}
+      height={64}
       style={{ width: size, height: size }}
       className={`pixel-canvas shrink-0 border border-amber-400/75 bg-[#120810] ${className}`}
       aria-label={`${standId} stand portrait`}

@@ -14,11 +14,11 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
   onWarpCheckpoint,
 }) => {
   const [view, setView] = useState<'checkpoints' | 'codex'>('checkpoints');
-  const [biomeFilter, setBiomeFilter] = useState<'castle' | 'forest' | 'volcano'>('castle');
+  const [biomeFilter, setBiomeFilter] = useState<'castle' | 'volcano' | 'forest'>('castle');
 
   const bossesInBiome = useMemo(() => {
-    const start = biomeFilter === 'castle' ? 1 : biomeFilter === 'forest' ? 41 : 81;
-    return Array.from({ length: 40 }, (_, i) => getBossDef(start + i));
+    const start = biomeFilter === 'castle' ? 1 : biomeFilter === 'volcano' ? 6 : 11;
+    return Array.from({ length: 5 }, (_, i) => getBossDef(start + i));
   }, [biomeFilter]);
 
   return (
@@ -27,10 +27,10 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
         <div className="flex items-center justify-between border-b border-amber-500/25 pb-3 mb-4">
           <div>
             <h2 className="font-display text-xl font-bold text-amber-100">
-              Citadel Checkpoints & 120 JoJo Codex
+              Citadel Checkpoints &amp; {TOTAL_BOSSES} JoJo Codex
             </h2>
             <p className="font-pixel-mono text-xs text-amber-300/80">
-              Biome shifts every 40 Bosses · Bosses: {hud.bossesDefeated}/{TOTAL_BOSSES} · Secrets: {hud.secretsFound}/{hud.totalSecrets}
+              Biome shifts every 5 Bosses · Bosses: {hud.bossesDefeated}/{TOTAL_BOSSES} · Secrets: {hud.secretsFound}/{hud.totalSecrets}
             </p>
           </div>
           <button
@@ -63,7 +63,7 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
                 : 'bg-[#1c1117] border-amber-500/25 text-amber-200/75'
             }`}
           >
-            120 JoJo Bosses
+            {TOTAL_BOSSES} JoJo Bosses
           </button>
         </div>
 
@@ -101,7 +101,7 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
           ) : (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                {(['castle', 'forest', 'volcano'] as const).map((b) => (
+                {(['castle', 'volcano', 'forest'] as const).map((b) => (
                   <button
                     key={b}
                     type="button"
@@ -112,7 +112,7 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
                         : 'bg-[#1a1015] text-amber-200 border-amber-500/30'
                     }`}
                   >
-                    {b === 'castle' ? '1-40 Castle' : b === 'forest' ? '41-80 Ruins' : '81-120 Volcano'}
+                    {b === 'castle' ? '1-5 Castle' : b === 'volcano' ? '6-10 Volcano' : '11-15 Ruins'}
                   </button>
                 ))}
               </div>

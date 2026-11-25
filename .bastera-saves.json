@@ -3,7 +3,7 @@
     "version": 1,
     "saveId": "autosave",
     "playerName": "BasteraKnight",
-    "savedAt": "2026-11-24T13:18:00.818Z",
+    "savedAt": "2026-11-25T12:52:24.857Z",
     "biome": "castle",
     "player": {
       "x": 310,
@@ -235,6 +235,69 @@
     "crownUnlocked": false,
     "gyroDefeated": false,
     "isekaiCompleted": false,
-    "townRaidTimer": 1200
+    "townRaidTimer": 1200,
+    "sideQuestProgress": {
+      "sq_01_crimson_tithe": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_02_butcher_well": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_03_glass_bride": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_04_plague_apothecary": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_05_hollow_bell": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_06_twin_fang_oath": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_07_ash_archivist": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_08_chained_hound": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_09_velvet_gallows": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      },
+      "sq_10_pale_regent": {
+        "stage": 0,
+        "kills": 0,
+        "twistRevealed": false,
+        "bossSpawned": false
+      }
+    },
+    "trackedSideQuestId": null
   }
 }

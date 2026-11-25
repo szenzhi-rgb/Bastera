@@ -1,12 +1,14 @@
 import { STANDS, WEAPONS } from './data';
+import { SIDE_QUESTS } from './isekai';
 import {
   drawBossPortrait,
-  drawStandPortrait,
   getBakedBiomeWall,
   getBakedFloorStrip,
   getBakedJoJoBossSprite,
+  getBakedStandWorldSprite,
   getBakedStarPlatinumSprite,
   getBakedWarriorBattleSprite,
+  getBakedWeaponWorldSprite,
   shadeColor,
 } from './pixelArtAtlas';
 import { drawCrispOverlayLabel } from './isekaiSprites';
@@ -34,6 +36,7 @@ import { FLOOR_Y } from './worldGen';
 
 export const PIXEL_W = 480;
 export const PIXEL_H = 270;
+export const RENDER_SCALE = 3;
 
 function pRect(
   ctx: CanvasRenderingContext2D,
@@ -45,6 +48,18 @@ function pRect(
 ) {
   ctx.fillStyle = color;
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+
+function sRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
 }
 
 function drawPixelSparkle(
@@ -166,14 +181,14 @@ export function drawPlatforms(
       if (visW > 0) {
         ctx.drawImage(
           strip,
-          visLeft,
+          visLeft * 2,
           0,
-          visW,
+          visW * 2,
           strip.height,
           sx + visLeft,
           plat.y - 2,
           visW,
-          strip.height,
+          strip.height / 2,
         );
         if (biome === 'volcano') {
           const lavaGlow = 0.14 + 0.14 * Math.sin(time * 4.2);
@@ -182,7 +197,7 @@ export function drawPlatforms(
         }
       }
     } else {
-      // Elevated Brick / Carpet / Secret Bridge Ledge
+      // Elevated Brick / Carpet / Secret Bridge Ledge with crisp sub-pixel bevels & rivets
       const baseColor =
         plat.kind === 'secret_bridge'
           ? '#4b3621'
@@ -193,23 +208,42 @@ export function drawPlatforms(
               : biome === 'forest'
                 ? '#243b33'
                 : '#3b1915';
-      pRect(ctx, sx, plat.y, plat.w, plat.h, '#0c070a');
-      pRect(ctx, sx + 1, plat.y + 1, plat.w - 2, plat.h - 2, baseColor);
-      pRect(ctx, sx + 1, plat.y + 1, plat.w - 2, 2, plat.kind === 'bridge' ? '#a16207' : '#6d5561');
+      const topHi =
+        plat.kind === 'bridge'
+          ? '#ca8a04'
+          : biome === 'castle'
+            ? '#7c6270'
+            : biome === 'forest'
+              ? '#34d399'
+              : '#9a3412';
+      pRect(ctx, sx, plat.y, plat.w, plat.h, '#090609');
+      sRect(ctx, sx + 0.67, plat.y + 0.67, plat.w - 1.34, plat.h - 1.34, baseColor);
+      sRect(ctx, sx + 1, plat.y + 0.67, plat.w - 2, 1.33, topHi);
+      sRect(ctx, sx + 1, plat.y + plat.h - 1.33, plat.w - 2, 0.67, '#140b10');
       if (plat.kind === 'carpet_ledge') {
-        pRect(ctx, sx + 2, plat.y, plat.w - 4, 3, '#9f1239');
-        pRect(ctx, sx + 2, plat.y, plat.w - 4, 1, '#fbbf24');
+        sRect(ctx, sx + 2, plat.y - 0.33, plat.w - 4, 2.67, '#9f1239');
+        sRect(ctx, sx + 2, plat.y - 0.33, plat.w - 4, 0.67, '#fbbf24');
+        sRect(ctx, sx + 2, plat.y + 2, plat.w - 4, 0.67, '#b45309');
+        for (let tx = 6; tx < plat.w - 8; tx += 12) {
+          sRect(ctx, sx + tx, plat.y + 0.67, 3, 1, '#fde047');
+        }
       } else if (plat.kind === 'secret_bridge') {
-        pRect(ctx, sx, plat.y, plat.w, 2, '#f59e0b');
+        sRect(ctx, sx, plat.y, plat.w, 1.67, '#f59e0b');
+        sRect(ctx, sx + 2, plat.y + 0.33, plat.w - 4, 0.67, '#fef08a');
       } else if (plat.kind === 'bridge') {
-        // Ornate chain hangers + brass bolts
-        pRect(ctx, sx + 4, plat.y - 16, 2, 16, '#64748b');
-        pRect(ctx, sx + plat.w - 6, plat.y - 16, 2, 16, '#64748b');
-        pRect(ctx, sx + 3, plat.y + 2, 4, 4, '#fbbf24');
-        pRect(ctx, sx + plat.w - 7, plat.y + 2, 4, 4, '#fbbf24');
+        // Ornate chain links + brass rivets
+        for (let cy = 0; cy < 16; cy += 3) {
+          sRect(ctx, sx + 4 + (cy % 2) * 0.5, plat.y - 16 + cy, 1.67, 2.2, '#94a3b8');
+          sRect(ctx, sx + plat.w - 6 + (cy % 2) * 0.5, plat.y - 16 + cy, 1.67, 2.2, '#94a3b8');
+        }
+        sRect(ctx, sx + 3, plat.y + 2, 3.67, 3.67, '#fbbf24');
+        sRect(ctx, sx + 4, plat.y + 2.67, 1.33, 1.33, '#fef08a');
+        sRect(ctx, sx + plat.w - 6.67, plat.y + 2, 3.67, 3.67, '#fbbf24');
+        sRect(ctx, sx + plat.w - 5.67, plat.y + 2.67, 1.33, 1.33, '#fef08a');
       }
       for (let bx = 12; bx < plat.w - 6; bx += 16) {
-        pRect(ctx, sx + bx, plat.y + 3, 2, plat.h - 4, '#140e12');
+        sRect(ctx, sx + bx, plat.y + 2.67, 1.33, plat.h - 3.67, '#120b0f');
+        sRect(ctx, sx + bx + 1.33, plat.y + 2.67, 0.67, plat.h - 4.33, 'rgba(255,255,255,0.08)');
       }
     }
   }
@@ -316,20 +350,25 @@ export function drawInteractables(
     if (sx + p.w < -40 || sx > PIXEL_W + 40) continue;
 
     if (p.kind === 'throne') {
-      pRect(ctx, sx - 2, p.y + 30, 32, 4, '#451a03');
-      pRect(ctx, sx + 3, p.y - 2, 22, p.h - 2, '#290f02');
-      pRect(ctx, sx + 5, p.y, 18, p.h - 4, '#5c180c');
-      pRect(ctx, sx + 7, p.y + 2, 14, p.h - 8, '#991b1b');
-      pRect(ctx, sx + 6, p.y - 5, 16, 4, '#f59e0b');
-      pRect(ctx, sx + 8, p.y - 7, 3, 2, '#fef08a');
-      pRect(ctx, sx + 13, p.y - 8, 2, 3, '#fef08a');
-      pRect(ctx, sx + 17, p.y - 7, 3, 2, '#fef08a');
-      pRect(ctx, sx, p.y + 18, 28, 12, '#7f1d1d');
-      pRect(ctx, sx + 2, p.y + 18, 24, 2, '#fbbf24');
-      pRect(ctx, sx, p.y + 15, 5, 16, '#d97706');
-      pRect(ctx, sx + 23, p.y + 15, 5, 16, '#d97706');
-      pRect(ctx, sx + 11, p.y + 6, 6, 8, '#fbbf24');
-      pRect(ctx, sx + 13, p.y + 8, 2, 4, '#7f1d1d');
+      sRect(ctx, sx - 3, p.y + 29, 34, 6, '#09060b');
+      sRect(ctx, sx - 2, p.y + 30, 32, 4, '#451a03');
+      sRect(ctx, sx + 2, p.y - 3, 24, p.h, '#09060b');
+      sRect(ctx, sx + 3, p.y - 2, 22, p.h - 2, '#290f02');
+      sRect(ctx, sx + 5, p.y, 18, p.h - 4, '#5c180c');
+      sRect(ctx, sx + 7, p.y + 2, 14, p.h - 8, '#991b1b');
+      sRect(ctx, sx + 8.5, p.y + 3, 3, p.h - 10, '#be123c');
+      sRect(ctx, sx + 6, p.y - 5, 16, 4, '#f59e0b');
+      sRect(ctx, sx + 6, p.y - 5, 16, 1.5, '#fef08a');
+      sRect(ctx, sx + 8, p.y - 7.5, 3, 2.5, '#fef08a');
+      sRect(ctx, sx + 13, p.y - 8.5, 2, 3.5, '#fef08a');
+      sRect(ctx, sx + 17, p.y - 7.5, 3, 2.5, '#fef08a');
+      sRect(ctx, sx, p.y + 18, 28, 12, '#7f1d1d');
+      sRect(ctx, sx + 2, p.y + 18, 24, 2, '#fbbf24');
+      sRect(ctx, sx, p.y + 15, 5, 16, '#d97706');
+      sRect(ctx, sx + 23, p.y + 15, 5, 16, '#d97706');
+      sRect(ctx, sx + 11, p.y + 6, 6, 8, '#fbbf24');
+      sRect(ctx, sx + 12.5, p.y + 7.5, 3, 5, '#7f1d1d');
+      sRect(ctx, sx + 13.5, p.y + 9, 1, 2, '#fde047');
     } else if (p.kind === 'broken_brick') {
       if (p.activated) continue;
       pRect(ctx, sx, p.y, p.w, p.h, '#241a20');
@@ -376,7 +415,6 @@ export function drawInteractables(
       pRect(ctx, sx + 9 + sway, p.y + 8, 6, 12, '#fbbf24');
     } else if (p.kind === 'chest') {
       if (p.id === 'chest_fire_sword_op') {
-        // Infernal Crimson-Orange Pedestal Glow around the OP Fire Sword chest!
         const auraR = 22 + Math.round(Math.sin(time * 7) * 3);
         ctx.save();
         ctx.fillStyle = p.activated ? 'rgba(249,115,22,0.12)' : 'rgba(220,38,38,0.28)';
@@ -384,14 +422,20 @@ export function drawInteractables(
         ctx.arc(sx + 10, p.y + 8, auraR, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
-        pRect(ctx, sx - 2, p.y + 3, p.w + 4, p.h - 2, '#450a0a');
-        pRect(ctx, sx, p.y + (p.activated ? 0 : 4), p.w, 6, '#dc2626');
-        pRect(ctx, sx + 2, p.y + (p.activated ? 1 : 5), p.w - 4, 2, '#fb923c');
-        pRect(ctx, sx + 8, p.y + 8, 4, 4, '#fde047');
+        sRect(ctx, sx - 3, p.y + 2, p.w + 6, p.h, '#09060b');
+        sRect(ctx, sx - 2, p.y + 3, p.w + 4, p.h - 2, '#450a0a');
+        sRect(ctx, sx, p.y + (p.activated ? 0 : 4), p.w, 6, '#dc2626');
+        sRect(ctx, sx + 2, p.y + (p.activated ? 1 : 5), p.w - 4, 2, '#fb923c');
+        sRect(ctx, sx + 8, p.y + 8, 4, 4, '#fde047');
+        sRect(ctx, sx + 9, p.y + 9, 2, 2, '#ffffff');
       } else {
-        pRect(ctx, sx, p.y + 4, p.w, p.h - 4, '#78350f');
-        pRect(ctx, sx, p.y + (p.activated ? 0 : 4), p.w, 6, p.activated ? '#92400e' : '#b45309');
-        pRect(ctx, sx + 8, p.y + 8, 4, 4, '#fbbf24');
+        sRect(ctx, sx - 1, p.y + (p.activated ? -0.5 : 3), p.w + 2, p.h - (p.activated ? -1 : 2), '#09060b');
+        sRect(ctx, sx, p.y + 4, p.w, p.h - 4, '#78350f');
+        sRect(ctx, sx + 2, p.y + 5, p.w - 4, p.h - 6, '#92400e');
+        sRect(ctx, sx, p.y + (p.activated ? 0 : 4), p.w, 6, p.activated ? '#92400e' : '#b45309');
+        sRect(ctx, sx + 1, p.y + (p.activated ? 0.5 : 4.5), p.w - 2, 1.5, '#fde047');
+        sRect(ctx, sx + 8, p.y + 8, 4, 4, '#fbbf24');
+        sRect(ctx, sx + 9, p.y + 9, 2, 2, '#fef08a');
       }
     } else if (p.kind === 'checkpoint') {
       pRect(ctx, sx + 4, p.y + 10, 12, 20, '#334155');
@@ -529,12 +573,97 @@ export function drawInteractables(
       pRect(ctx, sx + 8, p.y + 18, p.w - 14, 2, '#d97706');
     } else if (p.kind === 'stand_shrine') {
       // Royal Stand Shrine Altar Pedestal & Hovering Star-Stone Crest
-      const bob = Math.round(Math.sin(time * 4) * 2);
-      pRect(ctx, sx + 6, p.y + 36, p.w - 12, p.h - 36, '#334155');
-      pRect(ctx, sx + 4, p.y + 32, p.w - 8, 5, '#fbbf24');
-      pRect(ctx, sx + 14, p.y + 22, p.w - 28, 10, '#881337');
-      pRect(ctx, sx + p.w / 2 - 5, p.y + 6 + bob, 10, 14, '#a855f7');
-      pRect(ctx, sx + p.w / 2 - 3, p.y + 8 + bob, 6, 10, '#fde047');
+      const bob = Math.sin(time * 4) * 2;
+      sRect(ctx, sx + 5, p.y + 35, p.w - 10, p.h - 35, '#09060b');
+      sRect(ctx, sx + 6, p.y + 36, p.w - 12, p.h - 36, '#334155');
+      sRect(ctx, sx + 8, p.y + 37, p.w - 16, p.h - 38, '#475569');
+      sRect(ctx, sx + 3, p.y + 31, p.w - 6, 6, '#09060b');
+      sRect(ctx, sx + 4, p.y + 32, p.w - 8, 4, '#fbbf24');
+      sRect(ctx, sx + 5, p.y + 32, p.w - 10, 1.5, '#fef08a');
+      sRect(ctx, sx + 13, p.y + 21, p.w - 26, 11, '#09060b');
+      sRect(ctx, sx + 14, p.y + 22, p.w - 28, 9, '#881337');
+      sRect(ctx, sx + 16, p.y + 23, p.w - 32, 7, '#be123c');
+      sRect(ctx, sx + p.w / 2 - 6, p.y + 5 + bob, 12, 16, '#09060b');
+      sRect(ctx, sx + p.w / 2 - 5, p.y + 6 + bob, 10, 14, '#a855f7');
+      sRect(ctx, sx + p.w / 2 - 3, p.y + 8 + bob, 6, 10, '#fde047');
+      sRect(ctx, sx + p.w / 2 - 1.5, p.y + 10 + bob, 3, 6, '#ffffff');
+    } else if (p.kind === 'town_gate_out') {
+      // Grand Royal East Gatehouse Portcullis leading out to Solaris Forest
+      sRect(ctx, sx - 1, p.y - 1, p.w + 2, p.h + 1, '#09060b');
+      sRect(ctx, sx, p.y, p.w, p.h, '#475569');
+      sRect(ctx, sx + 3, p.y + 3, p.w - 6, p.h - 3, '#64748b');
+      sRect(ctx, sx + 4, p.y + 4, p.w - 8, 8, '#fbbf24');
+      sRect(ctx, sx + 6, p.y + 5, p.w - 12, 2.5, '#fef08a');
+      for (let c = 0; c < 4; c++) {
+        sRect(ctx, sx + 3.5 + c * 18, p.y - 6.5, 11, 9, '#09060b');
+        sRect(ctx, sx + 4 + c * 18, p.y - 6, 10, 8, '#64748b');
+        sRect(ctx, sx + 5 + c * 18, p.y - 5, 8, 2, '#94a3b8');
+      }
+      sRect(ctx, sx + 14, p.y + 22, p.w - 28, p.h - 22, '#052e16');
+      sRect(ctx, sx + 18, p.y + 26, p.w - 36, p.h - 26, '#020617');
+      for (let bar = 0; bar < 5; bar++) {
+        sRect(ctx, sx + 18 + bar * 8, p.y + 24, 3, 12, '#94a3b8');
+        sRect(ctx, sx + 18.5 + bar * 8, p.y + 24, 1, 11, '#e2e8f0');
+      }
+      sRect(ctx, sx + 3.5, p.y + 17.5, 9, 29, '#09060b');
+      sRect(ctx, sx + 4, p.y + 18, 8, 28, '#9f1239');
+      sRect(ctx, sx + p.w - 12.5, p.y + 17.5, 9, 29, '#09060b');
+      sRect(ctx, sx + p.w - 12, p.y + 18, 8, 28, '#9f1239');
+      sRect(ctx, sx + 5, p.y + 20, 6, 4, '#fbbf24');
+      sRect(ctx, sx + p.w - 11, p.y + 20, 6, 4, '#fbbf24');
+    } else if (p.kind === 'outskirts_return_town') {
+      sRect(ctx, sx - 1, p.y - 1, p.w + 2, p.h + 1, '#09060b');
+      sRect(ctx, sx, p.y, p.w, p.h, '#64748b');
+      sRect(ctx, sx + 4, p.y + 4, p.w - 8, 6, '#fbbf24');
+      sRect(ctx, sx + 10, p.y + 18, p.w - 20, p.h - 18, '#fef3c7');
+      sRect(ctx, sx + 14, p.y + 22, p.w - 28, p.h - 22, '#f59e0b');
+      sRect(ctx, sx + 4, p.y + 16, 5, 22, '#9f1239');
+      sRect(ctx, sx + 4.5, p.y + 17, 4, 2, '#fbbf24');
+    } else if (p.kind === 'outskirts_cave_entrance') {
+      sRect(ctx, sx - 1, p.y + 9, p.w + 2, p.h - 9, '#09060b');
+      sRect(ctx, sx, p.y + 10, p.w, p.h - 10, '#334155');
+      sRect(ctx, sx + 10, p.y, p.w - 20, 18, '#475569');
+      sRect(ctx, sx + 20, p.y + 20, p.w - 40, p.h - 20, '#09040a');
+      sRect(ctx, sx + 24, p.y + 24, p.w - 48, 8, '#7f1d1d');
+      sRect(ctx, sx + 8, p.y + 14, 14, 6, '#16a34a');
+      sRect(ctx, sx + 10, p.y + 14, 10, 2, '#4ade80');
+      sRect(ctx, sx + p.w - 24, p.y + 18, 16, 6, '#15803d');
+      sRect(ctx, sx + p.w - 22, p.y + 18, 12, 2, '#4ade80');
+    } else if (p.kind === 'outskirts_cave_exit') {
+      sRect(ctx, sx + 17, p.y, 6, p.h - 8, '#09060b');
+      sRect(ctx, sx + 18, p.y, 4, p.h - 8, '#d97706');
+      sRect(ctx, sx + 15, p.y + p.h - 12, 10, 8, '#b45309');
+      sRect(ctx, sx + 25, p.y + 9, 10, 13, '#09060b');
+      sRect(ctx, sx + 26, p.y + 10, 8, 11, '#fef08a');
+      sRect(ctx, sx + 27.5, p.y + 12, 5, 7, '#ffffff');
+    } else if (p.kind === 'side_quest_npc') {
+      const quest = SIDE_QUESTS.find((q) => q.id === p.sideQuestId);
+      const coat = quest?.coatColor ?? '#7f1d1d';
+      const hair = quest?.hairColor ?? '#e2e8f0';
+      const shirt = quest?.shirtColor ?? '#cbd5e1';
+      const bob = Math.sin(time * 4.5 + p.x * 0.05) * 1.5;
+      // High-res ink-outlined Side Quest NPC + Gold Quest Marker
+      sRect(ctx, sx + 4, p.y + 19.5, 4.5, 6.5, '#09060b');
+      sRect(ctx, sx + 9.5, p.y + 19.5, 4.5, 6.5, '#09060b');
+      sRect(ctx, sx + 5, p.y + 20, 3, 6, '#1e293b');
+      sRect(ctx, sx + 10, p.y + 20, 3, 6, '#1e293b');
+      sRect(ctx, sx + 2, p.y + 9.5, 14, 12, '#09060b');
+      sRect(ctx, sx + 3, p.y + 10, 12, 11, coat);
+      sRect(ctx, sx + 6, p.y + 11, 6, 8, shirt);
+      sRect(ctx, sx + 7, p.y + 12, 4, 1.5, '#fbbf24');
+      sRect(ctx, sx + 4, p.y + 1, 10, 9.5, '#09060b');
+      sRect(ctx, sx + 5, p.y + 2, 8, 8, '#fde68a');
+      sRect(ctx, sx + 3.5, p.y + 0.5, 11, 3.8, hair);
+      sRect(ctx, sx + 6.5, p.y + 4.8, 2, 2.4, '#0f172a');
+      sRect(ctx, sx + 9.8, p.y + 4.8, 2, 2.4, '#0f172a');
+      sRect(ctx, sx + 7.2, p.y + 5.2, 0.8, 0.8, '#ffffff');
+      sRect(ctx, sx + 10.5, p.y + 5.2, 0.8, 0.8, '#ffffff');
+      // Bobbing Golden Quest '!' Marker
+      sRect(ctx, sx + 6.5, p.y - 14.5 + bob, 5, 8, '#09060b');
+      sRect(ctx, sx + 7, p.y - 14 + bob, 4, 7, '#fbbf24');
+      sRect(ctx, sx + 7.8, p.y - 13 + bob, 2, 5, '#fef08a');
+      sRect(ctx, sx + 6.5, p.y - 5.5 + bob, 5, 4, '#09060b');
+      sRect(ctx, sx + 7, p.y - 5 + bob, 4, 3, '#fde047');
     }
   }
 
@@ -683,123 +812,132 @@ export function drawWarrior(
     ctx.rotate(lean);
   }
 
-  // Multi-segment billowing anime scarf/cape with 1px ink trim & gold hem
-  pRect(ctx, -12 - cloakWave1, -21 + breath, 9, 12, '#090609');
-  pRect(ctx, -11 - cloakWave1, -20 + breath, 7, 10, capeColor);
-  pRect(ctx, -15 - cloakWave2, -13 + breath, 7, 9, '#090609');
-  pRect(ctx, -14 - cloakWave2, -12 + breath, 6, 7, capeShadow);
-  pRect(ctx, -13 - cloakWave2, -13 + breath, 4, 5, capeColor);
-  pRect(ctx, -14 - cloakWave2, -6 + breath, 5, 1, '#f59e0b');
+  // Multi-segment billowing anime scarf/cape with crisp sub-pixel ink trim & gold hem
+  sRect(ctx, -11.67 - cloakWave1, -21 + breath, 8.67, 12, '#090609');
+  sRect(ctx, -11 - cloakWave1, -20.33 + breath, 7.33, 10.67, capeColor);
+  sRect(ctx, -14.67 - cloakWave2, -13 + breath, 7, 9, '#090609');
+  sRect(ctx, -14 - cloakWave2, -12.33 + breath, 6, 7.33, capeShadow);
+  sRect(ctx, -13 - cloakWave2, -13 + breath, 4, 5, capeColor);
+  sRect(ctx, -14 - cloakWave2, -6 + breath, 5.33, 1, '#f59e0b');
 
-  // Crisp 1px pixel silhouette outline
-  pRect(ctx, -7, -29 + breath, 14, 24, '#090609');
+  // Crisp sub-pixel pixel silhouette outline
+  sRect(ctx, -6.67, -29 + breath, 13.33, 23.67, '#090609');
 
   // Hip leather scabbard behind back
-  pRect(ctx, -9, -12 + breath, 3, 9, '#78350f');
-  pRect(ctx, -9, -12 + breath, 3, 2, '#fbbf24');
+  sRect(ctx, -9, -12 + breath, 3, 9, '#78350f');
+  sRect(ctx, -9, -12 + breath, 3, 1.67, '#fbbf24');
 
   // Articulated greaves, brass knee-cops & pointed steel-toe sabatons
-  pRect(ctx, -5 + stride, -8, 4, 8, armorDark);
-  pRect(ctx, -4 + stride, -7, 2, 4, armorMid);
-  pRect(ctx, -5 + stride, -6, 3, 2, '#d97706');
-  pRect(ctx, 1 - stride, -8, 4, 8, armorMain);
-  pRect(ctx, 2 - stride, -7, 3, 2, armorHi);
-  pRect(ctx, 1 - stride, -6, 3, 2, '#fbbf24');
-  pRect(ctx, 1 - stride, -3, 6, 3, '#1e293b');
-  pRect(ctx, 4 - stride, -2, 3, 1, armorHi);
+  sRect(ctx, -5 + stride, -8.33, 4.33, 8.33, '#09060b');
+  sRect(ctx, -4.67 + stride, -8, 3.67, 7.67, armorDark);
+  sRect(ctx, -4 + stride, -7, 1.67, 4, armorMid);
+  sRect(ctx, -5 + stride, -6, 3, 1.67, '#d97706');
+  sRect(ctx, 0.67 - stride, -8.33, 4.67, 8.33, '#09060b');
+  sRect(ctx, 1 - stride, -8, 4, 7.67, armorMain);
+  sRect(ctx, 1.67 - stride, -7, 2.67, 2, armorHi);
+  sRect(ctx, 1 - stride, -6, 3, 1.67, '#fbbf24');
+  sRect(ctx, 1 - stride, -3, 6, 3, '#1e293b');
+  sRect(ctx, 4 - stride, -2.33, 3, 1, armorHi);
 
   const outfitStyle = customization.outfitStyle ?? 'knight_plate';
   const headgearStyle = customization.headgearStyle ?? 'helm';
 
   // Sculpted knight cuirass / adventurer tunic / crimson guild coat / demon slayer / royal regalia
-  pRect(ctx, -6, -19 + breath, 12, 12, armorMain);
+  sRect(ctx, -6, -19 + breath, 12, 12, armorMain);
   if (outfitStyle === 'adventurer_tunic') {
-    pRect(ctx, -6, -19 + breath, 12, 13, '#15803d');
-    pRect(ctx, -4, -18 + breath, 8, 10, '#166534');
-    pRect(ctx, -1, -18 + breath, 3, 12, '#fef3c7');
+    sRect(ctx, -6, -19 + breath, 12, 13, '#15803d');
+    sRect(ctx, -4, -18 + breath, 8, 10, '#166534');
+    sRect(ctx, -1, -18 + breath, 2.67, 12, '#fef3c7');
   } else if (outfitStyle === 'guild_coat') {
-    pRect(ctx, -6, -19 + breath, 12, 13, '#7f1d1d');
-    pRect(ctx, -5, -18 + breath, 10, 11, '#991b1b');
-    pRect(ctx, -2, -18 + breath, 4, 11, '#fef3c7');
-    pRect(ctx, -1, -16 + breath, 2, 4, '#fbbf24');
+    sRect(ctx, -6, -19 + breath, 12, 13, '#7f1d1d');
+    sRect(ctx, -5, -18 + breath, 10, 11, '#991b1b');
+    sRect(ctx, -2, -18 + breath, 4, 11, '#fef3c7');
+    sRect(ctx, -1, -16 + breath, 2, 4, '#fbbf24');
   } else if (outfitStyle === 'demon_slayer') {
-    pRect(ctx, -6, -19 + breath, 12, 13, '#3b0764');
-    pRect(ctx, -5, -18 + breath, 5, 11, '#7e22ce');
-    pRect(ctx, 0, -18 + breath, 5, 11, '#1e1b4b');
-    pRect(ctx, -2, -14 + breath, 4, 3, '#f43f5e');
+    sRect(ctx, -6, -19 + breath, 12, 13, '#3b0764');
+    sRect(ctx, -5, -18 + breath, 5, 11, '#7e22ce');
+    sRect(ctx, 0, -18 + breath, 5, 11, '#1e1b4b');
+    sRect(ctx, -2, -14 + breath, 4, 3, '#f43f5e');
   } else if (outfitStyle === 'royal_regalia') {
-    pRect(ctx, -6, -19 + breath, 12, 13, '#e2e8f0');
-    pRect(ctx, -5, -18 + breath, 10, 11, '#f8fafc');
-    pRect(ctx, -2, -18 + breath, 4, 11, '#9f1239');
-    pRect(ctx, -2, -16 + breath, 4, 3, '#fbbf24');
+    sRect(ctx, -6, -19 + breath, 12, 13, '#e2e8f0');
+    sRect(ctx, -5, -18 + breath, 10, 11, '#f8fafc');
+    sRect(ctx, -2, -18 + breath, 4, 11, '#9f1239');
+    sRect(ctx, -2, -16 + breath, 4, 3, '#fbbf24');
   } else {
-    pRect(ctx, -5, -18 + breath, 5, 6, armorHi);
-    pRect(ctx, 0, -18 + breath, 5, 7, armorMid);
+    sRect(ctx, -5, -18 + breath, 5, 6, armorHi);
+    sRect(ctx, 0, -18 + breath, 5, 7, armorMid);
+    sRect(ctx, -4.33, -17.33 + breath, 2, 4, '#ffffff');
   }
-  pRect(ctx, -2, -16 + breath, 2, 2, '#fbbf24');
-  pRect(ctx, -7, -20 + breath, 6, 5, '#d97706');
-  pRect(ctx, -6, -20 + breath, 4, 2, '#fde047');
-  pRect(ctx, -6, -10 + breath, 12, 2, '#b45309');
-  pRect(ctx, -1, -10 + breath, 3, 2, '#fef08a');
+  sRect(ctx, -2, -16 + breath, 2, 2, '#fbbf24');
+  sRect(ctx, -7, -20 + breath, 6, 5, '#d97706');
+  sRect(ctx, -6, -20 + breath, 4, 1.67, '#fde047');
+  sRect(ctx, -6, -10 + breath, 12, 2, '#b45309');
+  sRect(ctx, -1, -10 + breath, 3, 2, '#fef08a');
 
   // Headgear
   if (headgearStyle === 'beret') {
-    pRect(ctx, -6, -27 + breath, 11, 8, '#f3cba5');
-    pRect(ctx, 1, -24 + breath, 2, 2, '#0f172a');
-    pRect(ctx, -7, -32 + breath, 13, 5, capeColor);
-    pRect(ctx, -5, -33 + breath, 8, 2, '#fde047');
+    sRect(ctx, -6, -27 + breath, 11, 8, '#f3cba5');
+    sRect(ctx, 1, -24 + breath, 2, 2, '#0f172a');
+    sRect(ctx, -7, -32 + breath, 13, 5, capeColor);
+    sRect(ctx, -5, -33 + breath, 8, 2, '#fde047');
   } else if (headgearStyle === 'bandana') {
-    pRect(ctx, -6, -27 + breath, 11, 8, '#f3cba5');
-    pRect(ctx, 1, -24 + breath, 2, 2, '#0f172a');
-    pRect(ctx, -6, -29 + breath, 12, 3, '#dc2626');
-    pRect(ctx, -10 - Math.round(cloakWave1 * 0.4), -29 + breath, 5, 2, '#ef4444');
+    sRect(ctx, -6, -27 + breath, 11, 8, '#f3cba5');
+    sRect(ctx, 1, -24 + breath, 2, 2, '#0f172a');
+    sRect(ctx, -6, -29 + breath, 12, 3, '#dc2626');
+    sRect(ctx, -10 - Math.round(cloakWave1 * 0.4), -29 + breath, 5, 2, '#ef4444');
   } else if (headgearStyle === 'circlet') {
-    pRect(ctx, -6, -27 + breath, 11, 8, '#f3cba5');
-    pRect(ctx, -6, -29 + breath, 11, 3, '#334155');
-    pRect(ctx, 1, -24 + breath, 2, 2, visorGlow);
-    pRect(ctx, -6, -28 + breath, 12, 2, '#fbbf24');
-    pRect(ctx, 0, -29 + breath, 2, 2, '#38bdf8');
+    sRect(ctx, -6, -27 + breath, 11, 8, '#f3cba5');
+    sRect(ctx, -6, -29 + breath, 11, 3, '#334155');
+    sRect(ctx, 1, -24 + breath, 2, 2, visorGlow);
+    sRect(ctx, -6, -28 + breath, 12, 2, '#fbbf24');
+    sRect(ctx, 0, -29 + breath, 2, 2, '#38bdf8');
   } else {
-    pRect(ctx, -6, -28 + breath, 12, 9, armorMain);
-    pRect(ctx, -5, -28 + breath, 9, 2, armorHi);
-    pRect(ctx, -6, -26 + breath, 12, 1, '#d97706');
-    pRect(ctx, -1, -24 + breath, 7, 3, '#0f172a');
-    pRect(ctx, 1, -23 + breath, 3, 2, isAnimePose ? '#fef08a' : visorGlow);
-    pRect(ctx, -5, -33 + breath, 8, 5, '#090609');
-    pRect(ctx, -4, -32 + breath, 6, 4, plumeColor);
-    pRect(ctx, -9 - Math.round(cloakWave1 * 0.5), -31 + breath, 6, 3, plumeShade);
+    sRect(ctx, -6, -28 + breath, 12, 9, armorMain);
+    sRect(ctx, -5, -28 + breath, 9, 1.67, armorHi);
+    sRect(ctx, -6, -26 + breath, 12, 1, '#d97706');
+    sRect(ctx, -1, -24 + breath, 7, 3, '#0f172a');
+    sRect(ctx, 1, -23.33 + breath, 3, 1.67, isAnimePose ? '#fef08a' : visorGlow);
+    sRect(ctx, 1.67, -23.33 + breath, 1, 0.67, '#ffffff');
+    sRect(ctx, -5, -33 + breath, 8, 5, '#090609');
+    sRect(ctx, -4, -32 + breath, 6, 4, plumeColor);
+    sRect(ctx, -9 - Math.round(cloakWave1 * 0.5), -31 + breath, 6, 3, plumeShade);
   }
 
   if (customization.crownEquipped) {
     const cy = headgearStyle === 'helm' ? -36 : -34;
-    pRect(ctx, -5, cy + breath, 10, 4, '#f59e0b');
-    pRect(ctx, -5, cy - 3 + breath, 2, 3, '#fbbf24');
-    pRect(ctx, -1, cy - 4 + breath, 3, 4, '#fef08a');
-    pRect(ctx, 3, cy - 3 + breath, 2, 3, '#fbbf24');
-    pRect(ctx, 0, cy + 1 + breath, 2, 2, '#e11d48');
+    sRect(ctx, -5, cy + breath, 10, 4, '#f59e0b');
+    sRect(ctx, -5, cy - 3 + breath, 2, 3, '#fbbf24');
+    sRect(ctx, -1, cy - 4 + breath, 3, 4, '#fef08a');
+    sRect(ctx, 3, cy - 3 + breath, 2, 3, '#fbbf24');
+    sRect(ctx, 0, cy + 1 + breath, 2, 2, '#e11d48');
   }
 
-  // Distinct Weapon Rendering & Full Choreography (3-Arc Slash / Double Poke / Fast Triple Slash / Spin-Dash Wind Poke!)
+  // Distinct High-Res Baked Weapon Rendering & Full Choreography
   const weapon = WEAPONS[weaponId];
   const vLen = weapon.visualLength;
   const vWid = weapon.visualWidth;
+  const wSprite = getBakedWeaponWorldSprite(weaponId);
+  const drawW = Math.max(8, 7 + Math.round(vWid * 1.1));
+  const drawH = Math.max(20, Math.round(vLen * 1.35));
 
   if (!isPeer && equippedStand === 'gyro_ball') {
-    // GYRO STEEL BALL STAND: Replaces sword in hand with a glowing spinning Emerald-Gold Steel Ball!
+    // GYRO STEEL BALL STAND: Replaces sword in hand with a high-res spinning Emerald-Gold Steel Ball!
     const spin = simTime * 18;
     const bx = attackPhase === 'active' ? 12 : attackPhase === 'windup' ? -9 : 7;
     const by = attackPhase === 'active' ? -15 : -14 + breath;
-    pRect(ctx, bx - 6, by - 6, 12, 12, '#064e3b');
-    pRect(ctx, bx - 5, by - 5, 10, 10, '#16a34a');
-    pRect(ctx, bx - 3, by - 3, 6, 6, '#4ade80');
-    pRect(ctx, bx + Math.round(Math.cos(spin) * 3) - 1, by + Math.round(Math.sin(spin) * 3) - 1, 3, 3, '#fef08a');
+    sRect(ctx, bx - 6, by - 6, 12, 12, '#09060b');
+    sRect(ctx, bx - 5.33, by - 5.33, 10.67, 10.67, '#064e3b');
+    sRect(ctx, bx - 4.33, by - 4.33, 8.67, 8.67, '#16a34a');
+    sRect(ctx, bx - 2.67, by - 2.67, 5.33, 5.33, '#4ade80');
+    sRect(ctx, bx - 4, by - 0.67, 8, 1.33, '#fbbf24');
+    sRect(ctx, bx - 0.67, by - 4, 1.33, 8, '#fde047');
+    sRect(ctx, bx + Math.cos(spin) * 2.8 - 1, by + Math.sin(spin) * 2.8 - 1, 2.33, 2.33, '#ffffff');
   } else if (isSpinDashAttack) {
     // BURSTING SPINNING POKE DASH with swirling wind vortex ribbons & tornado cones!
     const spinOsc = Math.sin(simTime * 42);
     const windLen = Math.round(weapon.range * 1.85);
-    // Outer swirling wind ribbons
     ctx.strokeStyle = '#34d399';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.2;
     for (let ring = 0; ring < 3; ring++) {
       ctx.beginPath();
       ctx.ellipse(12 + ring * 14, -14 + spinOsc * 2, 8 + ring * 3, 14 - ring * 2, simTime * 16 + ring, 0, Math.PI * 1.6);
@@ -812,119 +950,127 @@ export function drawWarrior(
     ctx.lineTo(4, -4);
     ctx.closePath();
     ctx.fill();
-    // Spinning drilled weapon core
-    pRect(ctx, 4, -15 - Math.round(vWid / 2), vLen + 14, vWid + 1, weapon.accentColor);
-    pRect(ctx, 6, -14 - Math.round(vWid / 2), vLen + 12, Math.max(2, vWid - 1), weapon.color);
-    pRect(ctx, 10, -14, windLen, 2, '#ffffff');
+    ctx.save();
+    ctx.translate(8, -14);
+    ctx.rotate(Math.PI / 2);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(wSprite, -drawW / 2, -drawH + 2, drawW, drawH);
+    ctx.restore();
+    sRect(ctx, 10, -14.5, windLen, 1.5, '#ffffff');
   } else if (attackPhase === 'active') {
     if (comboStep === 2) {
-      // DOUBLE POKE COMBO (extended long-range piercing twin thrusts!)
       const pokeLen = Math.round(weapon.range * 1.48);
       const yShift = comboSubStep === 0 ? -18 : -11;
       const yGhost = comboSubStep === 0 ? -11 : -18;
-      // Ghost previous thrust streak
       ctx.fillStyle = weapon.accentColor;
       ctx.globalAlpha = 0.48;
       ctx.fillRect(6, yGhost, pokeLen - 6, 3);
       ctx.globalAlpha = 1;
-      // Primary extended piercing thrust + shockwave rings
       ctx.fillStyle = weapon.accentColor;
       ctx.fillRect(6, yShift - 2, pokeLen, vWid + 4);
       ctx.fillStyle = weapon.color;
       ctx.fillRect(8, yShift - 1, pokeLen - 2, vWid + 1);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(10, yShift, pokeLen - 4, 2);
+      ctx.fillRect(10, yShift, pokeLen - 4, 1.67);
+      ctx.save();
+      ctx.translate(12, yShift + 1);
+      ctx.rotate(Math.PI / 2);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(wSprite, -drawW / 2, -drawH + 4, drawW, drawH);
+      ctx.restore();
       ctx.strokeStyle = weapon.color;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.ellipse(18, yShift + 1, 4, 11, 0, 0, Math.PI * 2);
       ctx.stroke();
     } else if (comboStep === 3) {
-      // VERY FAST TRIPLE SLASH: Up-to-Down (0), Left-to-Right (1), Right-to-Left (2)
       const reach = weapon.range + 10;
       ctx.lineCap = 'round';
       if (comboSubStep === 0) {
-        // Swing 1: Up-to-Down Vertical Overhead Cleave!
         ctx.strokeStyle = weapon.accentColor;
-        ctx.lineWidth = 8;
+        ctx.lineWidth = 7;
         ctx.beginPath();
         ctx.arc(8, -14, reach * 0.72, -Math.PI * 0.65, Math.PI * 0.45);
         ctx.stroke();
         ctx.strokeStyle = weapon.color;
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
         ctx.arc(8, -14, reach * 0.72, -Math.PI * 0.6, Math.PI * 0.4);
         ctx.stroke();
-        pRect(ctx, 10, -28, vWid + 2, vLen + 4, '#ffffff');
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
       } else if (comboSubStep === 1) {
-        // Swing 2: Left-to-Right Sweeping Horizontal Crescent!
         ctx.strokeStyle = weapon.accentColor;
-        ctx.lineWidth = 9;
+        ctx.lineWidth = 8;
         ctx.beginPath();
         ctx.moveTo(-4, -22);
         ctx.quadraticCurveTo(reach * 0.55, -28, reach + 6, -13);
         ctx.stroke();
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(0, -20);
         ctx.quadraticCurveTo(reach * 0.55, -26, reach + 4, -13);
         ctx.stroke();
       } else {
-        // Swing 3: Right-to-Left Reverse Backhand Crescent!
         ctx.strokeStyle = weapon.accentColor;
-        ctx.lineWidth = 9;
+        ctx.lineWidth = 8;
         ctx.beginPath();
         ctx.moveTo(reach + 6, -24);
         ctx.quadraticCurveTo(reach * 0.45, -4, -6, -12);
         ctx.stroke();
         ctx.strokeStyle = weapon.color;
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
         ctx.moveTo(reach + 4, -23);
         ctx.quadraticCurveTo(reach * 0.45, -6, -4, -13);
         ctx.stroke();
       }
     } else {
-      // Combo Step 1: Detailed 3-frame animated sword slash choreography (no poke!)
       const reach = weapon.range + 4;
       const startAng = comboSubStep === 0 ? -1.4 : comboSubStep === 1 ? -0.6 : 0.1;
       const endAng = startAng + 1.55;
       ctx.strokeStyle = weapon.accentColor;
-      ctx.lineWidth = 8 + Math.min(3, vWid);
+      ctx.lineWidth = 7 + Math.min(3, vWid);
       ctx.beginPath();
       ctx.arc(6, -15, reach * 0.75, startAng, endAng);
       ctx.stroke();
       ctx.strokeStyle = weapon.color;
-      ctx.lineWidth = 4 + Math.min(2, Math.floor(vWid / 2));
+      ctx.lineWidth = 3.5 + Math.min(2, Math.floor(vWid / 2));
       ctx.beginPath();
       ctx.arc(6, -15, reach * 0.75, startAng + 0.12, endAng);
       ctx.stroke();
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.arc(6, -15, reach * 0.78, startAng + 0.2, endAng);
       ctx.stroke();
     }
   } else if (attackPhase === 'windup') {
-    pRect(ctx, -10, -8 - vLen, vWid + 1, vLen, weapon.color);
-    pRect(ctx, -9, -7 - vLen, 1, vLen - 3, '#ffffff');
-    pRect(ctx, -12, -13 + breath, vWid + 5, 2, weapon.accentColor);
+    ctx.save();
+    ctx.translate(-8, -11 + breath);
+    ctx.rotate(-0.42);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(wSprite, -drawW / 2, -drawH + 4, drawW, drawH);
+    ctx.restore();
   } else if (isAnimePose) {
-    pRect(ctx, 4, -12 - vLen, vWid, vLen, weapon.color);
-    pRect(ctx, 5, -11 - vLen, 1, vLen - 3, '#ffffff');
-    pRect(ctx, 2, -13 + breath, 7, 2, weapon.accentColor);
+    ctx.save();
+    ctx.translate(6, -12 + breath);
+    ctx.rotate(0.14);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(wSprite, -drawW / 2, -drawH + 4, drawW, drawH);
+    ctx.restore();
     const sparkY = -25 + Math.round(((quirkCycle - 3.6) / 1.4) * 14);
-    drawPixelSparkle(ctx, 5, sparkY, 2, '#fef08a');
+    drawPixelSparkle(ctx, 6, sparkY, 2, '#fef08a');
   } else {
-    // Draw equipped weapon at its custom size, color & special effect glint!
-    const topY = -10 - vLen + breath;
-    pRect(ctx, 3, topY - 1, vWid + 2, vLen + 2, '#090609');
-    pRect(ctx, 4, topY, vWid, vLen, weapon.color);
-    if (vWid >= 2) {
-      pRect(ctx, 4 + Math.floor(vWid / 2), topY + 2, 1, Math.max(4, vLen - 4), '#ffffff');
-    }
-    pRect(ctx, 2, -12 + breath, vWid + 5, 2, weapon.accentColor);
+    // High-Res Baked Weapon Sprite resting proudly in Knight's hand
+    ctx.save();
+    ctx.translate(6, -11 + breath);
+    ctx.rotate(0.22);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(wSprite, -drawW / 2, -drawH + 4, drawW, drawH);
+    ctx.restore();
 
     if (weapon.specialEffect !== 'none' && Math.floor(idleTimer * 6) % 2 === 0) {
       const fxCol =
@@ -941,7 +1087,7 @@ export function drawWarrior(
                   : weapon.specialEffect === 'holy_beam'
                     ? '#fef08a'
                     : weapon.accentColor;
-      drawPixelSparkle(ctx, 4 + Math.floor(vWid / 2), topY + Math.floor(vLen * 0.35), 2, fxCol);
+      drawPixelSparkle(ctx, 7, -14 - Math.floor(vLen * 0.55) + breath, 2, fxCol);
     }
   }
 
@@ -1022,274 +1168,306 @@ export function drawEnemy(
     const col = flash ? '#ffffff' : windupPulse ? '#fca5a5' : '#e2e8f0';
     const boneSh = flash ? '#ffffff' : '#94a3b8';
     const ink = '#09060b';
-    pRect(ctx, -5, -28 + idleBob, 10, 9, ink);
-    pRect(ctx, -6, -19 + idleBob, 12, 11, ink);
-    pRect(ctx, -4, -29 + idleBob, 8, 3, '#475569');
-    pRect(ctx, -6, -31 + idleBob, 2, 3, '#cbd5e1');
-    pRect(ctx, 4, -31 + idleBob, 2, 3, '#cbd5e1');
-    pRect(ctx, -4, -26 + idleBob, 8, 6, col);
-    pRect(ctx, 1, -24 + idleBob, 2, 2, '#ef4444'); // Glowing eye socket
-    pRect(ctx, 3, -22 + idleBob, 1, 1, '#09060b'); // Nasal cavity
+    sRect(ctx, -5.5, -28.5 + idleBob, 11, 10, ink);
+    sRect(ctx, -6.5, -19.5 + idleBob, 13, 12, ink);
+    sRect(ctx, -4.5, -29.5 + idleBob, 9, 3.5, '#475569');
+    sRect(ctx, -3, -29 + idleBob, 6, 1.5, '#94a3b8');
+    sRect(ctx, -6.5, -31.5 + idleBob, 2.5, 3.5, '#cbd5e1');
+    sRect(ctx, 4, -31.5 + idleBob, 2.5, 3.5, '#cbd5e1');
+    sRect(ctx, -4, -26 + idleBob, 8, 6, col);
+    sRect(ctx, -3, -25.5 + idleBob, 5, 1.5, '#ffffff');
+    sRect(ctx, 1, -24.2 + idleBob, 2.5, 2.2, '#ef4444'); // Glowing eye socket
+    sRect(ctx, 1.5, -23.8 + idleBob, 1, 1, '#fef08a');
+    sRect(ctx, 3, -22 + idleBob, 1.2, 1.2, ink); // Nasal cavity
     const jaw = Math.floor(time * 4 + enemy.patrolOriginX) % 4 === 0 ? 1 : 0;
-    pRect(ctx, -3, -20 + idleBob + jaw, 6, 2, boneSh);
-    pRect(ctx, -1, -20 + idleBob + jaw, 1, 2, ink); // Teeth gaps
-    pRect(ctx, 1, -20 + idleBob + jaw, 1, 2, ink);
+    sRect(ctx, -3, -20 + idleBob + jaw, 6, 2, boneSh);
+    sRect(ctx, -1, -20 + idleBob + jaw, 1, 2, ink);
+    sRect(ctx, 1, -20 + idleBob + jaw, 1, 2, ink);
     // Ribcage slats + spine + tattered crimson cape
-    pRect(ctx, -7, -19 + idleBob, 3, 12, '#7f1d1d');
-    pRect(ctx, -4, -18 + idleBob, 8, 9, '#1e293b');
-    pRect(ctx, -3, -17 + idleBob, 6, 2, col);
-    pRect(ctx, -3, -14 + idleBob, 6, 2, col);
-    pRect(ctx, -2, -11 + idleBob, 4, 2, boneSh);
+    sRect(ctx, -7.5, -19 + idleBob, 3.5, 12.5, '#7f1d1d');
+    sRect(ctx, -6.5, -18 + idleBob, 1.5, 10, '#be123c');
+    sRect(ctx, -4, -18 + idleBob, 8, 9, '#1e293b');
+    sRect(ctx, -3, -17 + idleBob, 6, 2, col);
+    sRect(ctx, -3, -14 + idleBob, 6, 2, col);
+    sRect(ctx, -2, -11 + idleBob, 4, 2, boneSh);
     // Striding bone legs & sabatons
-    pRect(ctx, -5 + stride, -8, 3, 8, boneSh);
-    pRect(ctx, 2 - stride, -8, 3, 8, boneSh);
-    pRect(ctx, -5 + stride, -3, 4, 3, '#334155');
-    pRect(ctx, 2 - stride, -3, 4, 3, '#334155');
+    sRect(ctx, -5.5 + stride, -8, 3.5, 8, ink);
+    sRect(ctx, 1.5 - stride, -8, 3.5, 8, ink);
+    sRect(ctx, -5 + stride, -8, 2.8, 7.5, boneSh);
+    sRect(ctx, 2 - stride, -8, 2.8, 7.5, boneSh);
+    sRect(ctx, -5 + stride, -3, 4.2, 3, '#334155');
+    sRect(ctx, 2 - stride, -3, 4.2, 3, '#334155');
     // Kite Shield with cross emblem + Halberd/Spear
-    pRect(ctx, 4, -20 + idleBob, 5, 11, '#b45309');
-    pRect(ctx, 5, -19 + idleBob, 3, 8, '#fbbf24');
-    pRect(ctx, 6, -18 + idleBob, 1, 6, '#991b1b');
-    pRect(ctx, 5, -9 + idleBob, 3, 3, '#92400e');
+    sRect(ctx, 3.5, -20.5 + idleBob, 6, 12, ink);
+    sRect(ctx, 4, -20 + idleBob, 5, 11, '#b45309');
+    sRect(ctx, 5, -19 + idleBob, 3, 8, '#fbbf24');
+    sRect(ctx, 6, -18 + idleBob, 1, 6, '#991b1b');
+    sRect(ctx, 5, -9 + idleBob, 3, 3, '#92400e');
     if (enemy.state === 'windup' || enemy.state === 'attack') {
-      pRect(ctx, 6, -16, 17, 2, '#e2e8f0');
-      pRect(ctx, 20, -19, 4, 7, '#f87171');
+      sRect(ctx, 6, -16.5, 17.5, 3, ink);
+      sRect(ctx, 6, -16, 17, 2, '#e2e8f0');
+      sRect(ctx, 20, -19.5, 5, 8, ink);
+      sRect(ctx, 20.5, -19, 4, 7, '#f87171');
     }
   } else if (enemy.archetype === 'shadow_bat') {
-    const flap = Math.round(Math.sin(time * 16) * 3);
+    const flap = Math.sin(time * 16) * 3;
     const col = flash ? '#ffffff' : windupPulse ? '#f87171' : '#7c3aed';
-    pRect(ctx, -4, -11, 8, 8, '#09060b');
-    pRect(ctx, -3, -10, 6, 6, col);
-    pRect(ctx, -3, -14, 2, 4, '#a78bfa');
-    pRect(ctx, 1, -14, 2, 4, '#a78bfa');
-    // Multi-jointed scalloped bat wing struts + membranes
-    pRect(ctx, -12, -13 + flap, 8, 2, '#a78bfa');
-    pRect(ctx, -11, -11 + flap, 7, 3, '#4c1d95');
-    pRect(ctx, -14, -9 + flap, 4, 3, '#2e1065');
-    pRect(ctx, 4, -13 + flap, 8, 2, '#a78bfa');
-    pRect(ctx, 4, -11 + flap, 7, 3, '#4c1d95');
-    pRect(ctx, 10, -9 + flap, 4, 3, '#2e1065');
-    pRect(ctx, 1, -8, 2, 2, '#fde047'); // Glowing eye
-    pRect(ctx, 0, -5, 1, 2, '#ffffff'); // Vampire fangs
-    pRect(ctx, 2, -5, 1, 2, '#ffffff');
+    sRect(ctx, -4.5, -11.5, 9, 9, '#09060b');
+    sRect(ctx, -3.5, -10.5, 7, 7, col);
+    sRect(ctx, -3, -14.5, 2.5, 4.5, '#a78bfa');
+    sRect(ctx, 1, -14.5, 2.5, 4.5, '#a78bfa');
+    sRect(ctx, -13, -13.5 + flap, 9, 3, '#09060b');
+    sRect(ctx, -12, -13 + flap, 8, 2, '#a78bfa');
+    sRect(ctx, -11, -11 + flap, 7, 3, '#4c1d95');
+    sRect(ctx, -14, -9 + flap, 4, 3, '#2e1065');
+    sRect(ctx, 4, -13.5 + flap, 9, 3, '#09060b');
+    sRect(ctx, 4, -13 + flap, 8, 2, '#a78bfa');
+    sRect(ctx, 4, -11 + flap, 7, 3, '#4c1d95');
+    sRect(ctx, 10, -9 + flap, 4, 3, '#2e1065');
+    sRect(ctx, 1, -8, 2.2, 2.2, '#fde047');
+    sRect(ctx, 1.5, -7.6, 0.8, 0.8, '#ffffff');
+    sRect(ctx, 0, -5, 1, 2, '#ffffff');
+    sRect(ctx, 2, -5, 1, 2, '#ffffff');
   } else if (enemy.archetype === 'cultist_mage') {
     const col = flash ? '#ffffff' : windupPulse ? '#fde047' : '#881337';
-    // Flowing tapered cultist robe, gold stole & pointed cowl
-    pRect(ctx, -8, -12 + idleBob, 16, 12, '#09060b');
-    pRect(ctx, -7, -21 + idleBob, 14, 21, col);
-    pRect(ctx, -4, -20 + idleBob, 4, 18, '#be123c');
-    pRect(ctx, 0, -19 + idleBob, 2, 16, '#fbbf24'); // Ceremonial gold stole
-    pRect(ctx, -6, -30 + idleBob, 12, 10, '#4c0519');
-    pRect(ctx, -3, -34 + idleBob, 5, 5, '#4c0519'); // Pointed cowl peak
-    pRect(ctx, -2, -26 + idleBob, 6, 5, '#09060b'); // Shadowed face
-    pRect(ctx, 1, -24 + idleBob, 2, 2, '#34d399');
-    pRect(ctx, 7, -26 + idleBob, 2, 26, '#d97706');
-    pRect(ctx, 6, -31 + idleBob, 4, 5, enemy.state === 'windup' ? '#fef08a' : '#38bdf8');
-    const orbX = Math.round(Math.cos(time * 4) * 6);
-    const orbY = Math.round(Math.sin(time * 4) * 3) - 30 + idleBob;
-    pRect(ctx, 7 + orbX, orbY, 2, 2, '#67e8f9');
+    sRect(ctx, -8.5, -22 + idleBob, 17, 22.5, '#09060b');
+    sRect(ctx, -7, -21 + idleBob, 14, 21, col);
+    sRect(ctx, -4.5, -20 + idleBob, 4.5, 18, '#be123c');
+    sRect(ctx, 0, -19 + idleBob, 2, 16, '#fbbf24');
+    sRect(ctx, -6.5, -30.5 + idleBob, 13, 11, '#09060b');
+    sRect(ctx, -6, -30 + idleBob, 12, 10, '#4c0519');
+    sRect(ctx, -3, -34 + idleBob, 5, 5, '#4c0519');
+    sRect(ctx, -2, -26 + idleBob, 6, 5, '#09060b');
+    sRect(ctx, 1, -24 + idleBob, 2.2, 2.2, '#34d399');
+    sRect(ctx, 1.5, -23.6 + idleBob, 0.8, 0.8, '#ffffff');
+    sRect(ctx, 6.5, -26.5 + idleBob, 3, 27, '#09060b');
+    sRect(ctx, 7, -26 + idleBob, 2, 26, '#d97706');
+    sRect(ctx, 5.5, -31.5 + idleBob, 5, 6, '#09060b');
+    sRect(ctx, 6, -31 + idleBob, 4, 5, enemy.state === 'windup' ? '#fef08a' : '#38bdf8');
+    const orbX = Math.cos(time * 4) * 6;
+    const orbY = Math.sin(time * 4) * 3 - 30 + idleBob;
+    sRect(ctx, 7 + orbX, orbY, 2.2, 2.2, '#67e8f9');
   } else if (enemy.archetype === 'cursed_armor') {
-    // Towering Haunted Living Armor with Sallet Helm, Tower Shield & Zweihander!
     const armCol = flash ? '#ffffff' : windupPulse ? '#fde047' : '#64748b';
     const trimCol = flash ? '#ffffff' : '#f59e0b';
-    pRect(ctx, -9, -31 + idleBob, 18, 25, '#09060b');
-    pRect(ctx, -8, -22 + idleBob, 16, 14, armCol);
-    pRect(ctx, -6, -21 + idleBob, 8, 9, '#94a3b8');
-    pRect(ctx, -3, -18 + idleBob, 4, 5, '#7e22ce'); // Haunted chest sigil
-    // Layered Pauldrons & Articulated Greaves
-    pRect(ctx, -11, -23 + idleBob, 5, 6, trimCol);
-    pRect(ctx, 6, -23 + idleBob, 5, 6, trimCol);
-    pRect(ctx, -6 + stride, -8, 5, 8, '#334155');
-    pRect(ctx, 2 - stride, -8, 5, 8, '#475569');
-    // Horned Armet / Sallet Helm with glowing spectral visor slit
-    pRect(ctx, -6, -30 + idleBob, 12, 9, '#94a3b8');
-    pRect(ctx, -8, -33 + idleBob, 2, 4, '#cbd5e1');
-    pRect(ctx, 6, -33 + idleBob, 2, 4, '#cbd5e1');
-    pRect(ctx, -2, -26 + idleBob, 7, 3, '#09060b');
-    pRect(ctx, 1, -25 + idleBob, 3, 2, '#a855f7');
-    // Tower Shield + Zweihander
-    pRect(ctx, 6, -21 + idleBob, 5, 14, '#1e293b');
-    pRect(ctx, 7, -20 + idleBob, 3, 12, trimCol);
+    sRect(ctx, -9.5, -31.5 + idleBob, 19, 26, '#09060b');
+    sRect(ctx, -8, -22 + idleBob, 16, 14, armCol);
+    sRect(ctx, -6, -21 + idleBob, 8, 9, '#94a3b8');
+    sRect(ctx, -4, -20 + idleBob, 3, 3, '#cbd5e1');
+    sRect(ctx, -3, -18 + idleBob, 4, 5, '#7e22ce');
+    sRect(ctx, -11.5, -23.5 + idleBob, 6, 7, '#09060b');
+    sRect(ctx, -11, -23 + idleBob, 5, 6, trimCol);
+    sRect(ctx, 5.5, -23.5 + idleBob, 6, 7, '#09060b');
+    sRect(ctx, 6, -23 + idleBob, 5, 6, trimCol);
+    sRect(ctx, -6.5 + stride, -8, 6, 8, '#09060b');
+    sRect(ctx, 1.5 - stride, -8, 6, 8, '#09060b');
+    sRect(ctx, -6 + stride, -8, 5, 8, '#334155');
+    sRect(ctx, 2 - stride, -8, 5, 8, '#475569');
+    sRect(ctx, -6.5, -30.5 + idleBob, 13, 10, '#09060b');
+    sRect(ctx, -6, -30 + idleBob, 12, 9, '#94a3b8');
+    sRect(ctx, -8, -33 + idleBob, 2, 4, '#cbd5e1');
+    sRect(ctx, 6, -33 + idleBob, 2, 4, '#cbd5e1');
+    sRect(ctx, -2, -26 + idleBob, 7, 3, '#09060b');
+    sRect(ctx, 1, -25 + idleBob, 3.2, 2, '#a855f7');
+    sRect(ctx, 5.5, -21.5 + idleBob, 6, 15, '#09060b');
+    sRect(ctx, 6, -21 + idleBob, 5, 14, '#1e293b');
+    sRect(ctx, 7, -20 + idleBob, 3, 12, trimCol);
     if (enemy.state === 'windup' || enemy.state === 'attack') {
-      pRect(ctx, 5, -28 + idleBob, 19, 4, '#e2e8f0');
-      pRect(ctx, 8, -27 + idleBob, 14, 1, '#c084fc');
+      sRect(ctx, 4.5, -28.5 + idleBob, 20, 5, '#09060b');
+      sRect(ctx, 5, -28 + idleBob, 19, 4, '#e2e8f0');
+      sRect(ctx, 8, -27 + idleBob, 14, 1.2, '#c084fc');
     } else {
-      pRect(ctx, -10, -29 + idleBob, 3, 19, '#cbd5e1');
+      sRect(ctx, -10.5, -29.5 + idleBob, 4, 20, '#09060b');
+      sRect(ctx, -10, -29 + idleBob, 3, 19, '#cbd5e1');
     }
   } else if (enemy.archetype === 'phantom_wisp') {
-    // Floating Candlelight Wraith Specter with Skull Mask & Spirit Crown Flame
-    const hover = Math.round(Math.sin(time * 5 + enemy.patrolOriginX) * 3);
+    const hover = Math.sin(time * 5 + enemy.patrolOriginX) * 3;
     const bodyCol = flash ? '#ffffff' : windupPulse ? '#fef08a' : '#38bdf8';
-    const tailSway = Math.round(Math.sin(time * 8 + enemy.patrolOriginX) * 2);
-    // Ghostly tattered shroud + drifting ethereal tail
-    pRect(ctx, -6, -22 + hover, 12, 14, '#09060b');
-    pRect(ctx, -5, -21 + hover, 10, 12, bodyCol);
-    pRect(ctx, -4 + tailSway, -9 + hover, 8, 5, '#0284c7');
-    pRect(ctx, -2 + tailSway * 2, -4 + hover, 4, 4, '#bae6fd');
-    // Spectral skull face + flickering candle-crown flame
-    pRect(ctx, -4, -27 + hover, 8, 7, '#f8fafc');
-    pRect(ctx, -2, -25 + hover, 2, 2, '#09060b');
-    pRect(ctx, 2, -25 + hover, 2, 2, '#09060b');
-    pRect(ctx, 2, -25 + hover, 1, 1, '#fde047');
-    pRect(ctx, -1, -32 + hover, 2, 5, '#f97316');
-    pRect(ctx, -1, -34 + hover, 2, 3, '#fef08a');
+    const tailSway = Math.sin(time * 8 + enemy.patrolOriginX) * 2;
+    sRect(ctx, -6.5, -22.5 + hover, 13, 15, '#09060b');
+    sRect(ctx, -5, -21 + hover, 10, 12, bodyCol);
+    sRect(ctx, -4 + tailSway, -9 + hover, 8, 5, '#0284c7');
+    sRect(ctx, -2 + tailSway * 2, -4 + hover, 4, 4, '#bae6fd');
+    sRect(ctx, -4.5, -27.5 + hover, 9, 8, '#09060b');
+    sRect(ctx, -4, -27 + hover, 8, 7, '#f8fafc');
+    sRect(ctx, -2, -25 + hover, 2, 2, '#09060b');
+    sRect(ctx, 2, -25 + hover, 2, 2, '#09060b');
+    sRect(ctx, 2, -25 + hover, 1, 1, '#fde047');
+    sRect(ctx, -1, -32 + hover, 2, 5, '#f97316');
+    sRect(ctx, -1, -34 + hover, 2, 3, '#fef08a');
   } else if (enemy.archetype === 'goblin_normal') {
     const skin = flash ? '#ffffff' : windupPulse ? '#fef08a' : '#65a30d';
-    pRect(ctx, -5, -21 + idleBob, 10, 9, '#09060b');
-    pRect(ctx, -4, -20 + idleBob, 8, 7, skin);
-    pRect(ctx, -9, -18 + idleBob, 5, 3, '#84cc16'); // Pointed goblin ears
-    pRect(ctx, 4, -18 + idleBob, 5, 3, '#84cc16');
-    pRect(ctx, 1, -17 + idleBob, 2, 2, '#ef4444');
-    pRect(ctx, -5, -12 + idleBob, 10, 7, '#78350f'); // Tattered hide tunic
-    pRect(ctx, -4 + stride, -5, 3, 5, '#4d7c0f');
-    pRect(ctx, 1 - stride, -5, 3, 5, '#4d7c0f');
-    pRect(ctx, 4, -13 + idleBob, 8, 2, '#cbd5e1'); // Crooked rusty knife
+    sRect(ctx, -5.5, -21.5 + idleBob, 11, 10, '#09060b');
+    sRect(ctx, -4, -20 + idleBob, 8, 7, skin);
+    sRect(ctx, -9, -18 + idleBob, 5, 3, '#84cc16');
+    sRect(ctx, 4, -18 + idleBob, 5, 3, '#84cc16');
+    sRect(ctx, 1, -17.5 + idleBob, 2.2, 2.2, '#ef4444');
+    sRect(ctx, 1.8, -17 + idleBob, 0.8, 0.8, '#fde047');
+    sRect(ctx, -5.5, -12.5 + idleBob, 11, 8, '#09060b');
+    sRect(ctx, -5, -12 + idleBob, 10, 7, '#78350f');
+    sRect(ctx, -4 + stride, -5, 3, 5, '#4d7c0f');
+    sRect(ctx, 1 - stride, -5, 3, 5, '#4d7c0f');
+    sRect(ctx, 3.5, -13.5 + idleBob, 9, 3, '#09060b');
+    sRect(ctx, 4, -13 + idleBob, 8, 2, '#cbd5e1');
   } else if (enemy.archetype === 'hobgoblin') {
     const skin = flash ? '#ffffff' : windupPulse ? '#fb923c' : '#b45309';
-    pRect(ctx, -8, -28 + idleBob, 16, 20, '#09060b');
-    pRect(ctx, -7, -27 + idleBob, 14, 17, skin);
-    pRect(ctx, -11, -24 + idleBob, 4, 4, '#d97706'); // Wide goblin ears
-    pRect(ctx, 7, -24 + idleBob, 4, 4, '#d97706');
-    pRect(ctx, 1, -24 + idleBob, 3, 2, '#fde047'); // Fierce amber eyes
-    pRect(ctx, 2, -21 + idleBob, 2, 2, '#ffffff'); // Tusks
-    pRect(ctx, -7, -17 + idleBob, 14, 9, '#44403c'); // Iron chestplate
-    pRect(ctx, -6 + stride, -8, 5, 8, '#78350f');
-    pRect(ctx, 2 - stride, -8, 5, 8, '#78350f');
-    // Massive spiked iron club!
-    pRect(ctx, 6, -24 + idleBob, 5, 16, '#57534e');
-    pRect(ctx, 5, -24 + idleBob, 7, 3, '#e2e8f0');
+    sRect(ctx, -8.5, -28.5 + idleBob, 17, 21, '#09060b');
+    sRect(ctx, -7, -27 + idleBob, 14, 17, skin);
+    sRect(ctx, -11, -24 + idleBob, 4, 4, '#d97706');
+    sRect(ctx, 7, -24 + idleBob, 4, 4, '#d97706');
+    sRect(ctx, 1, -24 + idleBob, 3, 2.2, '#fde047');
+    sRect(ctx, 2, -21 + idleBob, 2, 2, '#ffffff');
+    sRect(ctx, -7, -17 + idleBob, 14, 9, '#44403c');
+    sRect(ctx, -5, -16 + idleBob, 10, 2, '#78716c');
+    sRect(ctx, -6.5 + stride, -8, 6, 8, '#09060b');
+    sRect(ctx, 1.5 - stride, -8, 6, 8, '#09060b');
+    sRect(ctx, -6 + stride, -8, 5, 8, '#78350f');
+    sRect(ctx, 2 - stride, -8, 5, 8, '#78350f');
+    sRect(ctx, 5.5, -24.5 + idleBob, 6, 17, '#09060b');
+    sRect(ctx, 6, -24 + idleBob, 5, 16, '#57534e');
+    sRect(ctx, 5, -24 + idleBob, 7, 3, '#e2e8f0');
   } else if (enemy.archetype === 'bandit_fighter') {
     const coat = flash ? '#ffffff' : windupPulse ? '#fde047' : '#991b1b';
-    pRect(ctx, -6, -26 + idleBob, 12, 19, '#09060b');
-    pRect(ctx, -5, -25 + idleBob, 10, 7, '#e7b98f');
-    pRect(ctx, -6, -26 + idleBob, 12, 3, '#dc2626'); // Red brigand bandana
-    pRect(ctx, 1, -22 + idleBob, 3, 2, '#09060b');
-    pRect(ctx, -5, -18 + idleBob, 10, 11, coat);
-    pRect(ctx, -4 + stride, -7, 3, 7, '#1e293b');
-    pRect(ctx, 2 - stride, -7, 3, 7, '#1e293b');
-    pRect(ctx, 4, -18 + idleBob, 11, 3, '#e2e8f0'); // Cutlass
+    sRect(ctx, -6.5, -26.5 + idleBob, 13, 20, '#09060b');
+    sRect(ctx, -5, -25 + idleBob, 10, 7, '#e7b98f');
+    sRect(ctx, -6, -26 + idleBob, 12, 3, '#dc2626');
+    sRect(ctx, 1, -22 + idleBob, 3, 2, '#09060b');
+    sRect(ctx, -5, -18 + idleBob, 10, 11, coat);
+    sRect(ctx, -3, -17 + idleBob, 6, 2, '#fbbf24');
+    sRect(ctx, -4 + stride, -7, 3, 7, '#1e293b');
+    sRect(ctx, 2 - stride, -7, 3, 7, '#1e293b');
+    sRect(ctx, 3.5, -18.5 + idleBob, 12, 4, '#09060b');
+    sRect(ctx, 4, -18 + idleBob, 11, 3, '#e2e8f0');
   } else if (enemy.archetype === 'bandit_archer') {
     const cloak = flash ? '#ffffff' : windupPulse ? '#fde047' : '#14532d';
-    pRect(ctx, -6, -26 + idleBob, 12, 19, '#09060b');
-    pRect(ctx, -5, -26 + idleBob, 10, 8, cloak); // Ranger hood
-    pRect(ctx, 0, -23 + idleBob, 4, 4, '#e7b98f');
-    pRect(ctx, 2, -22 + idleBob, 2, 1, '#09060b');
-    pRect(ctx, -5, -18 + idleBob, 10, 11, '#3f6212');
-    pRect(ctx, -4 + stride, -7, 3, 7, '#292524');
-    pRect(ctx, 2 - stride, -7, 3, 7, '#292524');
-    // Curved oak longbow
-    pRect(ctx, 6, -24 + idleBob, 2, 16, '#92400e');
-    pRect(ctx, 5, -22 + idleBob, 1, 12, '#e2e8f0');
+    sRect(ctx, -6.5, -26.5 + idleBob, 13, 20, '#09060b');
+    sRect(ctx, -5, -26 + idleBob, 10, 8, cloak);
+    sRect(ctx, 0, -23 + idleBob, 4, 4, '#e7b98f');
+    sRect(ctx, 2, -22 + idleBob, 2, 1.2, '#09060b');
+    sRect(ctx, -5, -18 + idleBob, 10, 11, '#3f6212');
+    sRect(ctx, -4 + stride, -7, 3, 7, '#292524');
+    sRect(ctx, 2 - stride, -7, 3, 7, '#292524');
+    sRect(ctx, 5.5, -24.5 + idleBob, 3, 17, '#09060b');
+    sRect(ctx, 6, -24 + idleBob, 2, 16, '#92400e');
+    sRect(ctx, 5, -22 + idleBob, 1, 12, '#e2e8f0');
   } else if (enemy.archetype === 'bandit_assassin') {
     const cloak = flash ? '#ffffff' : windupPulse ? '#facc15' : '#18181b';
-    pRect(ctx, -6, -25 + idleBob, 12, 18, '#09060b');
-    pRect(ctx, -5, -25 + idleBob, 10, 8, cloak); // Dark stealth cowl
-    pRect(ctx, -5, -21 + idleBob, 10, 3, '#be123c'); // Crimson face mask
-    pRect(ctx, 1, -23 + idleBob, 3, 2, '#facc15'); // Fierce assassin eye glint
-    pRect(ctx, -5, -17 + idleBob, 10, 10, '#27272a');
-    pRect(ctx, -4 + stride, -7, 3, 7, '#09090b');
-    pRect(ctx, 2 - stride, -7, 3, 7, '#09090b');
-    // Dual poisoned curved daggers
-    pRect(ctx, 5, -16 + idleBob, 9, 2, '#a3e635');
-    pRect(ctx, -11, -15 + idleBob, 7, 2, '#94a3b8');
+    sRect(ctx, -6.5, -25.5 + idleBob, 13, 19, '#09060b');
+    sRect(ctx, -5, -25 + idleBob, 10, 8, cloak);
+    sRect(ctx, -5, -21 + idleBob, 10, 3, '#be123c');
+    sRect(ctx, 1, -23 + idleBob, 3, 2, '#facc15');
+    sRect(ctx, -5, -17 + idleBob, 10, 10, '#27272a');
+    sRect(ctx, -4 + stride, -7, 3, 7, '#09090b');
+    sRect(ctx, 2 - stride, -7, 3, 7, '#09090b');
+    sRect(ctx, 4.5, -16.5 + idleBob, 10, 3, '#09060b');
+    sRect(ctx, 5, -16 + idleBob, 9, 2, '#a3e635');
+    sRect(ctx, -11, -15 + idleBob, 7, 2, '#94a3b8');
   } else if (enemy.archetype === 'bandit_pyromancer') {
     const robe = flash ? '#ffffff' : windupPulse ? '#fef08a' : '#7f1d1d';
-    pRect(ctx, -6, -27 + idleBob, 12, 20, '#09060b');
-    pRect(ctx, -5, -27 + idleBob, 10, 8, '#991b1b'); // Pointed crimson cowl
-    pRect(ctx, 0, -24 + idleBob, 4, 4, '#09090b');
-    pRect(ctx, 2, -23 + idleBob, 2, 2, '#fb923c'); // Ember eyes
-    pRect(ctx, -5, -19 + idleBob, 10, 12, robe);
-    pRect(ctx, -5, -19 + idleBob, 2, 12, '#fbbf24'); // Gold mage sash
-    pRect(ctx, -4 + stride, -7, 3, 7, '#450a0a');
-    pRect(ctx, 2 - stride, -7, 3, 7, '#450a0a');
-    // Blazing Warlock Fire-Staff
-    pRect(ctx, 6, -28 + idleBob, 2, 22, '#78350f');
-    const fl = Math.round(Math.sin(time * 16) * 2);
-    pRect(ctx, 4, -33 + idleBob + fl, 6, 6, '#f97316');
-    pRect(ctx, 5, -31 + idleBob + fl, 4, 4, '#fef08a');
+    sRect(ctx, -6.5, -27.5 + idleBob, 13, 21, '#09060b');
+    sRect(ctx, -5, -27 + idleBob, 10, 8, '#991b1b');
+    sRect(ctx, 0, -24 + idleBob, 4, 4, '#09060b');
+    sRect(ctx, 2, -23 + idleBob, 2, 2, '#fb923c');
+    sRect(ctx, -5, -19 + idleBob, 10, 12, robe);
+    sRect(ctx, -5, -19 + idleBob, 2, 12, '#fbbf24');
+    sRect(ctx, -4 + stride, -7, 3, 7, '#450a0a');
+    sRect(ctx, 2 - stride, -7, 3, 7, '#450a0a');
+    sRect(ctx, 6, -28 + idleBob, 2, 22, '#78350f');
+    const fl = Math.sin(time * 16) * 2;
+    sRect(ctx, 4, -33 + idleBob + fl, 6, 6, '#f97316');
+    sRect(ctx, 5, -31 + idleBob + fl, 4, 4, '#fef08a');
   } else if (enemy.archetype === 'bandit_brute') {
     const armor = flash ? '#ffffff' : windupPulse ? '#f87171' : '#57534e';
-    pRect(ctx, -11, -33 + idleBob, 22, 25, '#09060b');
-    pRect(ctx, -10, -25 + idleBob, 20, 17, armor);
-    pRect(ctx, -6, -33 + idleBob, 12, 8, '#44403c'); // Heavy iron pot-helm
-    pRect(ctx, -8, -35 + idleBob, 3, 4, '#cbd5e1');
-    pRect(ctx, 5, -35 + idleBob, 3, 4, '#cbd5e1');
-    pRect(ctx, -2, -29 + idleBob, 6, 2, '#ef4444'); // Visor glare
-    pRect(ctx, -9, -25 + idleBob, 6, 4, '#991b1b'); // Spiked crimson pauldron
-    pRect(ctx, 3, -25 + idleBob, 6, 4, '#991b1b');
-    pRect(ctx, -8 + stride, -8, 6, 8, '#292524');
-    pRect(ctx, 2 - stride, -8, 6, 8, '#292524');
-    // Heavy Tower Shield & War Axe
-    pRect(ctx, 7, -26 + idleBob, 8, 16, '#475569');
-    pRect(ctx, 9, -24 + idleBob, 4, 12, '#cbd5e1');
-    pRect(ctx, -12, -29 + idleBob, 3, 18, '#78350f');
-    pRect(ctx, -16, -29 + idleBob, 6, 7, '#e2e8f0');
+    sRect(ctx, -11.5, -33.5 + idleBob, 23, 26, '#09060b');
+    sRect(ctx, -10, -25 + idleBob, 20, 17, armor);
+    sRect(ctx, -6, -33 + idleBob, 12, 8, '#44403c');
+    sRect(ctx, -8, -35 + idleBob, 3, 4, '#cbd5e1');
+    sRect(ctx, 5, -35 + idleBob, 3, 4, '#cbd5e1');
+    sRect(ctx, -2, -29 + idleBob, 6, 2, '#ef4444');
+    sRect(ctx, -9, -25 + idleBob, 6, 4, '#991b1b');
+    sRect(ctx, 3, -25 + idleBob, 6, 4, '#991b1b');
+    sRect(ctx, -8 + stride, -8, 6, 8, '#292524');
+    sRect(ctx, 2 - stride, -8, 6, 8, '#292524');
+    sRect(ctx, 6.5, -26.5 + idleBob, 9, 17, '#09060b');
+    sRect(ctx, 7, -26 + idleBob, 8, 16, '#475569');
+    sRect(ctx, 9, -24 + idleBob, 4, 12, '#cbd5e1');
+    sRect(ctx, -12, -29 + idleBob, 3, 18, '#78350f');
+    sRect(ctx, -16.5, -29.5 + idleBob, 7, 8, '#09060b');
+    sRect(ctx, -16, -29 + idleBob, 6, 7, '#e2e8f0');
   } else if (enemy.archetype === 'demon_succubus') {
-    const hover = Math.round(Math.sin(time * 5 + enemy.patrolOriginX) * 3);
+    const hover = Math.sin(time * 5 + enemy.patrolOriginX) * 3;
     const body = flash ? '#ffffff' : windupPulse ? '#f472b6' : '#be123c';
-    const wing = Math.round(Math.sin(time * 12) * 3);
-    // Bat wings
-    pRect(ctx, -13, -24 + hover + wing, 7, 10, '#4c0519');
-    pRect(ctx, 6, -24 + hover - wing, 7, 10, '#4c0519');
-    // Horns & silver-violet locks
-    pRect(ctx, -4, -30 + hover, 2, 5, '#09060b');
-    pRect(ctx, 2, -30 + hover, 2, 5, '#09060b');
-    pRect(ctx, -5, -26 + hover, 10, 9, '#a855f7');
-    pRect(ctx, -3, -24 + hover, 6, 6, '#f5d0fe');
-    pRect(ctx, 1, -22 + hover, 2, 2, '#f43f5e');
-    pRect(ctx, -4, -17 + hover, 8, 12, body);
-    pRect(ctx, -3, -5 + hover, 2, 5, '#4c0519');
-    pRect(ctx, 1, -5 + hover, 2, 5, '#4c0519');
-    pRect(ctx, 6, -16 + hover, 4, 4, '#f43f5e'); // Heart orb!
+    const wing = Math.sin(time * 12) * 3;
+    sRect(ctx, -13.5, -24.5 + hover + wing, 8, 11, '#09060b');
+    sRect(ctx, -13, -24 + hover + wing, 7, 10, '#4c0519');
+    sRect(ctx, 5.5, -24.5 + hover - wing, 8, 11, '#09060b');
+    sRect(ctx, 6, -24 + hover - wing, 7, 10, '#4c0519');
+    sRect(ctx, -4, -30 + hover, 2, 5, '#09060b');
+    sRect(ctx, 2, -30 + hover, 2, 5, '#09060b');
+    sRect(ctx, -5.5, -26.5 + hover, 11, 10, '#09060b');
+    sRect(ctx, -5, -26 + hover, 10, 9, '#a855f7');
+    sRect(ctx, -3, -24 + hover, 6, 6, '#f5d0fe');
+    sRect(ctx, 1, -22 + hover, 2, 2, '#f43f5e');
+    sRect(ctx, -4.5, -17.5 + hover, 9, 13, '#09060b');
+    sRect(ctx, -4, -17 + hover, 8, 12, body);
+    sRect(ctx, -3, -5 + hover, 2, 5, '#4c0519');
+    sRect(ctx, 1, -5 + hover, 2, 5, '#4c0519');
+    sRect(ctx, 6, -16 + hover, 4, 4, '#f43f5e');
+    sRect(ctx, 7, -15 + hover, 2, 2, '#fbcfe8');
   } else if (enemy.archetype === 'demon_tank') {
     const armor = flash ? '#ffffff' : windupPulse ? '#ef4444' : '#312e81';
-    pRect(ctx, -11, -34 + idleBob, 22, 26, '#09060b');
-    pRect(ctx, -10, -26 + idleBob, 20, 18, armor);
-    pRect(ctx, -6, -34 + idleBob, 12, 9, '#1e1b4b');
-    pRect(ctx, -9, -39 + idleBob, 3, 7, '#cbd5e1'); // Giant horns
-    pRect(ctx, 6, -39 + idleBob, 3, 7, '#cbd5e1');
-    pRect(ctx, -3, -30 + idleBob, 6, 3, '#ef4444'); // Glowing red eyes
-    pRect(ctx, -3, -21 + idleBob, 6, 6, '#dc2626'); // Demonic core
-    pRect(ctx, -8 + stride, -8, 6, 8, '#1e1b4b');
-    pRect(ctx, 2 - stride, -8, 6, 8, '#1e1b4b');
-    pRect(ctx, 7, -23 + idleBob, 7, 13, '#4c1d95'); // Heavy shield gauntlet
+    sRect(ctx, -11.5, -34.5 + idleBob, 23, 27, '#09060b');
+    sRect(ctx, -10, -26 + idleBob, 20, 18, armor);
+    sRect(ctx, -6, -34 + idleBob, 12, 9, '#1e1b4b');
+    sRect(ctx, -9, -39 + idleBob, 3, 7, '#cbd5e1');
+    sRect(ctx, 6, -39 + idleBob, 3, 7, '#cbd5e1');
+    sRect(ctx, -3, -30 + idleBob, 6, 3, '#ef4444');
+    sRect(ctx, -3, -21 + idleBob, 6, 6, '#dc2626');
+    sRect(ctx, -1, -19 + idleBob, 2, 2, '#fef08a');
+    sRect(ctx, -8 + stride, -8, 6, 8, '#1e1b4b');
+    sRect(ctx, 2 - stride, -8, 6, 8, '#1e1b4b');
+    sRect(ctx, 6.5, -23.5 + idleBob, 8, 14, '#09060b');
+    sRect(ctx, 7, -23 + idleBob, 7, 13, '#4c1d95');
   } else if (enemy.archetype === 'demon_lightning') {
     const body = flash ? '#ffffff' : windupPulse ? '#fef08a' : '#7e22ce';
-    pRect(ctx, -6, -27 + idleBob, 12, 19, '#09060b');
-    pRect(ctx, -5, -26 + idleBob, 10, 7, body);
-    pRect(ctx, -7, -30 + idleBob, 3, 5, '#fde047'); // Lightning horns
-    pRect(ctx, 4, -30 + idleBob, 3, 5, '#fde047');
-    pRect(ctx, 0, -23 + idleBob, 4, 2, '#fef08a');
-    pRect(ctx, -5, -19 + idleBob, 10, 12, '#4c1d95');
-    pRect(ctx, -4 + stride, -7, 3, 7, '#1e1b4b');
-    pRect(ctx, 1 - stride, -7, 3, 7, '#1e1b4b');
-    // Crackling lightning blade in hand
-    const zap = Math.round(Math.sin(time * 24) * 2);
-    pRect(ctx, 5, -18 + idleBob + zap, 11, 2, '#fde047');
-    pRect(ctx, 8, -16 + idleBob - zap, 7, 2, '#ffffff');
+    sRect(ctx, -6.5, -27.5 + idleBob, 13, 20, '#09060b');
+    sRect(ctx, -5, -26 + idleBob, 10, 7, body);
+    sRect(ctx, -7, -30 + idleBob, 3, 5, '#fde047');
+    sRect(ctx, 4, -30 + idleBob, 3, 5, '#fde047');
+    sRect(ctx, 0, -23 + idleBob, 4, 2, '#fef08a');
+    sRect(ctx, -5, -19 + idleBob, 10, 12, '#4c1d95');
+    sRect(ctx, -4 + stride, -7, 3, 7, '#1e1b4b');
+    sRect(ctx, 1 - stride, -7, 3, 7, '#1e1b4b');
+    const zap = Math.sin(time * 24) * 2;
+    sRect(ctx, 5, -18 + idleBob + zap, 11, 2, '#fde047');
+    sRect(ctx, 8, -16 + idleBob - zap, 7, 2, '#ffffff');
   } else {
     const col = flash ? '#ffffff' : windupPulse ? '#fb923c' : '#57534e';
     const wingLift = enemy.state === 'attack' || enemy.state === 'windup' ? -4 : 0;
-    // Stone Gargoyle with sculpted feathered wings, magma chest crack & curved horns
-    pRect(ctx, -9, -24 + idleBob, 18, 17, '#09060b');
-    pRect(ctx, -8, -23 + idleBob, 16, 15, col);
-    pRect(ctx, -5, -22 + idleBob, 10, 6, '#78716c');
-    pRect(ctx, -1, -17 + idleBob, 3, 5, '#f97316'); // Magma chest crack
-    pRect(ctx, -14, -31 + idleBob + wingLift, 7, 12, '#44403c');
-    pRect(ctx, -17, -33 + idleBob + wingLift, 4, 7, '#292524');
-    pRect(ctx, -6, -30 + idleBob, 3, 7, '#a8a29e');
-    pRect(ctx, 3, -30 + idleBob, 3, 7, '#a8a29e');
-    pRect(ctx, 2, -21 + idleBob, 3, 2, '#ef4444');
-    pRect(ctx, 3, -18 + idleBob, 1, 2, '#e2e8f0'); // Stone fang
-    pRect(ctx, -6, -7, 5, 7, '#292524');
-    pRect(ctx, 2, -7, 5, 7, '#292524');
+    sRect(ctx, -9.5, -24.5 + idleBob, 19, 18, '#09060b');
+    sRect(ctx, -8, -23 + idleBob, 16, 15, col);
+    sRect(ctx, -5, -22 + idleBob, 10, 6, '#78716c');
+    sRect(ctx, -1, -17 + idleBob, 3, 5, '#f97316');
+    sRect(ctx, -0.5, -16 + idleBob, 1.5, 3, '#fef08a');
+    sRect(ctx, -14.5, -31.5 + idleBob + wingLift, 8, 13, '#09060b');
+    sRect(ctx, -14, -31 + idleBob + wingLift, 7, 12, '#44403c');
+    sRect(ctx, -17, -33 + idleBob + wingLift, 4, 7, '#292524');
+    sRect(ctx, -6, -30 + idleBob, 3, 7, '#a8a29e');
+    sRect(ctx, 3, -30 + idleBob, 3, 7, '#a8a29e');
+    sRect(ctx, 2, -21 + idleBob, 3, 2, '#ef4444');
+    sRect(ctx, 3, -18 + idleBob, 1, 2, '#e2e8f0');
+    sRect(ctx, -6, -7, 5, 7, '#292524');
+    sRect(ctx, 2, -7, 5, 7, '#292524');
   }
 
   // Strong Dungeon Boss golden crown & horned war-crest
   if (isBoss) {
-    pRect(ctx, -7, -36 + idleBob, 14, 4, '#fbbf24');
-    pRect(ctx, -7, -40 + idleBob, 3, 4, '#fef08a');
-    pRect(ctx, -2, -42 + idleBob, 4, 6, '#fbbf24');
-    pRect(ctx, 4, -40 + idleBob, 3, 4, '#fef08a');
+    sRect(ctx, -7.5, -36.5 + idleBob, 15, 5, '#09060b');
+    sRect(ctx, -7, -36 + idleBob, 14, 4, '#fbbf24');
+    sRect(ctx, -7, -40 + idleBob, 3, 4, '#fef08a');
+    sRect(ctx, -2, -42 + idleBob, 4, 6, '#fbbf24');
+    sRect(ctx, -1, -41 + idleBob, 2, 4, '#ffffff');
+    sRect(ctx, 4, -40 + idleBob, 3, 4, '#fef08a');
   }
 
   // Weapon status visual indicators (Burn / Frost / Venom)
@@ -1565,7 +1743,7 @@ export function drawJoJoBoss(
     ctx.translate(Math.round(sx + boss.w / 2 + boss.facing * 24), Math.round(sy - 16 + Math.sin(time * 20) * 3));
     ctx.scale(boss.facing * standScale, standScale);
     ctx.globalAlpha = 0.88;
-    ctx.drawImage(sp, -14, -10);
+    ctx.drawImage(sp, -14, -10, 64, 52);
 
     // Wide blazing multi-layered Stand fists & solar-crimson flames
     ctx.globalCompositeOperation = 'lighter';
@@ -1647,13 +1825,18 @@ export function drawProjectiles(
     if (sx < -40 || sx > PIXEL_W + 40) continue;
 
     if (pr.kind === 'knife') {
-      pRect(ctx, sx - 6, sy - 1, 12, 2, '#e2e8f0');
-      pRect(ctx, sx - 6, sy - 2, 3, 4, '#f59e0b');
+      const dir = pr.vx >= 0 ? 1 : -1;
+      sRect(ctx, sx - 6.5, sy - 2.5, 13, 5, '#09060b');
+      sRect(ctx, sx - 6, sy - 1.5, 12, 3, '#e2e8f0');
+      sRect(ctx, sx - 5, sy - 1, 8, 1, '#ffffff');
+      sRect(ctx, sx - dir * 5.5, sy - 2, 3, 4, '#f59e0b');
     } else if (pr.kind === 'arrow') {
       const dir = pr.vx >= 0 ? 1 : -1;
-      pRect(ctx, sx - 7, sy - 1, 14, 2, '#92400e');
-      pRect(ctx, sx + dir * 5, sy - 2, 3, 4, '#e2e8f0');
-      pRect(ctx, sx - dir * 7, sy - 2, 3, 4, '#ef4444');
+      sRect(ctx, sx - 7.5, sy - 2.5, 15, 5, '#09060b');
+      sRect(ctx, sx - 7, sy - 1, 14, 2, '#92400e');
+      sRect(ctx, sx + dir * 5, sy - 2, 3.5, 4, '#e2e8f0');
+      sRect(ctx, sx + dir * 6, sy - 1, 2, 2, '#ffffff');
+      sRect(ctx, sx - dir * 7, sy - 2, 3, 4, '#ef4444');
     } else if (pr.kind === 'gyro_ball') {
       const spin = (Date.now() * 0.032) % (Math.PI * 2);
       const r = Math.max(8, pr.radius);
@@ -1664,26 +1847,40 @@ export function drawProjectiles(
       ctx.arc(sx, sy, r + (isLarge ? 7 : 5), 0, Math.PI * 2);
       ctx.fill();
       if (isLarge) {
-        // Golden Ratio orbital ring + vibrant boomerang steel ball
         ctx.strokeStyle = '#fde047';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(sx, sy, r + 2, spin, spin + Math.PI * 1.45);
         ctx.stroke();
-        pRect(ctx, sx - r + 2, sy - r + 2, (r - 2) * 2, (r - 2) * 2, '#064e3b');
-        pRect(ctx, sx - r + 4, sy - r + 4, (r - 4) * 2, (r - 4) * 2, '#16a34a');
-        pRect(ctx, sx - r + 6, sy - r + 6, (r - 6) * 2, (r - 6) * 2, '#4ade80');
-        pRect(ctx, sx + Math.cos(spin) * (r * 0.45) - 2, sy + Math.sin(spin) * (r * 0.45) - 2, 4, 4, '#fef08a');
-        pRect(ctx, sx + Math.cos(spin + Math.PI) * (r * 0.45) - 1, sy + Math.sin(spin + Math.PI) * (r * 0.45) - 1, 3, 3, '#a855f7');
+        ctx.fillStyle = '#09060b';
+        ctx.beginPath();
+        ctx.arc(sx, sy, r - 1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#064e3b';
+        ctx.beginPath();
+        ctx.arc(sx, sy, r - 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.arc(sx, sy, r - 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#4ade80';
+        ctx.beginPath();
+        ctx.arc(sx - 2, sy - 2, Math.max(2, r - 6), 0, Math.PI * 2);
+        ctx.fill();
+        sRect(ctx, sx + Math.cos(spin) * (r * 0.45) - 2, sy + Math.sin(spin) * (r * 0.45) - 2, 4, 4, '#fef08a');
+        sRect(ctx, sx + Math.cos(spin + Math.PI) * (r * 0.45) - 1.5, sy + Math.sin(spin + Math.PI) * (r * 0.45) - 1.5, 3, 3, '#a855f7');
       } else {
-        pRect(ctx, sx - 6, sy - 6, 12, 12, '#15803d');
-        pRect(ctx, sx - 4, sy - 4, 8, 8, '#22c55e');
-        pRect(ctx, sx + Math.cos(spin) * 3 - 1, sy + Math.sin(spin) * 3 - 1, 3, 3, '#fef08a');
+        sRect(ctx, sx - 6.5, sy - 6.5, 13, 13, '#09060b');
+        sRect(ctx, sx - 5.5, sy - 5.5, 11, 11, '#15803d');
+        sRect(ctx, sx - 4, sy - 4, 8, 8, '#22c55e');
+        sRect(ctx, sx + Math.cos(spin) * 3 - 1.5, sy + Math.sin(spin) * 3 - 1.5, 3, 3, '#fef08a');
       }
       ctx.restore();
     } else if (pr.kind === 'succubus_orb') {
-      pRect(ctx, sx - 4, sy - 4, 8, 8, '#f43f5e');
-      pRect(ctx, sx - 2, sy - 2, 4, 4, '#fbcfe8');
+      sRect(ctx, sx - 4.5, sy - 4.5, 9, 9, '#09060b');
+      sRect(ctx, sx - 4, sy - 4, 8, 8, '#f43f5e');
+      sRect(ctx, sx - 2, sy - 2, 4, 4, '#fbcfe8');
     } else if (pr.kind === 'purple_flame' || pr.kind === 'purple_meteor') {
       const r = pr.kind === 'purple_meteor' ? 12 : Math.max(9, pr.radius);
       ctx.save();
@@ -1862,6 +2059,80 @@ export function drawProjectiles(
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(sx + dir * 7, sy - 1, 4, 2);
       ctx.restore();
+    } else if (pr.kind === 'jjk_blue_pull' || pr.kind === 'jjk_red_repulse' || pr.kind === 'jjk_hollow_sphere') {
+      const isBlue = pr.kind === 'jjk_blue_pull';
+      const isPurple = pr.kind === 'jjk_hollow_sphere';
+      const cMain = isBlue ? '#38bdf8' : isPurple ? '#a855f7' : '#ef4444';
+      const cAccent = isBlue ? '#0284c7' : isPurple ? '#e879f9' : '#fbbf24';
+      ctx.save();
+      const grad = ctx.createRadialGradient(sx, sy, 2, sx, sy, pr.radius + 10);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.35, cMain);
+      grad.addColorStop(0.75, cAccent);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(sx, sy, pr.radius + 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(sx, sy, pr.radius + 4, nowSec * 1.4, nowSec * 1.4 + Math.PI * 1.35);
+      ctx.stroke();
+      ctx.restore();
+    } else if (pr.kind === 'jjk_chain_spear') {
+      const dir = pr.vx >= 0 ? 1 : -1;
+      ctx.save();
+      // Trailing chain links
+      for (let c = 1; c <= 4; c++) {
+        pRect(ctx, sx - dir * c * 7 - 2, sy - 2, 4, 4, c % 2 === 0 ? '#64748b' : '#cbd5e1');
+      }
+      // Inverted Spear blade
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(sx + dir * 16, sy);
+      ctx.lineTo(sx - dir * 4, sy - 5);
+      ctx.lineTo(sx - dir * 4, sy + 5);
+      ctx.closePath();
+      ctx.fill();
+      pRect(ctx, sx - dir * 6, sy - 2, 5, 4, '#a855f7');
+      ctx.restore();
+    } else if (pr.kind === 'jjk_rika_beam_orb') {
+      const dir = pr.vx >= 0 ? 1 : -1;
+      const tailLen = Math.min(220, (pr.beamLength ?? 220) * 0.55);
+      ctx.save();
+      const grad = ctx.createLinearGradient(sx - dir * tailLen, sy, sx + dir * 18, sy);
+      grad.addColorStop(0, 'rgba(192, 132, 252, 0)');
+      grad.addColorStop(0.45, '#c084fc');
+      grad.addColorStop(0.85, '#f0abfc');
+      grad.addColorStop(1, '#ffffff');
+      ctx.fillStyle = grad;
+      const startX = dir === 1 ? sx - tailLen : sx;
+      ctx.fillRect(startX, sy - 10, tailLen, 20);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(sx, sy, pr.radius + 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (pr.kind === 'jjk_nue_bolt') {
+      ctx.save();
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(sx - 12, sy - 8);
+      ctx.lineTo(sx, sy + 2);
+      ctx.lineTo(sx + 12, sy - 8);
+      ctx.stroke();
+      pRect(ctx, sx - 5, sy - 5, 10, 10, '#38bdf8');
+      pRect(ctx, sx - 2, sy - 2, 4, 4, '#ffffff');
+      ctx.restore();
+    } else if (pr.kind === 'jjk_collapse_boulder') {
+      ctx.save();
+      const r = pr.radius;
+      pRect(ctx, sx - r, sy - r, r * 2, r * 2, '#57534e');
+      pRect(ctx, sx - r + 2, sy - r + 2, r * 2 - 4, r * 2 - 4, '#78716c');
+      pRect(ctx, sx - r, sy - 2, r * 2, 3, pr.color || '#fb923c');
+      ctx.restore();
     } else {
       ctx.save();
       const grad = ctx.createRadialGradient(sx, sy, 1, sx, sy, pr.radius + 5);
@@ -1872,6 +2143,16 @@ export function drawProjectiles(
       ctx.beginPath();
       ctx.arc(sx, sy, pr.radius + 5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    }
+    if (pr.beamLength && pr.kind === 'jjk_piercing_blood') {
+      const dir = pr.vx >= 0 ? 1 : -1;
+      const tailLen = Math.min(240, pr.beamLength * 0.55);
+      ctx.save();
+      ctx.fillStyle = 'rgba(225, 29, 72, 0.55)';
+      ctx.fillRect(dir === 1 ? sx - tailLen : sx, sy - 3, tailLen, 6);
+      ctx.fillStyle = '#fff1f2';
+      ctx.fillRect(dir === 1 ? sx - tailLen * 0.8 : sx, sy - 1, tailLen * 0.8, 2);
       ctx.restore();
     }
   }
@@ -2113,7 +2394,7 @@ function drawBattleSlashFx(
     const frame: 0 | 1 = Math.floor(p * 26) % 2 === 0 ? 0 : 1;
     const sp = getBakedStarPlatinumSprite(frame);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(sp, Math.round(cx - 56), Math.round(cy - 26 + Math.sin(p * 30) * 3));
+    ctx.drawImage(sp, Math.round(cx - 56), Math.round(cy - 26 + Math.sin(p * 30) * 3), 64, 52);
     for (let i = 0; i < 6; i++) {
       const ang = (i / 6) * Math.PI * 2 + p * 14;
       const rx = cx + Math.cos(ang) * 14;
@@ -2674,15 +2955,16 @@ export function drawStarPlatinumGuardian(
   ctx.globalAlpha = Math.min(0.96, remainingSec * 2.2);
   ctx.translate(sx, sy);
   ctx.scale(facing * 1.75, 1.75);
-  ctx.drawImage(sp, -10, -8);
+  ctx.drawImage(sp, -10, -8, 64, 52);
 
   // Enlarged floating ORA impact shockwaves in front of Star Platinum's fists
   for (let i = 0; i < 5; i++) {
     const t = (time * 10 + i * 0.2) % 1;
     const fx = Math.round(30 + t * 44);
     const fy = Math.round(3 + ((i * 9) % 28));
-    pRect(ctx, fx, fy, 10, 4, i % 2 === 0 ? '#a78bfa' : '#fbbf24');
-    pRect(ctx, fx + 6, fy + 1, 4, 2, '#ffffff');
+    sRect(ctx, fx - 0.5, fy - 0.5, 11, 5, '#09060b');
+    sRect(ctx, fx, fy, 10, 4, i % 2 === 0 ? '#a78bfa' : '#fbbf24');
+    sRect(ctx, fx + 6, fy + 1, 4, 2, '#ffffff');
   }
   ctx.restore();
 }
@@ -2700,41 +2982,35 @@ export function drawChiliPepperEntity(
   remainingSec: number,
 ) {
   const sx = Math.round(playerX - camX + 8 - facing * 18);
-  const sy = Math.round(playerY - 10 + Math.sin(time * 14) * 3);
+  const sy = Math.round(playerY - 14 + Math.sin(time * 14) * 2.5);
+  const frame: 0 | 1 = Math.floor(time * 14) % 2 === 0 ? 0 : 1;
+  const sprite = getBakedStandWorldSprite('chili_pepper', frame);
 
   ctx.save();
+  ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = Math.min(0.96, remainingSec * 2.5);
   ctx.translate(sx, sy);
   ctx.scale(facing, 1);
 
   // Crackling outer electrical aura
-  ctx.strokeStyle = Math.floor(time * 24) % 2 === 0 ? '#22d3ee' : '#fef08a';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = frame === 0 ? '#22d3ee' : '#fef08a';
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.arc(0, 6, 15 + Math.sin(time * 28) * 2, 0, Math.PI * 2);
+  ctx.arc(0, 4, 20 + Math.sin(time * 28) * 2.5, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Golden-yellow winged electric Stand silhouette
-  pRect(ctx, -4, -10, 2, 5, '#facc15');
-  pRect(ctx, 2, -10, 2, 5, '#facc15');
-  pRect(ctx, -5, -5, 10, 7, '#eab308');
-  pRect(ctx, -4, -4, 8, 5, '#fef08a');
-  pRect(ctx, 0, -2, 3, 2, '#22d3ee');
-  pRect(ctx, -6, 2, 12, 10, '#ca8a04');
-  pRect(ctx, -4, 3, 8, 8, '#facc15');
-  // Spiked electric tail
-  pRect(ctx, -11, 10, 6, 3, '#22d3ee');
-  pRect(ctx, -14, 7, 4, 3, '#fef08a');
+  // High-resolution 96x96 baked Stand sprite rendered crisply into 44x44 logical space
+  ctx.drawImage(sprite, -22, -18, 44, 44);
 
-  // Animated lightning arcs jumping off arms
-  const arcX = 6 + Math.round(Math.sin(time * 32) * 3);
-  pRect(ctx, 5, 3, arcX, 2, '#38bdf8');
-  pRect(ctx, 7, 5, arcX - 2, 2, '#ffffff');
+  // Animated lightning arcs jumping off fists
+  const arcX = 10 + Math.round(Math.sin(time * 32) * 3);
+  sRect(ctx, 12, 2, arcX, 2, '#38bdf8');
+  sRect(ctx, 14, 3.5, arcX - 2, 1.5, '#ffffff');
   ctx.restore();
 }
 
 /**
- * Generic brief Stand summoning silhouette for all JJBA Stands when executing [3].
+ * High-Resolution Stand Summoning Manifestation for all 10 JJBA Stands when executing [3].
  */
 export function drawJjbaStandSprite(
   ctx: CanvasRenderingContext2D,
@@ -2747,30 +3023,42 @@ export function drawJjbaStandSprite(
   alpha: number,
 ) {
   const def = STANDS[standId];
-  const sx = Math.round(x - camX + 8 - facing * 14);
-  const sy = Math.round(y - 16 + Math.sin(time * 12) * 2);
+  const sx = Math.round(x - camX + 8 - facing * 16);
+  const sy = Math.round(y - 18 + Math.sin(time * 12) * 2.5);
+  const frame: 0 | 1 = Math.floor(time * 12) % 2 === 0 ? 0 : 1;
+  const sprite = getBakedStandWorldSprite(standId, frame);
 
   ctx.save();
+  ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = Math.max(0, Math.min(0.95, alpha));
   ctx.translate(sx, sy);
 
   // Glowing Stand manifestation halo
   ctx.fillStyle = def.primaryColor;
-  ctx.globalAlpha = Math.max(0, Math.min(0.32, alpha * 0.4));
+  ctx.globalAlpha = Math.max(0, Math.min(0.36, alpha * 0.45));
   ctx.beginPath();
-  ctx.arc(0, 10, 20, 0, Math.PI * 2);
+  ctx.arc(0, 6, 24, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.globalAlpha = Math.max(0, Math.min(0.96, alpha));
+  ctx.strokeStyle = def.accentColor;
+  ctx.lineWidth = 1.6;
+  ctx.globalAlpha = Math.max(0, Math.min(0.75, alpha * 0.8));
+  ctx.beginPath();
+  ctx.arc(0, 6, 21 + Math.sin(time * 16) * 2, time * 2, time * 2 + Math.PI * 1.45);
+  ctx.stroke();
+
+  // Render facing Stand spirit cleanly from 96x96 HD baked atlas
+  ctx.globalAlpha = Math.max(0, Math.min(0.98, alpha));
   ctx.save();
-  ctx.translate(-14, -6);
-  drawStandPortrait(ctx, standId, 28);
+  ctx.scale(facing, 1);
+  ctx.drawImage(sprite, -24, -18, 48, 48);
   ctx.restore();
 
-  // Outer energy border
-  ctx.strokeStyle = def.accentColor;
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(-14, -6, 28, 28);
+  // Floating menacing katakana (ゴゴゴ)
+  ctx.fillStyle = def.accentColor;
+  ctx.font = 'bold 8px monospace';
+  ctx.fillText('ゴ', -26, -12 + Math.sin(time * 8) * 2);
+  ctx.fillText('ゴ', 20, -4 + Math.cos(time * 7) * 2);
   ctx.restore();
 }
 

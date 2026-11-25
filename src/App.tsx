@@ -10,6 +10,7 @@ import { InventoryModal } from './components/InventoryModal';
 import { PotionShopModal } from './components/PotionShopModal';
 import { SanctuaryModal } from './components/SanctuaryModal';
 import { SaveLoadModal } from './components/SaveLoadModal';
+import { SideQuestModal } from './components/SideQuestModal';
 import { SoloLevelingStatusModal } from './components/SoloLevelingStatusModal';
 import { StandShrineModal } from './components/StandShrineModal';
 import { StatusModals } from './components/StatusModals';
@@ -19,7 +20,7 @@ import { WeaponShopModal } from './components/WeaponShopModal';
 import { WorldsModal } from './components/WorldsModal';
 import { TOTAL_BOSSES, TOTAL_HIDDEN_PASSAGES } from './game/data';
 import { BasteraGameEngine } from './game/engine';
-import { ISEKAI_IDLE_TRANSPORT_SECONDS } from './game/isekai';
+import { ISEKAI_IDLE_TRANSPORT_SECONDS, SIDE_QUESTS } from './game/isekai';
 import {
   DEFAULT_WARRIOR_CUSTOMIZATION,
   createInitialInventory,
@@ -89,7 +90,7 @@ const INITIAL_HUD: HudSnapshot = {
   hotSpringSeconds: 0,
   isNightTime: false,
   nightFactor: 0,
-  secondsToNightToggle: 300,
+  secondsToNightToggle: 180,
   unlockedWardrobe: ['outfit_knight_plate', 'hat_helm'],
   crownUnlocked: false,
   gyroDefeated: false,
@@ -99,9 +100,14 @@ const INITIAL_HUD: HudSnapshot = {
   caravanRide: null,
   arenaWins: 0,
   townRaid: null,
-  secondsToTownRaid: 1200,
+  secondsToTownRaid: 300,
   townDamageStatus: null,
   arenaDuel: null,
+  sideQuests: SIDE_QUESTS.map((q) => ({
+    ...q,
+    progress: { stage: 0, kills: 0, twistRevealed: false, bossSpawned: false },
+  })),
+  trackedSideQuestId: null,
   onlineAdventurers: [],
   pendingGuildInvites: [],
   inventory: createInitialInventory(),
@@ -159,6 +165,7 @@ export default function App() {
   const [showCaravanModal, setShowCaravanModal] = useState(false);
   const [showArenaModal, setShowArenaModal] = useState(false);
   const [showStandShrineModal, setShowStandShrineModal] = useState(false);
+  const [showSideQuestModal, setShowSideQuestModal] = useState(false);
   const [saves, setSaves] = useState<BasteraSaveSummary[]>(() => listLocalSaves());
   const [savesLoading, setSavesLoading] = useState(false);
   const [isMobilePortrait, setIsMobilePortrait] = useState(false);
@@ -178,6 +185,7 @@ export default function App() {
     setShowCaravanModal(false);
     setShowArenaModal(false);
     setShowStandShrineModal(false);
+    setShowSideQuestModal(false);
   }, []);
 
   const refreshSaves = useCallback(async () => {
@@ -431,6 +439,10 @@ export default function App() {
           setShowStandShrineModal(false);
           return;
         }
+        if (showSideQuestModal) {
+          setShowSideQuestModal(false);
+          return;
+        }
         if (hud.status === 'playing') {
           engineRef.current?.setStatus('paused');
         } else if (hud.status === 'paused') {
@@ -448,6 +460,12 @@ export default function App() {
       } else if (e.code === 'KeyK' && hud.status === 'playing') {
         closeAllModals();
         setShowStatus((v) => !v);
+      } else if (e.code === 'KeyQ' && hud.status === 'playing') {
+        setShowSideQuestModal((prev) => {
+          const next = !prev;
+          if (next) closeAllModals();
+          return next;
+        });
       } else if (e.code === 'KeyU') {
         engineRef.current?.toggleMute();
       } else if (e.code === 'KeyV') {
@@ -471,6 +489,7 @@ export default function App() {
     showCaravanModal,
     showArenaModal,
     showStandShrineModal,
+    showSideQuestModal,
     handleStartGame,
     closeAllModals,
   ]);
@@ -490,6 +509,7 @@ export default function App() {
         showCaravanModal ||
         showArenaModal ||
         showStandShrineModal ||
+        showSideQuestModal ||
         Boolean(hud.dungeonChoicePending),
     );
   }, [
@@ -506,6 +526,7 @@ export default function App() {
     showCaravanModal,
     showArenaModal,
     showStandShrineModal,
+    showSideQuestModal,
     hud.dungeonChoicePending,
   ]);
 
@@ -638,6 +659,10 @@ export default function App() {
             closeAllModals();
             setShowStandShrineModal(true);
           }}
+          onOpenSideQuests={() => {
+            closeAllModals();
+            setShowSideQuestModal(true);
+          }}
           onAllocateStat={(key: StatKey) => engineRef.current?.allocatePlayerStat(key, 1)}
           onTogglePause={() => engineRef.current?.setStatus('paused')}
           onToggleMute={() => engineRef.current?.toggleMute()}
@@ -687,7 +712,7 @@ export default function App() {
         />
       )}
 
-      {/* Checkpoint Warp & 120 Boss Codex */}
+      {/* Checkpoint Warp & 15 Boss Codex */}
       {showMap && hud.status === 'playing' && (
         <CheckpointMapModal
           hud={hud}
@@ -817,6 +842,16 @@ export default function App() {
           hud={hud}
           onClose={() => setShowStandShrineModal(false)}
           onSelectOrBuyStand={(standId) => engineRef.current?.buyOrEquipStandById(standId)}
+        />
+      )}
+
+      {/* Outskirts Blood-Oath Side Quests Modal (10 Violent Plot-Twist Quests) */}
+      {showSideQuestModal && hud.status === 'playing' && (
+        <SideQuestModal
+          hud={hud}
+          onClose={() => setShowSideQuestModal(false)}
+          onAcceptOrTrackQuest={(questId) => engineRef.current?.acceptOrAdvanceSideQuest(questId)}
+          onTrackQuest={(questId) => engineRef.current?.setTrackedSideQuest(questId)}
         />
       )}
 

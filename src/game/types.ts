@@ -178,7 +178,60 @@ export type RealmMode =
   | 'carriage_escort'
   | 'demon_realm'
   | 'demon_king_arena'
-  | 'dueling_arena';
+  | 'dueling_arena'
+  | 'outskirts_forest'
+  | 'outskirts_caves';
+
+export type SideQuestId =
+  | 'sq_01_crimson_tithe'
+  | 'sq_02_butcher_well'
+  | 'sq_03_glass_bride'
+  | 'sq_04_plague_apothecary'
+  | 'sq_05_hollow_bell'
+  | 'sq_06_twin_fang_oath'
+  | 'sq_07_ash_archivist'
+  | 'sq_08_chained_hound'
+  | 'sq_09_velvet_gallows'
+  | 'sq_10_pale_regent';
+
+export type SideQuestStage = 0 | 1 | 2 | 3;
+
+export interface SideQuestDef {
+  id: SideQuestId;
+  index: number;
+  title: string;
+  giverName: string;
+  giverRoleLabel: string;
+  giverRealm: 'isekai_town' | 'outskirts_forest' | 'outskirts_caves';
+  giverX: number;
+  coatColor: string;
+  hairColor: string;
+  shirtColor: string;
+  targetRealm: 'outskirts_forest' | 'outskirts_caves';
+  twistTriggerKills: number;
+  hookSummary: string;
+  giverOpeningDialogue: string[];
+  twistTitle: string;
+  twistRevelation: string;
+  twistDialogue: string[];
+  bossName: string;
+  bossTitle: string;
+  bossArchetype: EnemyArchetype;
+  bossSpawnX: number;
+  bossHp: number;
+  bossDamage: number;
+  bossDefeatLine: string;
+  rewardGold: number;
+  rewardStatPoints: number;
+  rewardStarStones: number;
+}
+
+export interface SideQuestProgress {
+  stage: SideQuestStage;
+  kills: number;
+  twistRevealed: boolean;
+  bossSpawned: boolean;
+}
 
 export type GuildRank = 'F' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
 
@@ -345,7 +398,12 @@ export interface InteractableProp {
     | 'arena_door'
     | 'arena_board'
     | 'stand_shrine'
-    | 'mission_gate';
+    | 'mission_gate'
+    | 'town_gate_out'
+    | 'outskirts_return_town'
+    | 'outskirts_cave_entrance'
+    | 'outskirts_cave_exit'
+    | 'side_quest_npc';
   label: string;
   dialogue: string[];
   speaker: string;
@@ -354,6 +412,7 @@ export interface InteractableProp {
   rewardItemId?: string;
   rewardWeaponId?: WeaponId;
   checkpointIndex?: number;
+  sideQuestId?: SideQuestId;
 }
 
 export interface HiddenPassage {
@@ -400,6 +459,7 @@ export interface EnemyState {
   statusFrostTimer?: number;
   statusVenomTimer?: number;
   stunTimer?: number;
+  sideQuestId?: SideQuestId;
 }
 
 export type CitadelBossSkillName = 'Ram n Charge' | 'Stand Barrage' | 'Burst Crush!';
@@ -487,12 +547,26 @@ export interface Projectile {
     | 'jjk_magma_meteor'
     | 'jjk_piercing_blood'
     | 'jjk_exec_blade'
-    | 'jjk_cursed_nail';
+    | 'jjk_cursed_nail'
+    | 'jjk_blue_pull'
+    | 'jjk_red_repulse'
+    | 'jjk_hollow_sphere'
+    | 'jjk_chain_spear'
+    | 'jjk_rika_beam_orb'
+    | 'jjk_nue_bolt'
+    | 'jjk_collapse_boulder';
   spinPhase?: number;
   targetsCarriage?: boolean;
   boomerangReturn?: boolean;
   boomerangAge?: number;
   hitTargetIds?: string[];
+  homingStrength?: number;
+  gravityScale?: number;
+  bounceFloor?: boolean;
+  pullPlayerStrength?: number;
+  beamLength?: number;
+  drainStamina?: number;
+  slowSeconds?: number;
 }
 
 export interface DialogueState {
@@ -882,7 +956,21 @@ export type PurpleFlameKind =
   | 'jjk_jogo_volcano'
   | 'jjk_piercing_blood'
   | 'jjk_deadly_gavel'
-  | 'jjk_straw_resonance';
+  | 'jjk_straw_resonance'
+  | 'jjk_world_cut'
+  | 'jjk_tether_trap'
+  | 'jjk_cursed_speech_wave'
+  | 'jjk_max_elephant'
+  | 'jjk_collapse_rubble'
+  | 'jjk_divergent_burst'
+  | 'jjk_curse_swarm'
+  | 'jjk_shutter_doors'
+  | 'jjk_sky_lightning'
+  | 'jjk_soul_spikes'
+  | 'jjk_meteor_crater'
+  | 'jjk_supernova_ring'
+  | 'jjk_gavel_verdict'
+  | 'jjk_hairpin_mine';
 
 export interface PurpleFlameZone {
   id: string;
@@ -896,6 +984,7 @@ export interface PurpleFlameZone {
   kind: PurpleFlameKind;
   hasHit: boolean;
   hitHouses?: boolean;
+  telegraphTime?: number;
 }
 
 export type TownRaiderId = 'rimuru_tempest' | 'goblin_slayer';
@@ -1119,6 +1208,14 @@ export interface ActiveArenaDuel {
   domainCooldown: number;
   domainName: string;
   domainCastCount: number;
+  roundNumber: number;
+  playerRoundWins: number;
+  opponentRoundWins: number;
+  roundHistory: ('player' | 'opponent')[];
+  roundPhase: 'countdown' | 'fighting' | 'round_over';
+  roundPhaseTimer: number;
+  fightBannerTimer: number;
+  lastRoundWinner: 'player' | 'opponent' | null;
 }
 
 export interface DungeonChoicePending {
@@ -1221,12 +1318,22 @@ export interface HudSnapshot {
     activeSkillBanner: string | null;
     aiActionTag: string | null;
     winsCount: number;
+    roundNumber: number;
+    playerRoundWins: number;
+    opponentRoundWins: number;
+    roundHistory: ('player' | 'opponent')[];
+    roundPhase: 'countdown' | 'fighting' | 'round_over';
+    countdownSeconds: number;
+    fightBannerActive: boolean;
+    lastRoundWinner: 'player' | 'opponent' | null;
     activeDomain: {
       name: string;
       challengerId: ArenaChallengerId;
       secondsLeft: number;
     } | null;
   } | null;
+  sideQuests: Array<SideQuestDef & { progress: SideQuestProgress }>;
+  trackedSideQuestId: SideQuestId | null;
   onlineAdventurers: OnlineAdventurer[];
   pendingGuildInvites: GuildInvite[];
   inventory: InventoryItem[];
@@ -1247,6 +1354,7 @@ export interface HudSnapshot {
     skillPhase: CitadelBossSkillPhase;
     skillDialogue: string | null;
     burstStreak: number;
+    critCount?: number;
     isMegaBoss?: boolean;
     isGyroBoss?: boolean;
     megaArchetype?: MegaBossArchetype;

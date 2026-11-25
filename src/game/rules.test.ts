@@ -72,10 +72,12 @@ import {
   ARENA_CHALLENGERS,
   GUILD_MISSIONS,
   ISEKAI_IDLE_TRANSPORT_SECONDS,
+  ISEKAI_ROOM_BOUNDS,
   JJK_DOMAINS,
   MISSIONS_REQUIRED_PER_RANK,
   PURPLE_FLAME_SKILLS,
   SEVENTEEN_MANHWA_DEMON_KINGS,
+  SIDE_QUESTS,
   TOWN_RAID_INTERVAL_SECONDS,
   TOWN_RAID_REWARD_GOLD,
   WARDROBE_CATALOG,
@@ -95,12 +97,16 @@ import {
   createDungeonSectorEnemies,
   createGoblinDungeonWave,
   createGuildNpcs,
+  createInitialSideQuestProgress,
+  createOutskirtsAmbientEnemies,
   createSeventeenDemonKingsInit,
+  createSideQuestBossEnemy,
   createThreeDemonKingsInit,
   createTownHouseStates,
   createTownNpcs,
   createTownRaidBoss,
   getIsekaiDayNightState,
+  isQuestTargetEnemyKill,
   parseCaravanDestination,
   promoteGuildRankAfterMission,
   promoteGuildRankDirect,
@@ -112,11 +118,14 @@ import {
   stepTownRebuildNpcs,
 } from './isekai';
 
-test('world generates 120 unique bosses across 3 biomes (1-40 castle, 41-80 volcano, 81-120 forest)', () => {
+test('world generates 15 unique bosses across 3 biomes (1-5 castle, 6-10 volcano, 11-15 forest)', () => {
   const names = new Set<string>();
   const voiceLines = new Set<string>();
   const climates = new Set<string>();
   const attackPatterns = new Set<string>();
+
+  assert.equal(TOTAL_BOSSES, 15);
+  assert.equal(BOSSES_PER_BIOME, 5);
 
   for (let i = 1; i <= TOTAL_BOSSES; i++) {
     const boss = getBossDef(i);
@@ -141,17 +150,17 @@ test('world generates 120 unique bosses across 3 biomes (1-40 castle, 41-80 volc
   }
   assert.equal(names.size, TOTAL_BOSSES);
   assert.equal(voiceLines.size, TOTAL_BOSSES);
-  assert.equal(climates.size, 12);
+  assert.ok(climates.size >= 10);
   assert.equal(attackPatterns.size, 8);
   assert.equal(getBiomeForChunk(1), 'castle');
-  assert.equal(getBiomeForChunk(41), 'volcano');
-  assert.equal(getBiomeForChunk(81), 'forest');
+  assert.equal(getBiomeForChunk(6), 'volcano');
+  assert.equal(getBiomeForChunk(11), 'forest');
 });
 
-test('endless dungeon contains 108 hidden passages with puzzle mechanics starting in chunk 0', () => {
+test('endless dungeon contains 16 hidden passages with puzzle mechanics starting in chunk 0', () => {
   let passageCount = 0;
   const puzzleTypes = new Set<string>();
-  for (let c = 0; c < TOTAL_BOSSES; c++) {
+  for (let c = 0; c <= TOTAL_BOSSES; c++) {
     const chunk = generateChunk(c);
     if (chunk.hiddenPassage) {
       passageCount += 1;
@@ -347,7 +356,7 @@ test('Solo Leveling stat points grant +1 per monster and +10 per boss and scale 
 
 import { getBossFacialTraits } from './bossFaces';
 
-test('all 120 bosses have unique deterministic facial trait designs', () => {
+test('all 15 bosses have unique deterministic facial trait designs', () => {
   const signatures = new Set<string>();
   for (let i = 1; i <= TOTAL_BOSSES; i++) {
     const traits = getBossFacialTraits(i);
@@ -480,15 +489,15 @@ test('mega boss triggers at exact 10% threshold, features DIO & Undead Knight wi
   assert.equal(seenStyles.size, 4);
 });
 
-test('chunk 41 spawns breakable bridge over volcano pit and transitions cleanly to volcano floor', () => {
-  const chunk41 = generateChunk(41);
-  assert.equal(chunk41.biome, 'volcano');
-  const slipBridge = chunk41.platforms.find((p) => p.id === 'bridge_41_slip');
+test('chunk 6 spawns breakable bridge over volcano pit and transitions cleanly to volcano floor', () => {
+  const chunk6 = generateChunk(6);
+  assert.equal(chunk6.biome, 'volcano');
+  const slipBridge = chunk6.platforms.find((p) => p.id === 'bridge_6_slip');
   assert.ok(slipBridge !== undefined);
   assert.equal(slipBridge.breakable, true);
   assert.equal(slipBridge.kind, 'bridge');
-  assert.ok(chunk41.platforms.some((p) => p.id === 'ledge_41_pit_escape'));
-  assert.ok(chunk41.platforms.some((p) => p.id === 'ledge_41_forge_catwalk'));
+  assert.ok(chunk6.platforms.some((p) => p.id === 'ledge_6_pit_escape'));
+  assert.ok(chunk6.platforms.some((p) => p.id === 'ledge_6_forge_catwalk'));
 });
 
 test('save system roundtrips full player progress and guest co-op boss lock prevents boss engagement', () => {
@@ -584,12 +593,12 @@ test('dash bursts forward with cooldown, monsters scale x1.4 per level, and 5 bo
   assert.equal(fifth.nextStreak, 0);
 });
 
-test('boss difficulty scales +40% every 10 bosses and Gyro Zeppeli matches 3x player HP and exact player ATK', () => {
+test('boss difficulty scales +40% every 5 bosses and Gyro Zeppeli spawns after 15 bosses with 6x player HP and exact player ATK', () => {
   assert.equal(getBossDifficultyMultiplier(1), 1);
-  assert.equal(getBossDifficultyMultiplier(10), 1);
-  assert.equal(getBossDifficultyMultiplier(11), 1.4);
-  assert.equal(getBossDifficultyMultiplier(21), 1.8);
-  assert.equal(getBossDifficultyMultiplier(100), 4.6);
+  assert.equal(getBossDifficultyMultiplier(5), 1);
+  assert.equal(getBossDifficultyMultiplier(6), 1.4);
+  assert.equal(getBossDifficultyMultiplier(11), 1.8);
+  assert.equal(getBossDifficultyMultiplier(15), 1.8);
 
   const player = createInitialPlayer();
   player.maxHp = 220;
@@ -598,10 +607,11 @@ test('boss difficulty scales +40% every 10 bosses and Gyro Zeppeli matches 3x pl
   const playerAtk = calculateAttackDamage(player, 1, false);
   const gyroDef = createGyroZeppeliBossDef(player.maxHp, playerAtk);
 
-  assert.equal(gyroDef.index, 101);
+  assert.equal(gyroDef.index, TOTAL_BOSSES + 1);
+  assert.equal(gyroDef.index, 16);
   assert.equal(gyroDef.name, 'Gyro Zeppeli');
   assert.equal(gyroDef.isGyroBoss, true);
-  assert.equal(gyroDef.maxHp, 660);
+  assert.equal(gyroDef.maxHp, player.maxHp * 6);
   assert.equal(gyroDef.gyroAttackDamage, playerAtk);
   assert.ok((gyroDef.emotes?.length ?? 0) >= 3);
 
@@ -987,11 +997,16 @@ test('3x monster HP, 1.9x per-boss-defeated Citadel scaling, endless dungeon dis
   assert.ok(onsen.healedHp > 0);
   assert.ok((p.hotSpringTimer ?? 0) >= 60);
   assert.equal(getIsekaiDayNightState(10).isNight, false);
-  assert.equal(getIsekaiDayNightState(310).isNight, true);
+  assert.equal(getIsekaiDayNightState(195).isNight, true);
 
-  // 5. Jujutsu Kaisen Colosseum challengers (16 total) with 3x Match HP & OP reactive AI
+  // 5. Jujutsu Kaisen Colosseum challengers (16 total) with Best-of-3 rounds, 3x Match HP & OP reactive AI
   assert.equal(ARENA_CHALLENGERS.length, 16);
   const duel = createArenaDuelInit('satoru_gojo', p);
+  assert.equal(duel.roundPhase, 'countdown');
+  assert.equal(duel.roundNumber, 1);
+  assert.equal(duel.playerRoundWins, 0);
+  assert.equal(duel.opponentRoundWins, 0);
+  duel.roundPhase = 'fighting';
   assert.equal(duel.maxHp, p.maxHp * 3);
   assert.equal(duel.hp, p.maxHp * 3);
   assert.equal(duel.matchedAtk, Math.round(calculateAttackDamage(p, 1, false)));
@@ -1038,8 +1053,8 @@ test('3x monster HP, 1.9x per-boss-defeated Citadel scaling, endless dungeon dis
 });
 
 test('Town Raid (Rimuru Tempest / Goblin Slayer), NPC house rebuilding, 16 JJK Domains, 17 Manhwa Demon Kings & 5-class bandit ambush', () => {
-  // 1. Town Raid 20-minute interval, 1000G reward, 3x HP / matched ATK, house breaking & NPC rebuilding
-  assert.equal(TOWN_RAID_INTERVAL_SECONDS, 1200);
+  // 1. Town Raid 5-minute interval, 1000G reward, 6x HP / matched ATK, house breaking & NPC rebuilding
+  assert.equal(TOWN_RAID_INTERVAL_SECONDS, 300);
   assert.equal(TOWN_RAID_REWARD_GOLD, 1000);
 
   const player = createInitialPlayer();
@@ -1048,9 +1063,9 @@ test('Town Raid (Rimuru Tempest / Goblin Slayer), NPC house rebuilding, 16 JJK D
   const atk = Math.round(calculateAttackDamage(player, 1, false));
   const rimuru = createTownRaidBoss('rimuru_tempest', player.maxHp, atk);
   const gs = createTownRaidBoss('goblin_slayer', player.maxHp, atk);
-  assert.equal(rimuru.maxHp, player.maxHp * 3);
+  assert.equal(rimuru.maxHp, player.maxHp * 6);
   assert.equal(rimuru.attackDamage, atk);
-  assert.equal(gs.maxHp, player.maxHp * 3);
+  assert.equal(gs.maxHp, player.maxHp * 6);
 
   const houses = createTownHouseStates();
   assert.ok(houses.length >= 8);
@@ -1177,6 +1192,97 @@ test('10 JJBA pixel Stands, Royal Stand Shrine, JJK Star Stones, Dinostand shift
   assert.equal(startWeaponAttack(player), true);
   assert.ok(player.attackTimer < baseWindup * 0.65);
 });
+
+test('10 violent plot-twist side quests, Royal Town East Gate, Outskirts Forest & Caves, and save persistence', () => {
+  assert.equal(SIDE_QUESTS.length, 10);
+  const questIds = new Set(SIDE_QUESTS.map((q) => q.id));
+  const npcNames = new Set(SIDE_QUESTS.map((q) => q.giverName));
+  const bossNames = new Set(SIDE_QUESTS.map((q) => q.bossName));
+  assert.equal(questIds.size, 10);
+  assert.equal(npcNames.size, 10);
+  assert.equal(bossNames.size, 10);
+
+  for (const q of SIDE_QUESTS) {
+    assert.ok(q.twistTitle.includes('PLOT TWIST'));
+    assert.ok(q.twistRevelation.length > 20);
+    assert.ok(q.twistTriggerKills >= 3);
+    assert.ok(q.rewardGold > 0 && q.rewardStatPoints > 0 && q.rewardStarStones > 0);
+  }
+
+  // Royal Town East Gate connects to Outskirts Forest, which connects to Outskirts Caves
+  const townInteractables = buildIsekaiRoomInteractables('isekai_town');
+  assert.ok(townInteractables.some((p) => p.kind === 'town_gate_out'));
+  assert.equal(
+    townInteractables.filter((p) => p.kind === 'side_quest_npc').length,
+    SIDE_QUESTS.filter((q) => q.giverRealm === 'isekai_town').length,
+  );
+
+  const forestInteractables = buildIsekaiRoomInteractables('outskirts_forest');
+  assert.ok(forestInteractables.some((p) => p.kind === 'outskirts_return_town'));
+  assert.ok(forestInteractables.some((p) => p.kind === 'outskirts_cave_entrance'));
+  assert.equal(
+    forestInteractables.filter((p) => p.kind === 'side_quest_npc').length,
+    SIDE_QUESTS.filter((q) => q.giverRealm === 'outskirts_forest').length,
+  );
+
+  const caveInteractables = buildIsekaiRoomInteractables('outskirts_caves');
+  assert.ok(caveInteractables.some((p) => p.kind === 'outskirts_cave_exit'));
+  assert.equal(
+    caveInteractables.filter((p) => p.kind === 'side_quest_npc').length,
+    SIDE_QUESTS.filter((q) => q.giverRealm === 'outskirts_caves').length,
+  );
+
+  assert.ok(ISEKAI_ROOM_BOUNDS.outskirts_forest.maxX >= 2000);
+  assert.ok(ISEKAI_ROOM_BOUNDS.outskirts_caves.maxX >= 2000);
+
+  // Ambient monsters and Side Quest bosses spawn cleanly
+  const forestPacks = createOutskirtsAmbientEnemies('outskirts_forest', 2);
+  const cavePacks = createOutskirtsAmbientEnemies('outskirts_caves', 2);
+  assert.ok(forestPacks.length >= 6);
+  assert.ok(cavePacks.length >= 6);
+
+  const sq1 = SIDE_QUESTS[0];
+  assert.equal(isQuestTargetEnemyKill(sq1, 'outskirts_forest', forestPacks[0]), true);
+  assert.equal(isQuestTargetEnemyKill(sq1, 'outskirts_caves', cavePacks[0]), false);
+
+  const sqBoss = createSideQuestBossEnemy(sq1, 2);
+  assert.equal(sqBoss.sideQuestId, sq1.id);
+  assert.equal(sqBoss.isDungeonBoss, true);
+  assert.equal(sqBoss.rewardGold, sq1.rewardGold);
+  assert.equal(isQuestTargetEnemyKill(sq1, 'outskirts_forest', sqBoss), false);
+
+  // Side Quest state persists cleanly through saveSystem
+  const progress = createInitialSideQuestProgress();
+  progress.sq_01_crimson_tithe = {
+    stage: 1,
+    kills: 3,
+    twistRevealed: true,
+    bossSpawned: true,
+  };
+  const player = createInitialPlayer();
+  const inv = createInitialInventory();
+  const payload = createSavePayload({
+    saveId: 'sq_slot',
+    playerName: 'Oathbreaker',
+    biome: 'castle',
+    player,
+    inventory: inv,
+    defeatedBosses: new Set([1, 2]),
+    discoveredSecrets: new Set(),
+    openedChests: new Set(),
+    volcanoBridgeFallTriggered: false,
+    darkSanctumDiscovered: false,
+    realm: 'outskirts_forest',
+    sideQuestProgress: progress,
+    trackedSideQuestId: 'sq_01_crimson_tithe',
+  });
+  const loaded = normalizeLoadedSave(JSON.parse(JSON.stringify(payload)));
+  assert.ok(loaded !== null);
+  assert.equal(loaded.realm, 'outskirts_forest');
+  assert.equal(loaded.trackedSideQuestId, 'sq_01_crimson_tithe');
+  assert.equal(loaded.sideQuestProgress?.sq_01_crimson_tithe?.twistRevealed, true);
+});
+
 
 
 

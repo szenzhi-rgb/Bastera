@@ -5,6 +5,7 @@ import {
   TOWN_RANDOM_HOUSES,
   canAccessGuildFloor2,
 } from './isekai';
+import { getBakedWeaponWorldSprite } from './pixelArtAtlas';
 import { DEFAULT_WARRIOR_CUSTOMIZATION } from './rules';
 import { PIXEL_H, PIXEL_W } from './pixelSprites';
 import type {
@@ -84,6 +85,18 @@ function pRect(
 ) {
   ctx.fillStyle = color;
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+
+function sRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
 }
 
 function drawAnimeCloud(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
@@ -348,20 +361,26 @@ export function drawIsekaiTownBackdrop(
       continue;
     }
 
+    sRect(ctx, sx - 0.8, topY - 0.8, spec.w + 1.6, spec.h + 0.8, '#0f172a');
     pRect(ctx, sx, topY, spec.w, spec.h, hitFlash ? '#fca5a5' : spec.wallColor);
     pRect(ctx, sx, topY, 6, spec.h, spec.beamColor);
     pRect(ctx, sx + spec.w - 6, topY, 6, spec.h, spec.beamColor);
     pRect(ctx, sx, midY, spec.w, 5, spec.beamColor);
+    sRect(ctx, sx + 1, midY + 1, spec.w - 2, 1.5, '#78350f');
     pRect(ctx, sx + Math.floor(spec.w / 2) - 2, topY, 5, spec.h, spec.beamColor);
     pRect(ctx, sx + 12, topY + 5, 4, midY - topY - 5, spec.beamColor);
     pRect(ctx, sx + spec.w - 16, topY + 5, 4, midY - topY - 5, spec.beamColor);
-    // Pitched Roof + optional chimney smoke
+    // Shaded Pitched Shingle Roof + optional chimney smoke
+    sRect(ctx, sx - 7, topY - 19, spec.w + 14, 21, '#09060b');
     pRect(ctx, sx - 6, topY - 18, spec.w + 12, 20, hitFlash ? '#ef4444' : spec.roofColor);
     pRect(ctx, sx - 4, topY - 2, spec.w + 8, 4, spec.roofDark);
     pRect(ctx, sx + 4, topY - 30, spec.w - 8, 14, spec.roofColor);
     pRect(ctx, sx + 16, topY - 40, Math.max(24, spec.w - 32), 12, spec.roofDark);
+    sRect(ctx, sx + 6, topY - 28, spec.w - 12, 2, spec.roofDark);
+    sRect(ctx, sx - 4, topY - 10, spec.w + 8, 1.5, spec.roofDark);
     if (spec.hasChimney) {
       pRect(ctx, sx + spec.w - 22, topY - 46, 10, 18, '#64748b');
+      sRect(ctx, sx + spec.w - 23, topY - 47, 12, 3, '#475569');
       const puff = ((time * 16 + idx * 7) % 18);
       ctx.fillStyle = 'rgba(241, 245, 249, 0.45)';
       ctx.fillRect(sx + spec.w - 20 + Math.round(Math.sin(time * 2 + idx) * 3), topY - 52 - puff, 5, 5);
@@ -372,12 +391,18 @@ export function drawIsekaiTownBackdrop(
       pRect(ctx, sx - 6, midY + 5, 4, 6, '#ffffff');
     }
     // Leaded windows (cozy warm lantern gold at night!)
+    sRect(ctx, sx + 11, topY + 11, 18, 19, '#1e293b');
     pRect(ctx, sx + 12, topY + 12, 16, 17, winGlowColor);
     pRect(ctx, sx + 19, topY + 12, 2, 17, spec.beamColor);
+    sRect(ctx, sx + 12, topY + 20, 16, 1.5, spec.beamColor);
+    sRect(ctx, sx + spec.w - 29, topY + 11, 18, 19, '#1e293b');
     pRect(ctx, sx + spec.w - 28, topY + 12, 16, 17, winGlowColor);
     pRect(ctx, sx + spec.w - 21, topY + 12, 2, 17, spec.beamColor);
+    sRect(ctx, sx + spec.w - 28, topY + 20, 16, 1.5, spec.beamColor);
     // Ground-floor arched door + flowerbox
+    sRect(ctx, sx + Math.floor(spec.w / 2) - 10, 193, 20, 31, '#1c1008');
     pRect(ctx, sx + Math.floor(spec.w / 2) - 9, 194, 18, 30, '#451a03');
+    sRect(ctx, sx + Math.floor(spec.w / 2) - 7, 196, 14, 26, '#78350f');
     pRect(ctx, sx + Math.floor(spec.w / 2) + 4, 209, 3, 3, '#fbbf24');
     pRect(ctx, sx + 10, topY + 29, 20, 4, '#78350f');
     pRect(ctx, sx + 12, topY + 26, 4, 3, '#f43f5e');
@@ -581,24 +606,30 @@ export function drawIsekaiTownBackdrop(
   // Hero Building 4: GRAND WIDE WEAPONS ARMORY SHOP (x=1100..1330, door x=1185)
   const ax = Math.round(1100 - bxOff);
   if (ax > -250 && ax < PIXEL_W + 20) {
+    sRect(ctx, ax - 1, 105, 226, 121, '#09060b');
     pRect(ctx, ax, 106, 224, 120, '#e2e8f0');
     pRect(ctx, ax, 106, 224, 6, '#431407');
     pRect(ctx, ax, 162, 224, 6, '#431407');
     pRect(ctx, ax, 106, 8, 120, '#431407');
     pRect(ctx, ax + 110, 106, 6, 120, '#78350f');
     pRect(ctx, ax + 216, 106, 8, 120, '#431407');
+    sRect(ctx, ax - 9, 79, 242, 28, '#09060b');
     pRect(ctx, ax - 8, 80, 240, 26, '#7c2d12');
     pRect(ctx, ax + 10, 64, 204, 18, '#9a3412');
     pRect(ctx, ax + 34, 52, 156, 14, '#b45309');
+    sRect(ctx, ax - 6, 103, 236, 2, '#fbbf24');
     pRect(ctx, ax + 184, 42, 14, 24, '#334155');
+    // Glazed Armory Showcase Windows displaying real baked weapons!
+    sRect(ctx, ax + 17, 173, 50, 38, '#78350f');
     pRect(ctx, ax + 18, 174, 48, 36, '#0f172a');
-    pRect(ctx, ax + 24, 178, 3, 28, '#38bdf8');
-    pRect(ctx, ax + 35, 176, 4, 30, '#f59e0b');
-    pRect(ctx, ax + 48, 180, 3, 26, '#f43f5e');
+    ctx.drawImage(getBakedWeaponWorldSprite('frostbite'), ax + 20, 174, 13, 35);
+    ctx.drawImage(getBakedWeaponWorldSprite('greatsword'), ax + 35, 172, 14, 38);
+    ctx.drawImage(getBakedWeaponWorldSprite('fire_sword_op'), ax + 49, 175, 13, 35);
+    sRect(ctx, ax + 151, 173, 54, 38, '#78350f');
     pRect(ctx, ax + 152, 174, 52, 36, '#0f172a');
-    pRect(ctx, ax + 160, 178, 4, 28, '#a855f7');
-    pRect(ctx, ax + 174, 176, 4, 30, '#fde047');
-    pRect(ctx, ax + 188, 179, 3, 27, '#10b981');
+    ctx.drawImage(getBakedWeaponWorldSprite('shadow_katana'), ax + 155, 173, 14, 37);
+    ctx.drawImage(getBakedWeaponWorldSprite('dragon_slayer'), ax + 170, 171, 15, 39);
+    ctx.drawImage(getBakedWeaponWorldSprite('emerald_saber'), ax + 186, 175, 13, 35);
     pRect(ctx, ax + 78, 122, 68, 22, '#29150c');
     if (labelCtx) {
       drawCrispOverlayLabel(labelCtx, ax + 112, 133, 'WEAPONS ARMORY', {
@@ -620,18 +651,20 @@ export function drawIsekaiTownBackdrop(
   // Hero Building 4B: ROYAL STAND SHRINE (x=1465..1655, pedestal/door x=1536..1584)
   const ssx = Math.round(1465 - bxOff);
   if (ssx > -210 && ssx < PIXEL_W + 40) {
-    // Royal marble terrace plinth & crimson-gold steps
+    sRect(ctx, ssx - 9, 211, 208, 15, '#09060b');
     pRect(ctx, ssx - 8, 212, 206, 14, '#cbd5e1');
-    pRect(ctx, ssx - 4, 208, 198, 5, '#fbbf24');
-    // Obsidian-violet sanctuary backdrop framed by fluted royal marble colonnade
+    sRect(ctx, ssx - 4, 208, 198, 5, '#fbbf24');
+    sRect(ctx, ssx - 4, 208, 198, 1.5, '#fef08a');
+    sRect(ctx, ssx + 7, 91, 176, 120, '#09060b');
     pRect(ctx, ssx + 8, 92, 174, 118, '#1e102e');
     pRect(ctx, ssx + 14, 98, 162, 110, '#2e1065');
     // Royal Bastera crimson drape & gold trim behind altar
     pRect(ctx, ssx + 62, 108, 66, 98, '#881337');
     pRect(ctx, ssx + 66, 112, 58, 94, '#4c0519');
-    pRect(ctx, ssx + 62, 108, 66, 4, '#fbbf24');
+    sRect(ctx, ssx + 62, 108, 66, 4, '#fbbf24');
     // Four marble Corinthian pillars
     for (const colX of [ssx + 6, ssx + 42, ssx + 136, ssx + 172]) {
+      sRect(ctx, colX - 1, 93, 14, 118, '#09060b');
       pRect(ctx, colX, 94, 12, 116, '#f1f5f9');
       pRect(ctx, colX + 2, 96, 4, 112, '#ffffff');
       pRect(ctx, colX + 8, 96, 3, 112, '#94a3b8');
@@ -639,30 +672,36 @@ export function drawIsekaiTownBackdrop(
       pRect(ctx, colX - 2, 204, 16, 6, '#fbbf24');
     }
     // Royal Crowned Pediment & Twin Crimson Banners
+    sRect(ctx, ssx - 5, 71, 200, 24, '#09060b');
     pRect(ctx, ssx - 4, 72, 198, 22, '#4c0519');
     pRect(ctx, ssx - 6, 90, 202, 4, '#fbbf24');
     pRect(ctx, ssx + 18, 56, 154, 18, '#7f1d1d');
     pRect(ctx, ssx + 44, 42, 102, 16, '#9f1239');
     // Gilded Royal Crown crest at apex
+    sRect(ctx, ssx + 82, 27, 26, 16, '#09060b');
     pRect(ctx, ssx + 83, 28, 24, 14, '#fbbf24');
     pRect(ctx, ssx + 83, 24, 4, 6, '#fde047');
     pRect(ctx, ssx + 93, 21, 4, 9, '#fde047');
     pRect(ctx, ssx + 103, 24, 4, 6, '#fde047');
     pRect(ctx, ssx + 92, 32, 6, 6, '#a855f7');
+    sRect(ctx, ssx + 93.5, 33.5, 3, 3, '#f0abfc');
     // Twin glowing amethyst & gold braziers flanking the shrine
-    const sFlame = Math.round(Math.sin(time * 10) * 2);
+    const sFlame = Math.sin(time * 10) * 2;
     for (const bzx of [ssx + 26, ssx + 156]) {
+      sRect(ctx, bzx - 1, 183, 12, 26, '#09060b');
       pRect(ctx, bzx, 184, 10, 24, '#334155');
       pRect(ctx, bzx - 2, 180, 14, 5, '#fbbf24');
-      pRect(ctx, bzx + 1, 169 + sFlame, 8, 11, '#a855f7');
-      pRect(ctx, bzx + 3, 172 + sFlame, 4, 7, '#fef08a');
+      sRect(ctx, bzx + 1, 169 + sFlame, 8, 11, '#a855f7');
+      sRect(ctx, bzx + 3, 172 + sFlame, 4, 7, '#fef08a');
     }
     // Floating Golden Stand Arrow inside central shrine arch
-    const arrowBob = Math.round(Math.sin(time * 4.5) * 3);
-    pRect(ctx, ssx + 89, 134 + arrowBob, 12, 26, '#fbbf24');
-    pRect(ctx, ssx + 91, 126 + arrowBob, 8, 10, '#fde047');
-    pRect(ctx, ssx + 93, 122 + arrowBob, 4, 5, '#ffffff');
-    pRect(ctx, ssx + 92, 142 + arrowBob, 6, 8, '#a855f7');
+    const arrowBob = Math.sin(time * 4.5) * 3;
+    sRect(ctx, ssx + 88, 133 + arrowBob, 14, 28, '#09060b');
+    sRect(ctx, ssx + 89, 134 + arrowBob, 12, 26, '#fbbf24');
+    sRect(ctx, ssx + 91, 126 + arrowBob, 8, 10, '#fde047');
+    sRect(ctx, ssx + 93, 122 + arrowBob, 4, 5, '#ffffff');
+    sRect(ctx, ssx + 92, 142 + arrowBob, 6, 8, '#a855f7');
+    sRect(ctx, ssx + 93.5, 144 + arrowBob, 3, 4, '#fdf4ff');
     if (labelCtx) {
       drawCrispOverlayLabel(labelCtx, ssx + 95, 106, 'ROYAL STAND SHRINE · JJBA [F]', {
         color: '#fef08a',
@@ -815,8 +854,8 @@ export function drawIsekaiTownBackdrop(
     }
   }
 
-  // Royal Iron Streetlamps lined with Bastera crimson-gold heraldic pennants down the 3x avenue
-  for (let lxWorld = 115; lxWorld <= 3540; lxWorld += 230) {
+  // Royal Iron Streetlamps lined with Bastera crimson-gold heraldic pennants down the avenue to the East Gate
+  for (let lxWorld = 115; lxWorld <= 3800; lxWorld += 230) {
     const lx = Math.round(lxWorld - bxOff);
     if (lx < -20 || lx > PIXEL_W + 20) continue;
     pRect(ctx, lx, 174, 3, 50, '#334155');
@@ -827,6 +866,33 @@ export function drawIsekaiTownBackdrop(
     pRect(ctx, lx + 3, 180, 7 + bSway, 16, '#9f1239');
     pRect(ctx, lx + 3, 180, 7 + bSway, 2, '#fbbf24');
     pRect(ctx, lx + 5, 185, 3, 5, '#fbbf24');
+  }
+
+  // Royal East Gate Bastion Wall & Fortified Archway leading out to Solaris Forest (x=3740..3960)
+  const gateX = Math.round(3740 - bxOff);
+  if (gateX < PIXEL_W + 20 && gateX + 220 > -20) {
+    pRect(ctx, gateX + 10, 62, 210, 164, '#334155');
+    pRect(ctx, gateX + 10, 54, 210, 8, '#fbbf24');
+    for (let c = 0; c < 8; c++) {
+      pRect(ctx, gateX + 14 + c * 26, 42, 14, 14, '#475569');
+    }
+    pRect(ctx, gateX + 4, 88, 12, 34, '#9f1239');
+    pRect(ctx, gateX + 5, 90, 10, 5, '#fbbf24');
+    if (labelCtx) {
+      drawCrispOverlayLabel(labelCtx, gateX + 76, 98, 'ROYAL EAST GATE -> FOREST [F]', {
+        color: '#fef08a',
+        bg: 'rgba(136, 19, 55, 0.94)',
+        border: '#fbbf24',
+        fontSize: 20,
+        padX: 12,
+        padY: 4,
+      });
+    } else {
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('EAST GATE -> FOREST [F]', gateX + 76, 102);
+    }
   }
 
   // Subtle Ethereal Solaris Glow & Floating Mana Wisps (distinct from dark dungeons)
@@ -917,23 +983,30 @@ export function drawCaravanRider(
   ctx.save();
   ctx.translate(rx, 224);
   ctx.scale(facing, 1);
-  // Boots & leather duster coat
-  pRect(ctx, -5, -9, 4, 9, '#1e293b');
-  pRect(ctx, 1, -9, 4, 9, '#334155');
-  pRect(ctx, -6, -24 + breath, 12, 16, '#292524'); // Studded dark duster
-  pRect(ctx, -4, -23 + breath, 8, 11, '#78350f');
-  pRect(ctx, -6, -23 + breath, 12, 3, '#b91c1c'); // Fluttering crimson-gold scarf
-  pRect(ctx, -11 - breath, -22 + breath, 6, 3, '#dc2626');
-  // Face, sunglasses/visor glint & wide-brimmed ranger hat w/ feather
-  pRect(ctx, -4, -31 + breath, 8, 8, '#f3cba5');
-  pRect(ctx, 1, -28 + breath, 3, 2, '#09060b');
-  pRect(ctx, -9, -32 + breath, 18, 3, '#1e293b'); // Broad hat brim
-  pRect(ctx, -5, -38 + breath, 10, 6, '#334155');
-  pRect(ctx, -5, -33 + breath, 10, 2, '#fbbf24'); // Gold hatband
-  pRect(ctx, -7, -38 + breath, 3, 5, '#ef4444'); // Crimson hat plume
+  // Boots & leather duster coat with dark ink border
+  sRect(ctx, -6.5, -24.5 + breath, 13, 16.5, '#09060b');
+  sRect(ctx, -5, -9, 4, 9, '#1e293b');
+  sRect(ctx, 1, -9, 4, 9, '#334155');
+  sRect(ctx, -6, -24 + breath, 12, 16, '#292524'); // Studded dark duster
+  sRect(ctx, -4, -23 + breath, 8, 11, '#78350f');
+  sRect(ctx, -6, -23 + breath, 12, 3, '#b91c1c'); // Fluttering crimson-gold scarf
+  sRect(ctx, -11 - breath, -22 + breath, 6, 3, '#dc2626');
+  // Face, visor glint & wide-brimmed ranger hat w/ feather
+  sRect(ctx, -4.8, -31.8 + breath, 9.6, 8.8, '#09060b');
+  sRect(ctx, -4, -31 + breath, 8, 8, '#f3cba5');
+  sRect(ctx, 1, -28 + breath, 3, 2, '#09060b');
+  sRect(ctx, 1.8, -27.5 + breath, 1.2, 0.8, '#38bdf8');
+  sRect(ctx, -9.5, -32.5 + breath, 19, 4, '#09060b');
+  sRect(ctx, -9, -32 + breath, 18, 3, '#1e293b'); // Broad hat brim
+  sRect(ctx, -5, -38 + breath, 10, 6, '#334155');
+  sRect(ctx, -5, -33 + breath, 10, 2, '#fbbf24'); // Gold hatband
+  sRect(ctx, -7, -38 + breath, 3, 5, '#ef4444'); // Crimson hat plume
   // Travel lantern staff in hand
-  pRect(ctx, 6, -30, 2, 30, '#92400e');
-  pRect(ctx, 5, -34, 4, 5, '#fde047');
+  sRect(ctx, 5.5, -30.5, 3, 30.5, '#09060b');
+  sRect(ctx, 6, -30, 2, 30, '#92400e');
+  sRect(ctx, 4.5, -34.5, 5, 6, '#09060b');
+  sRect(ctx, 5, -34, 4, 5, '#fde047');
+  sRect(ctx, 6, -33, 2, 3, '#ffffff');
   ctx.restore();
 
   // Crisp nameplate above Caravan Rider Vance
@@ -970,7 +1043,14 @@ export function drawIsekaiNightLighting(
   playerScreenY: number,
 ) {
   if (nightFactor <= 0.04) return;
-  if (realm !== 'isekai_town' && realm !== 'dungeon_exterior' && realm !== 'carriage_escort') return;
+  if (
+    realm !== 'isekai_town' &&
+    realm !== 'dungeon_exterior' &&
+    realm !== 'carriage_escort' &&
+    realm !== 'outskirts_forest'
+  ) {
+    return;
+  }
 
   const nf = Math.min(1, nightFactor);
   ctx.save();
@@ -1056,6 +1136,11 @@ export function drawIsekaiNightLighting(
   } else if (realm === 'dungeon_exterior') {
     drawWarmLight(196 - camX, 208, 92, '251, 146, 60', 0.58);
     drawWarmLight(126 - camX, 192, 64, '253, 224, 71', 0.42);
+  } else if (realm === 'outskirts_forest') {
+    drawWarmLight(68 - camX, 186, 74, '253, 224, 71', 0.48);
+    drawWarmLight(620 - camX, 208, 68, '251, 146, 60', 0.45);
+    drawWarmLight(1380 - camX, 208, 72, '244, 63, 94', 0.42);
+    drawWarmLight(2200 - camX, 192, 84, '248, 113, 113', 0.46);
   }
 
   // Personal warm belt-lantern aura around the Warrior
@@ -1176,6 +1261,131 @@ export function drawDungeonExteriorBackdrop(
   }
 }
 
+export function drawOutskirtsForestBackdrop(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  time: number,
+  nightFactor = 0,
+  labelCtx?: CanvasRenderingContext2D | null,
+) {
+  const nf = Math.max(0, Math.min(1, nightFactor));
+  const grad = ctx.createLinearGradient(0, 0, 0, PIXEL_H);
+  grad.addColorStop(0, lerpHex('#1e293b', '#050814', nf));
+  grad.addColorStop(0.55, lerpHex('#14532d', '#041f14', nf));
+  grad.addColorStop(1, lerpHex('#064e3b', '#020f09', nf));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, PIXEL_W, PIXEL_H);
+
+  // Parallax gnarled Blood-Trail Forest pines & mist layers
+  const pxOff = Math.floor(camX * 0.42);
+  for (let i = -1; i <= 5; i++) {
+    const tx = i * 130 - ((pxOff % 130) + 130) % 130;
+    pRect(ctx, tx, 148, 130, 78, lerpHex('#064e3b', '#022c22', nf));
+    pRect(ctx, tx + 20, 96, 10, 128, '#291509');
+    pRect(ctx, tx + 4, 62, 42, 46, lerpHex('#166534', '#064e3b', nf));
+    pRect(ctx, tx + 12, 48, 26, 20, lerpHex('#15803d', '#065f46', nf));
+    pRect(ctx, tx + 82, 112, 9, 114, '#291509');
+    pRect(ctx, tx + 68, 78, 38, 40, lerpHex('#14532d', '#052e16', nf));
+  }
+
+  // Western Solaris City Rampart silhouette at left boundary
+  const bxOff = Math.floor(camX);
+  const wallX = Math.round(-bxOff);
+  if (wallX + 120 > 0) {
+    pRect(ctx, wallX, 38, 74, 188, '#334155');
+    pRect(ctx, wallX, 34, 74, 6, '#fbbf24');
+    if (labelCtx) {
+      drawCrispOverlayLabel(labelCtx, wallX + 54, 118, '<- SOLARIS TOWN GATE [F]', {
+        color: '#fef08a',
+        bg: 'rgba(15, 23, 42, 0.92)',
+        border: '#fbbf24',
+        fontSize: 18,
+        padX: 10,
+        padY: 4,
+      });
+    }
+  }
+
+  // Swaying Crimson Bramble Berries & Bandit Watch Campfires
+  for (let gx = 180; gx < 2140; gx += 64) {
+    const sx = gx - bxOff;
+    if (sx < -24 || sx > PIXEL_W + 24) continue;
+    const sw = Math.round(Math.sin(time * 3 + gx) * 1.5);
+    pRect(ctx, sx + sw, 212, 2, 12, '#15803d');
+    pRect(ctx, sx + 5 + sw, 214, 2, 10, '#166534');
+    if (gx % 128 === 52) {
+      pRect(ctx, sx + 2 + sw, 213, 3, 3, '#f43f5e');
+    }
+  }
+  for (const fx of [620, 1380]) {
+    const cfx = Math.round(fx - bxOff);
+    if (cfx > -24 && cfx < PIXEL_W + 24) {
+      const fl = Math.round(Math.sin(time * 13 + fx) * 2);
+      pRect(ctx, cfx - 6, 219, 12, 5, '#451a03');
+      pRect(ctx, cfx - 4, 210 + fl, 8, 10, '#f97316');
+      pRect(ctx, cfx - 2, 213 + fl, 4, 6, '#fef08a');
+    }
+  }
+
+  // Eastern Craggy Cliff & Outskirts Caves Mouth (x=2180..2400)
+  const cliffX = Math.round(2180 - bxOff);
+  if (cliffX < PIXEL_W + 20) {
+    pRect(ctx, cliffX, 58, 240, 168, '#1e293b');
+    pRect(ctx, cliffX + 12, 42, 220, 26, '#334155');
+    if (labelCtx) {
+      drawCrispOverlayLabel(labelCtx, cliffX + 64, 108, 'CRIMSON CAVES ENTRANCE [F]', {
+        color: '#fda4af',
+        bg: 'rgba(69, 10, 10, 0.94)',
+        border: '#f43f5e',
+        fontSize: 19,
+        padX: 10,
+        padY: 4,
+      });
+    }
+  }
+}
+
+export function drawOutskirtsCavesBackdrop(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  time: number,
+  labelCtx?: CanvasRenderingContext2D | null,
+) {
+  const grad = ctx.createLinearGradient(0, 0, 0, PIXEL_H);
+  grad.addColorStop(0, '#09040b');
+  grad.addColorStop(0.55, '#1c0b16');
+  grad.addColorStop(1, '#12070d');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, PIXEL_W, PIXEL_H);
+
+  // Parallax Underground Obsidian Pillars, Hanging Stalactites & Glowing Crimson Crystal Veins
+  const pxOff = Math.floor(camX * 0.48);
+  for (let i = -1; i <= 5; i++) {
+    const px = i * 116 - ((pxOff % 116) + 116) % 116;
+    pRect(ctx, px, 0, 116, 26, '#1e1b26');
+    pRect(ctx, px + 14, 26, 8, 22 + (i % 2) * 10, '#2e2438');
+    pRect(ctx, px + 68, 26, 10, 18 + ((i + 1) % 3) * 8, '#2e2438');
+    pRect(ctx, px + 40, 56, 20, 168, '#191220');
+    // Pulsing blood-quartz crystal veins
+    const glow = Math.sin(time * 2.8 + i) > 0 ? '#f43f5e' : '#be123c';
+    pRect(ctx, px + 45, 92, 4, 16, glow);
+    pRect(ctx, px + 51, 134, 3, 12, '#fb7185');
+  }
+
+  // Hanging Escape Rope sign near x=46
+  const rx = Math.round(54 - camX);
+  if (rx > -40 && rx < PIXEL_W + 40 && labelCtx) {
+    drawCrispOverlayLabel(labelCtx, rx, 106, 'CLIMB UP TO FOREST [F]', {
+      color: '#fde047',
+      bg: 'rgba(15, 23, 42, 0.92)',
+      border: '#fbbf24',
+      fontSize: 18,
+      padX: 10,
+      padY: 4,
+    });
+  }
+}
+
 export function drawIsekaiFloors(
   ctx: CanvasRenderingContext2D,
   realm: RealmMode,
@@ -1262,6 +1472,22 @@ export function drawIsekaiFloors(
     for (let ax = -((bxOff % 40 + 40) % 40); ax < PIXEL_W; ax += 40) {
       pRect(ctx, ax, 234, 34, 10, '#c29b61');
       pRect(ctx, ax + 14, 248, 34, 10, '#9a7542');
+    }
+  } else if (realm === 'outskirts_forest') {
+    pRect(ctx, 0, 224, PIXEL_W, 46, '#1e3a1e');
+    pRect(ctx, 0, 224, PIXEL_W, 5, '#15803d');
+    pRect(ctx, 0, 229, PIXEL_W, 3, '#3f2e1d');
+    for (let fx = -((bxOff % 36 + 36) % 36); fx < PIXEL_W; fx += 36) {
+      pRect(ctx, fx, 235, 24, 7, '#451a03');
+      pRect(ctx, fx + 8, 247, 20, 7, '#292524');
+    }
+  } else if (realm === 'outskirts_caves') {
+    pRect(ctx, 0, 224, PIXEL_W, 46, '#18101c');
+    pRect(ctx, 0, 224, PIXEL_W, 4, '#475569');
+    pRect(ctx, 0, 228, PIXEL_W, 2, '#9f1239');
+    for (let cx = -((bxOff % 30 + 30) % 30); cx < PIXEL_W; cx += 30) {
+      pRect(ctx, cx, 233, 24, 9, '#27272a');
+      pRect(ctx, cx + 10, 245, 22, 9, '#1f121e');
     }
   }
 }
@@ -1545,17 +1771,20 @@ export function drawIsekaiWeaponsShopInterior(
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // Exact Scaled Weapon Sprite rendered vertically on its display rack!
-    const bladeLen = Math.max(18, Math.round(w.visualLength * 1.45));
-    const bladeW = Math.max(3, w.visualWidth + 1);
-    const bladeTop = 160 - bladeLen;
-    pRect(ctx, rx - Math.floor(bladeW / 2), bladeTop, bladeW, bladeLen, w.color);
-    pRect(ctx, rx - Math.floor(bladeW / 2), bladeTop + 2, 1, Math.max(6, bladeLen - 4), w.accentColor);
-    // Crossguard & pommel
-    pRect(ctx, rx - 6, 158, 12, 3, '#fbbf24');
-    pRect(ctx, rx - 2, 161, 4, 8, '#78350f');
+    // High-Res Baked Weapon Sprite rendered vertically on its display rack!
+    const wSprite = getBakedWeaponWorldSprite(wid);
+    const dispScale = Math.max(1.05, Math.min(1.45, 0.92 + w.visualLength * 0.015));
+    const dw = 24 * dispScale;
+    const dh = 64 * dispScale;
+    ctx.save();
+    ctx.globalAlpha = 0.32;
+    sRect(ctx, rx - 3, 106, 6, 62, '#09060b');
+    ctx.globalAlpha = 1;
+    ctx.drawImage(wSprite, rx - dw / 2, 166 - dh * 0.92, dw, dh);
+    ctx.restore();
 
     // Special Effect badge tag below pedestal
+    sRect(ctx, rx - 23, 181, 46, 20, '#fbbf24');
     ctx.fillStyle = '#09060b';
     ctx.fillRect(rx - 22, 182, 44, 18);
     ctx.fillStyle = w.accentColor;
@@ -1946,49 +2175,55 @@ export function drawIsekaiNpcs(
     ctx.translate(sx + 8, Math.round(npc.y + 24));
     ctx.scale(npc.facing, 1);
 
-    const stride = !npc.sitting && npc.speed !== 0 ? Math.round(Math.sin(npc.walkCycle) * 2.5) : 0;
-    const bob = Math.round(Math.sin(time * 4 + npc.minX) * 0.8);
+    const stride = !npc.sitting && npc.speed !== 0 ? Math.sin(npc.walkCycle) * 2.5 : 0;
+    const bob = Math.sin(time * 4 + npc.minX) * 0.8;
 
     if (npc.sitting) {
       // Wooden barstool + Seated Adventurer raising frothy ale mug!
-      pRect(ctx, -4, -7, 8, 7, '#78350f');
-      pRect(ctx, -6, -9, 12, 2, '#b45309');
-      pRect(ctx, -5, -20, 10, 12, npc.coatColor);
-      pRect(ctx, -3, -19, 6, 8, npc.shirtColor);
-      pRect(ctx, -4, -27, 8, 7, '#f3cba5');
-      pRect(ctx, -5, -29, 10, 4, npc.hairColor);
-      pRect(ctx, 1, -24, 2, 2, '#09060b');
-      // Animated mug raise
+      sRect(ctx, -4.5, -7.5, 9, 7.5, '#09060b');
+      sRect(ctx, -4, -7, 8, 7, '#78350f');
+      sRect(ctx, -6, -9, 12, 2, '#b45309');
+      sRect(ctx, -5.8, -20.8, 11.6, 13.5, '#09060b');
+      sRect(ctx, -5, -20, 10, 12, npc.coatColor);
+      sRect(ctx, -3, -19, 6, 8, npc.shirtColor);
+      sRect(ctx, -4.8, -27.8, 9.6, 8.2, '#09060b');
+      sRect(ctx, -4, -27, 8, 7, '#f3cba5');
+      sRect(ctx, -5, -29, 10, 4, npc.hairColor);
+      sRect(ctx, 1, -24, 2, 2.2, '#09060b');
+      sRect(ctx, 1.5, -23.6, 0.8, 0.8, '#ffffff');
       const lift = Math.sin((npc.drinkingPhase ?? time * 2.5) + npc.x * 0.1) > 0.35 ? -5 : 0;
-      pRect(ctx, 5, -18 + lift, 5, 6, '#d97706'); // Frothy tankard
-      pRect(ctx, 5, -20 + lift, 5, 2, '#ffffff'); // Foam!
+      sRect(ctx, 4.5, -18.5 + lift, 6, 7, '#09060b');
+      sRect(ctx, 5, -18 + lift, 5, 6, '#d97706');
+      sRect(ctx, 5, -20 + lift, 5, 2, '#ffffff');
     } else {
-      // Legs (striding forward or backward)
-      pRect(ctx, -4 + stride, -8, 3, 8, '#1e293b');
-      pRect(ctx, 1 - stride, -8, 3, 8, '#334155');
-      // Tunic / Guild Uniform / Dress
-      pRect(ctx, -5, -19 + bob, 10, 12, npc.coatColor);
-      pRect(ctx, -2, -18 + bob, 4, 10, npc.shirtColor);
-      // Head & Anime Hair
-      pRect(ctx, -4, -27 + bob, 8, 8, '#f3cba5');
-      pRect(ctx, -5, -30 + bob, 10, 5, npc.hairColor);
-      pRect(ctx, -5, -26 + bob, 3, 7, npc.hairColor);
-      pRect(ctx, 1, -24 + bob, 2, 2, '#09060b');
+      sRect(ctx, -4.5 + stride, -8.5, 4, 8.5, '#09060b');
+      sRect(ctx, 0.5 - stride, -8.5, 4, 8.5, '#09060b');
+      sRect(ctx, -4 + stride, -8, 3, 8, '#1e293b');
+      sRect(ctx, 1 - stride, -8, 3, 8, '#334155');
+      sRect(ctx, -5.8, -19.8 + bob, 11.6, 13, '#09060b');
+      sRect(ctx, -5, -19 + bob, 10, 12, npc.coatColor);
+      sRect(ctx, -2, -18 + bob, 4, 10, npc.shirtColor);
+      sRect(ctx, -4.8, -27.8 + bob, 9.6, 9, '#09060b');
+      sRect(ctx, -4, -27 + bob, 8, 8, '#f3cba5');
+      sRect(ctx, -5.5, -30.5 + bob, 11, 5.5, '#09060b');
+      sRect(ctx, -5, -30 + bob, 10, 5, npc.hairColor);
+      sRect(ctx, -5, -26 + bob, 3, 7, npc.hairColor);
+      sRect(ctx, 1, -24 + bob, 2, 2.2, '#09060b');
+      sRect(ctx, 1.6, -23.6 + bob, 0.8, 0.8, '#ffffff');
       if (npc.rebuildingHouseIndex != null) {
         const swing = Math.sin(npc.hammerPhase ?? time * 11);
-        const hx = Math.round(6 + swing * 3);
-        const hy = Math.round(-20 + Math.abs(swing) * 5);
-        // Wooden Carpenter Hammer + Repair Sparks
-        pRect(ctx, 4, -18 + bob, 5, 3, npc.coatColor);
-        pRect(ctx, hx, hy, 2, 9, '#92400e');
-        pRect(ctx, hx - 2, hy - 3, 7, 4, '#cbd5e1');
+        const hx = 6 + swing * 3;
+        const hy = -20 + Math.abs(swing) * 5;
+        sRect(ctx, 4, -18 + bob, 5, 3, npc.coatColor);
+        sRect(ctx, hx, hy, 2, 9, '#92400e');
+        sRect(ctx, hx - 2.5, hy - 3.5, 8, 5, '#09060b');
+        sRect(ctx, hx - 2, hy - 3, 7, 4, '#cbd5e1');
         if (swing > 0.72) {
-          pRect(ctx, hx + 4, hy + 1, 2, 2, '#fde047');
-          pRect(ctx, hx + 7, hy - 2, 2, 2, '#fb923c');
+          sRect(ctx, hx + 4, hy + 1, 2, 2, '#fde047');
+          sRect(ctx, hx + 7, hy - 2, 2, 2, '#fb923c');
         }
       } else if (isCelebration && Math.floor(time * 4 + npc.x) % 2 === 0) {
-        // Cheering arms raised!
-        pRect(ctx, 4, -24 + bob, 3, 7, npc.coatColor);
+        sRect(ctx, 4, -24 + bob, 3, 7, npc.coatColor);
       }
     }
 
@@ -2039,28 +2274,39 @@ export function drawAlliedNpcs(
     const stride = Math.abs(ally.vx) > 6 ? Math.round(Math.sin(ally.walkCycle) * 2.5) : 0;
     const bob = Math.round(Math.sin(time * 5 + ally.x * 0.05) * 1);
 
-    // Cloak, Legs, Armor
-    pRect(ctx, -9, -20 + bob, 6, 15, ally.cloakColor);
-    pRect(ctx, -4 + stride, -8, 3, 8, '#1e293b');
-    pRect(ctx, 1 - stride, -8, 3, 8, '#334155');
-    pRect(ctx, -5, -19 + bob, 10, 12, ally.hitFlash > 0 ? '#ffffff' : ally.armorColor);
-    pRect(ctx, -4, -27 + bob, 8, 8, '#f3cba5');
-    pRect(ctx, -5, -30 + bob, 10, 5, ally.role === 'mage' ? '#fde047' : '#94a3b8');
-    pRect(ctx, 1, -24 + bob, 2, 2, '#09060b');
+    // Cloak, Legs, Armor with crisp ink border & weapon highlights
+    sRect(ctx, -9.8, -20.8 + bob, 7, 16, '#09060b');
+    sRect(ctx, -9, -20 + bob, 6, 15, ally.cloakColor);
+    sRect(ctx, -4.5 + stride, -8.5, 4, 8.5, '#09060b');
+    sRect(ctx, 0.5 - stride, -8.5, 4, 8.5, '#09060b');
+    sRect(ctx, -4 + stride, -8, 3, 8, '#1e293b');
+    sRect(ctx, 1 - stride, -8, 3, 8, '#334155');
+    sRect(ctx, -5.8, -19.8 + bob, 11.6, 13, '#09060b');
+    sRect(ctx, -5, -19 + bob, 10, 12, ally.hitFlash > 0 ? '#ffffff' : ally.armorColor);
+    sRect(ctx, -4.8, -27.8 + bob, 9.6, 9, '#09060b');
+    sRect(ctx, -4, -27 + bob, 8, 8, '#f3cba5');
+    sRect(ctx, -5.5, -30.5 + bob, 11, 5.5, '#09060b');
+    sRect(ctx, -5, -30 + bob, 10, 5, ally.role === 'mage' ? '#fde047' : '#94a3b8');
+    sRect(ctx, 1, -24 + bob, 2, 2.2, '#09060b');
+    sRect(ctx, 1.5, -23.6 + bob, 0.8, 0.8, '#ffffff');
 
     if (ally.role === 'knight') {
-      // Harold: Tower Shield + Gold Broadsword
-      pRect(ctx, 4, -21 + bob, 6, 12, '#1d4ed8');
-      pRect(ctx, 5, -20 + bob, 4, 10, '#fbbf24');
-      pRect(ctx, 4, -30 + bob, 3, 18, ally.weaponColor);
+      sRect(ctx, 3.5, -21.5 + bob, 7, 13, '#09060b');
+      sRect(ctx, 4, -21 + bob, 6, 12, '#1d4ed8');
+      sRect(ctx, 5, -20 + bob, 4, 10, '#fbbf24');
+      sRect(ctx, 3.5, -30.5 + bob, 4, 19, '#09060b');
+      sRect(ctx, 4, -30 + bob, 3, 18, ally.weaponColor);
     } else if (ally.role === 'lancer') {
-      // Elise: Long Azure Halberd
-      pRect(ctx, 2, -16 + bob, 20, 2, '#94a3b8');
-      pRect(ctx, 18, -19 + bob, 6, 7, ally.weaponColor);
+      sRect(ctx, 1.5, -16.5 + bob, 21, 3, '#09060b');
+      sRect(ctx, 2, -16 + bob, 20, 2, '#94a3b8');
+      sRect(ctx, 17.5, -19.5 + bob, 7, 8, '#09060b');
+      sRect(ctx, 18, -19 + bob, 6, 7, ally.weaponColor);
     } else {
-      // Aria: Radiant Cleric Staff
-      pRect(ctx, 5, -26 + bob, 2, 24, '#78350f');
-      pRect(ctx, 3, -31 + bob, 6, 6, ally.weaponColor);
+      sRect(ctx, 4.5, -26.5 + bob, 3, 25, '#09060b');
+      sRect(ctx, 5, -26 + bob, 2, 24, '#78350f');
+      sRect(ctx, 2.5, -31.5 + bob, 7, 7, '#09060b');
+      sRect(ctx, 3, -31 + bob, 6, 6, ally.weaponColor);
+      sRect(ctx, 4.5, -29.5 + bob, 3, 3, '#ffffff');
     }
     ctx.restore();
 
@@ -2376,33 +2622,69 @@ export function drawPurpleFlameZones(
         jjk_red_blue: ['#ef4444', '#38bdf8', '#fde047'],
         jjk_domain_shrine: ['#dc2626', '#fb7185', '#fbbf24'],
         jjk_cleave_storm: ['#f43f5e', '#fb923c', '#ffffff'],
+        jjk_world_cut: ['#f43f5e', '#ffffff', '#fb7185'],
         jjk_domain_chains: ['#a855f7', '#cbd5e1', '#e11d48'],
+        jjk_tether_trap: ['#a855f7', '#cbd5e1', '#e11d48'],
         jjk_domain_swords: ['#e879f9', '#38bdf8', '#fdf4ff'],
         jjk_rika_beam: ['#c084fc', '#e879f9', '#ffffff'],
+        jjk_cursed_speech_wave: ['#fde047', '#38bdf8', '#ffffff'],
         jjk_domain_shadow: ['#6366f1', '#38bdf8', '#09090b'],
+        jjk_max_elephant: ['#38bdf8', '#1e293b', '#e0f2fe'],
         jjk_domain_ratio: ['#facc15', '#10b981', '#fef9c3'],
+        jjk_collapse_rubble: ['#fb923c', '#facc15', '#78350f'],
         jjk_domain_station: ['#ef4444', '#fb7185', '#fde047'],
         jjk_black_flash: ['#ef4444', '#09090b', '#fb7185'],
+        jjk_divergent_burst: ['#38bdf8', '#ef4444', '#ffffff'],
         jjk_domain_womb: ['#7e22ce', '#d946ef', '#fde047'],
         jjk_uzumaki_vortex: ['#9333ea', '#e879f9', '#38bdf8'],
+        jjk_curse_swarm: ['#a855f7', '#d946ef', '#1e1b4b'],
         jjk_domain_arsenal: ['#10b981', '#f43f5e', '#e2e8f0'],
         jjk_split_soul_slash: ['#34d399', '#f43f5e', '#ffffff'],
         jjk_domain_gamble: ['#22c55e', '#fde047', '#ec4899'],
         jjk_jackpot_fever: ['#4ade80', '#fde047', '#38bdf8'],
+        jjk_shutter_doors: ['#22c55e', '#94a3b8', '#fde047'],
         jjk_domain_amber: ['#06b6d4', '#818cf8', '#e0f2fe'],
         jjk_kashimo_thunder: ['#22d3ee', '#38bdf8', '#ffffff'],
+        jjk_sky_lightning: ['#22d3ee', '#38bdf8', '#ffffff'],
         jjk_domain_perfection: ['#2dd4bf', '#a855f7', '#f0fdfa'],
         jjk_idle_transfig: ['#2dd4bf', '#f43f5e', '#a855f7'],
+        jjk_soul_spikes: ['#2dd4bf', '#a855f7', '#f0fdfa'],
         jjk_domain_coffin: ['#f97316', '#dc2626', '#fef08a'],
         jjk_jogo_volcano: ['#fb923c', '#dc2626', '#fde047'],
+        jjk_meteor_crater: ['#dc2626', '#f97316', '#fef08a'],
         jjk_domain_blood: ['#be123c', '#fb7185', '#ffe4e6'],
         jjk_piercing_blood: ['#e11d48', '#fb7185', '#ffffff'],
+        jjk_supernova_ring: ['#e11d48', '#fb7185', '#fff1f2'],
         jjk_domain_court: ['#fbbf24', '#38bdf8', '#fef3c7'],
         jjk_deadly_gavel: ['#fde047', '#f59e0b', '#ffffff'],
+        jjk_gavel_verdict: ['#fbbf24', '#fef08a', '#ffffff'],
         jjk_domain_straw: ['#f43f5e', '#38bdf8', '#fbcfe8'],
         jjk_straw_resonance: ['#fb7185', '#38bdf8', '#e879f9'],
+        jjk_hairpin_mine: ['#f43f5e', '#38bdf8', '#fbcfe8'],
       };
       const [c1, c2, c3] = paletteByKind[z.kind] ?? ['#a855f7', '#38bdf8', '#ffffff'];
+
+      // Telegraph warning indicator prior to detonation!
+      if ((z.telegraphTime ?? 0) > 0) {
+        const pulse = 0.45 + 0.45 * Math.sin(time * 24);
+        ctx.fillStyle = `${c1}28`;
+        ctx.fillRect(sx, z.y, z.w, z.h);
+        ctx.save();
+        ctx.strokeStyle = c3;
+        ctx.globalAlpha = pulse;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(sx + 1, z.y + 1, Math.max(4, z.w - 2), Math.max(4, z.h - 2));
+        ctx.setLineDash([]);
+        ctx.fillStyle = c1;
+        ctx.fillRect(sx, baseY - 5, z.w, 5);
+        ctx.beginPath();
+        ctx.ellipse(cx, baseY - 6, z.w * 0.44, 6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        ctx.restore();
+        continue;
+      }
 
       // Smooth outer luminous shockwave aura
       ctx.globalCompositeOperation = 'lighter';
@@ -2426,6 +2708,64 @@ export function drawPurpleFlameZones(
       ctx.fillStyle = beam;
       ctx.fillRect(sx, z.y, z.w, z.h);
 
+      // Bespoke anime signature shapes by zone kind
+      if (z.kind === 'jjk_world_cut' || z.kind === 'jjk_cleave_storm' || z.kind === 'jjk_split_soul_slash') {
+        ctx.strokeStyle = c3;
+        ctx.lineWidth = 3;
+        for (let s = 0; s < 5; s++) {
+          const sy1 = z.y + ((s + 0.3) / 5) * z.h;
+          ctx.beginPath();
+          ctx.moveTo(sx + 2, sy1 - 14);
+          ctx.lineTo(sx + z.w - 2, sy1 + 18);
+          ctx.moveTo(sx + z.w - 2, sy1 - 14);
+          ctx.lineTo(sx + 2, sy1 + 18);
+          ctx.stroke();
+        }
+      } else if (z.kind === 'jjk_sky_lightning' || z.kind === 'jjk_kashimo_thunder') {
+        ctx.strokeStyle = c3;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx, z.y);
+        for (let seg = 1; seg <= 6; seg++) {
+          const jag = (seg % 2 === 0 ? -1 : 1) * (10 + (seg % 3) * 4);
+          ctx.lineTo(cx + jag, z.y + (seg / 6) * z.h);
+        }
+        ctx.stroke();
+      } else if (z.kind === 'jjk_shutter_doors') {
+        const doorW = Math.max(10, Math.floor(z.w * 0.42));
+        pRect(ctx, sx + 2, z.y + 8, doorW, z.h - 10, '#334155');
+        pRect(ctx, sx + z.w - doorW - 2, z.y + 8, doorW, z.h - 10, '#334155');
+        pRect(ctx, sx + 4, z.y + 12, doorW - 4, 8, '#fde047');
+        pRect(ctx, sx + z.w - doorW, z.y + 12, doorW - 4, 8, '#fde047');
+        pRect(ctx, cx - 3, z.y + 10, 6, z.h - 12, '#4ade80');
+      } else if (z.kind === 'jjk_gavel_verdict' || z.kind === 'jjk_deadly_gavel') {
+        const gavelDrop = Math.min(1, (1 - prog) * 3.2);
+        const gy = z.y + Math.round((z.h - 46) * gavelDrop);
+        pRect(ctx, cx - 4, z.y + 4, 8, Math.max(12, gy - z.y), '#fbbf24');
+        pRect(ctx, sx + 12, gy, z.w - 24, 30, '#f59e0b');
+        pRect(ctx, sx + 16, gy + 5, z.w - 32, 20, '#fef08a');
+      } else if (z.kind === 'jjk_soul_spikes' || z.kind === 'jjk_straw_resonance') {
+        for (let k = 0; k < 5; k++) {
+          const spX = sx + 8 + k * ((z.w - 16) / 4);
+          ctx.fillStyle = k % 2 === 0 ? c1 : c2;
+          ctx.beginPath();
+          ctx.moveTo(spX - 9, baseY);
+          ctx.lineTo(spX, z.y + 12 + (k % 2) * 14);
+          ctx.lineTo(spX + 9, baseY);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else if (z.kind === 'jjk_piercing_blood' || z.kind === 'jjk_rika_beam') {
+        const beamY = Math.round(baseY - 26);
+        pRect(ctx, sx, beamY - 10, z.w, 20, c1);
+        pRect(ctx, sx, beamY - 4, z.w, 8, c3);
+      } else if (z.kind === 'jjk_max_elephant' || z.kind === 'jjk_collapse_rubble' || z.kind === 'jjk_meteor_crater') {
+        const dropY = Math.round(z.y + (1 - prog) * 16);
+        pRect(ctx, sx + 10, dropY + 6, z.w - 20, Math.min(48, z.h * 0.42), c2);
+        pRect(ctx, sx + 14, dropY + 10, z.w - 28, Math.min(34, z.h * 0.3), c1);
+        pRect(ctx, sx + 4, baseY - 12, z.w - 8, 12, c3);
+      }
+
       // Rotating fluid energy arcs & crisp ground shockwave rings
       ctx.strokeStyle = c3;
       ctx.lineWidth = 2.2;
@@ -2439,17 +2779,6 @@ export function drawPurpleFlameZones(
         const ang = time * (5 + r * 2) + r * 2.1;
         ctx.beginPath();
         ctx.arc(cx, midY, z.w * (0.22 + r * 0.1), ang, ang + Math.PI * 1.15);
-        ctx.stroke();
-      }
-
-      // Cross-slash / lightning / geometric lattice flair inside zone
-      ctx.strokeStyle = c1;
-      ctx.lineWidth = 2.5;
-      for (let s = 0; s < 4; s++) {
-        const syOff = z.y + ((s + 0.5) / 4) * z.h + Math.sin(time * 16 + s) * 6;
-        ctx.beginPath();
-        ctx.moveTo(sx + 8, syOff - 10);
-        ctx.lineTo(sx + z.w - 8, syOff + 10);
         ctx.stroke();
       }
       ctx.globalAlpha = Math.max(0.2, prog);
@@ -2950,222 +3279,208 @@ export function drawArenaChallenger(
 
   const attackThrust = duel.state === 'attack' || duel.state === 'windup' ? 6 : 0;
 
-  // Striding footwear
-  pRect(ctx, -5 + stride, -8, 4, 8, '#0f172a');
-  pRect(ctx, 2 - stride, -8, 4, 8, '#1e293b');
+  // Striding footwear with ink outline
+  sRect(ctx, -5.8 + stride, -8.5, 5, 8.5, '#09060b');
+  sRect(ctx, 1.2 - stride, -8.5, 5, 8.5, '#09060b');
+  sRect(ctx, -5 + stride, -8, 4, 8, '#0f172a');
+  sRect(ctx, 2 - stride, -8, 4, 8, '#1e293b');
+  // Outer character ink shadow frame
+  sRect(ctx, -9, -27 + bob, 18, 21, '#09060b');
+  sRect(ctx, -7, -36 + bob, 14, 11, '#09060b');
 
   // Character-accurate Jujutsu Kaisen Silhouette, Outfit, Hair, Face & Weapons
   if (duel.challengerId === 'satoru_gojo') {
-    // Satoru Gojo: High-collar dark navy Jujutsu uniform, snow-white spiky hair, black blindfold + Limitless Blue/Red orbs
-    pRect(ctx, -8, -26 + bob, 16, 19, flash ? '#ffffff' : '#0f172a');
-    pRect(ctx, -6, -27 + bob, 12, 4, '#1e293b'); // High collar
-    pRect(ctx, 0, -23 + bob, 2, 13, '#fbbf24'); // Uniform gold button
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
-    // Black Blindfold with Six Eyes cyan shimmer
-    pRect(ctx, -6, -32 + bob, 13, 4, '#09090b');
-    pRect(ctx, 2, -31 + bob, 3, 2, '#38bdf8');
-    // Snow-White Spiky Hair
-    pRect(ctx, -7, -38 + bob, 14, 6, flash ? '#ffffff' : '#f8fafc');
-    pRect(ctx, -5, -42 + bob, 4, 5, '#ffffff');
-    pRect(ctx, 1, -43 + bob, 4, 6, '#e2e8f0');
-    pRect(ctx, 5, -40 + bob, 3, 4, '#ffffff');
-    // Orbiting Limitless Blue & Reversal Red Spheres
+    sRect(ctx, -8, -26 + bob, 16, 19, flash ? '#ffffff' : '#0f172a');
+    sRect(ctx, -6, -27 + bob, 12, 4, '#1e293b');
+    sRect(ctx, 0, -23 + bob, 2, 13, '#fbbf24');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, -6, -32 + bob, 13, 4, '#09090b');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#38bdf8');
+    sRect(ctx, -7, -38 + bob, 14, 6, flash ? '#ffffff' : '#f8fafc');
+    sRect(ctx, -5, -42 + bob, 4, 5, '#ffffff');
+    sRect(ctx, 1, -43 + bob, 4, 6, '#e2e8f0');
+    sRect(ctx, 5, -40 + bob, 3, 4, '#ffffff');
     const orbAngle = time * 4.5;
-    pRect(ctx, Math.round(Math.cos(orbAngle) * 16) - 2, -22 + Math.round(Math.sin(orbAngle) * 10), 5, 5, '#38bdf8');
-    pRect(ctx, Math.round(Math.cos(orbAngle + Math.PI) * 16) - 2, -22 + Math.round(Math.sin(orbAngle + Math.PI) * 10), 5, 5, '#ef4444');
-    // Hand-to-hand Infinity strike forward
-    pRect(ctx, 5 + attackThrust, -21 + bob, 8, 4, '#fde6d8');
+    sRect(ctx, Math.cos(orbAngle) * 16 - 2, -22 + Math.sin(orbAngle) * 10, 5, 5, '#38bdf8');
+    sRect(ctx, Math.cos(orbAngle + Math.PI) * 16 - 2, -22 + Math.sin(orbAngle + Math.PI) * 10, 5, 5, '#ef4444');
+    sRect(ctx, 5 + attackThrust, -21 + bob, 8, 4, '#fde6d8');
   } else if (duel.challengerId === 'ryomen_sukuna') {
-    // Ryomen Sukuna: White Heian kimono w/ crimson sash, black wrist tattoos, spiky salmon-pink hair, facial marks + Kamutoke
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#f8fafc');
-    pRect(ctx, -7, -14 + bob, 14, 4, '#dc2626'); // Crimson obi sash
-    pRect(ctx, -8, -25 + bob, 5, 16, '#18181b'); // Black kimono lapel
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    // Sukuna black forehead/cheek markings & 4 crimson eyes!
-    pRect(ctx, -5, -33 + bob, 2, 2, '#09090b');
-    pRect(ctx, 2, -31 + bob, 3, 2, '#dc2626');
-    pRect(ctx, 2, -28 + bob, 2, 2, '#ef4444');
-    pRect(ctx, -1, -29 + bob, 2, 3, '#09090b');
-    // Spiky salmon-pink hair
-    pRect(ctx, -7, -38 + bob, 14, 5, '#fda4af');
-    pRect(ctx, -3, -41 + bob, 7, 4, '#fb7185');
-    // Kamutoke golden vajra + crimson Shrine slash arc
-    pRect(ctx, 7 + attackThrust, -26 + bob, 3, 18, '#fbbf24');
-    pRect(ctx, 5 + attackThrust, -28 + bob, 7, 4, '#fde047');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#f8fafc');
+    sRect(ctx, -7, -14 + bob, 14, 4, '#dc2626');
+    sRect(ctx, -8, -25 + bob, 5, 16, '#18181b');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, -5, -33 + bob, 2, 2, '#09090b');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#dc2626');
+    sRect(ctx, 2, -28 + bob, 2, 2, '#ef4444');
+    sRect(ctx, -1, -29 + bob, 2, 3, '#09090b');
+    sRect(ctx, -7, -38 + bob, 14, 5, '#fda4af');
+    sRect(ctx, -3, -41 + bob, 7, 4, '#fb7185');
+    sRect(ctx, 6.5 + attackThrust, -26.5 + bob, 4, 19, '#09060b');
+    sRect(ctx, 7 + attackThrust, -26 + bob, 3, 18, '#fbbf24');
+    sRect(ctx, 5 + attackThrust, -28 + bob, 7, 4, '#fde047');
     if (attackThrust > 0) {
-      pRect(ctx, 13 + attackThrust, -28 + bob, 10, 2, '#f43f5e');
-      pRect(ctx, 15 + attackThrust, -18 + bob, 10, 2, '#fb923c');
+      sRect(ctx, 13 + attackThrust, -28 + bob, 10, 2, '#f43f5e');
+      sRect(ctx, 15 + attackThrust, -18 + bob, 10, 2, '#fb923c');
     }
   } else if (duel.challengerId === 'toji_fushiguro') {
-    // Toji Fushiguro: Tight black muscle shirt, baggy white martial trousers, purple Inventory Worm curse draped, Inverted Spear!
-    pRect(ctx, -6 + stride, -9, 5, 9, '#f1f5f9'); // Baggy white pants
-    pRect(ctx, 1 - stride, -9, 5, 9, '#e2e8f0');
-    pRect(ctx, -8, -25 + bob, 16, 16, flash ? '#ffffff' : '#18181b');
-    // Coiled Purple Inventory Worm Curse across shoulder
-    pRect(ctx, -9, -24 + bob, 16, 5, '#7e22ce');
-    pRect(ctx, -10, -21 + bob, 5, 4, '#a855f7');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, 2, -27 + bob, 3, 1, '#9f1239'); // Lip scar
-    pRect(ctx, 2, -31 + bob, 3, 2, '#09090b');
-    // Messy black hair
-    pRect(ctx, -7, -38 + bob, 14, 5, '#09090b');
-    pRect(ctx, 3, -36 + bob, 4, 4, '#09090b');
-    // Inverted Spear of Heaven (two-pronged sai-dagger w/ silver sheen)
-    pRect(ctx, 7 + attackThrust, -22 + bob, 13, 3, '#cbd5e1');
-    pRect(ctx, 11 + attackThrust, -26 + bob, 7, 2, '#a855f7');
+    sRect(ctx, -6 + stride, -9, 5, 9, '#f1f5f9');
+    sRect(ctx, 1 - stride, -9, 5, 9, '#e2e8f0');
+    sRect(ctx, -8, -25 + bob, 16, 16, flash ? '#ffffff' : '#18181b');
+    sRect(ctx, -9, -24 + bob, 16, 5, '#7e22ce');
+    sRect(ctx, -10, -21 + bob, 5, 4, '#a855f7');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, 2, -27 + bob, 3, 1, '#9f1239');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#09060b');
+    sRect(ctx, -7, -38 + bob, 14, 5, '#09090b');
+    sRect(ctx, 3, -36 + bob, 4, 4, '#09090b');
+    sRect(ctx, 6.5 + attackThrust, -22.5 + bob, 14, 4, '#09060b');
+    sRect(ctx, 7 + attackThrust, -22 + bob, 13, 3, '#cbd5e1');
+    sRect(ctx, 11 + attackThrust, -26 + bob, 7, 2, '#a855f7');
   } else if (duel.challengerId === 'yuta_okkotsu') {
-    // Yuta Okkotsu: Iconic White zip-up Jujutsu tunic, messy dark navy hair, Katana & hovering Rika shadow silhouette behind!
-    // Hovering Rika Manifestation aura behind back
-    const rFloat = Math.round(Math.sin(time * 6) * 2);
+    const rFloat = Math.sin(time * 6) * 2;
     ctx.fillStyle = 'rgba(168, 85, 247, 0.45)';
     ctx.fillRect(-19, -38 + rFloat, 11, 22);
-    pRect(ctx, -16, -35 + rFloat, 4, 3, '#fdf4ff'); // Rika glowing eye!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#f8fafc');
-    pRect(ctx, 0, -24 + bob, 2, 16, '#1e293b');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
-    pRect(ctx, 2, -31 + bob, 3, 2, '#1e1b4b');
-    pRect(ctx, -7, -38 + bob, 14, 6, '#1e1b4b');
-    // Cursed Energy Katana
-    pRect(ctx, 6 + attackThrust, -20 + bob, 18, 2, '#e2e8f0');
-    pRect(ctx, 8 + attackThrust, -21 + bob, 14, 1, '#c084fc');
+    sRect(ctx, -16, -35 + rFloat, 4, 3, '#fdf4ff');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#f8fafc');
+    sRect(ctx, 0, -24 + bob, 2, 16, '#1e293b');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#1e1b4b');
+    sRect(ctx, -7, -38 + bob, 14, 6, '#1e1b4b');
+    sRect(ctx, 5.5 + attackThrust, -21 + bob, 19, 3.5, '#09060b');
+    sRect(ctx, 6 + attackThrust, -20 + bob, 18, 2, '#e2e8f0');
+    sRect(ctx, 8 + attackThrust, -21 + bob, 14, 1, '#c084fc');
   } else if (duel.challengerId === 'megumi_fushiguro') {
-    // Megumi Fushiguro: Dark navy Jujutsu jacket, tall sea-urchin spiky black hair, jet-black blade & Divine Dog silhouette!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e293b');
-    pRect(ctx, -4, -24 + bob, 8, 5, '#0f172a');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, 2, -31 + bob, 3, 2, '#0284c7');
-    // Classic tall sea-urchin spiky hair!
-    pRect(ctx, -8, -39 + bob, 16, 6, '#09090b');
-    pRect(ctx, -9, -43 + bob, 4, 5, '#09090b');
-    pRect(ctx, -2, -45 + bob, 5, 7, '#09090b');
-    pRect(ctx, 5, -42 + bob, 4, 5, '#09090b');
-    // Flanking Ten Shadows Divine Dog paw-silhouette
-    pRect(ctx, -18, -14 + bob, 9, 10, '#09090b');
-    pRect(ctx, -17, -18 + bob, 3, 4, '#f8fafc');
-    // Jet-Black Shadow Blade
-    pRect(ctx, 6 + attackThrust, -20 + bob, 17, 3, '#334155');
-    pRect(ctx, 8 + attackThrust, -19 + bob, 14, 1, '#38bdf8');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e293b');
+    sRect(ctx, -4, -24 + bob, 8, 5, '#0f172a');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#0284c7');
+    sRect(ctx, -8, -39 + bob, 16, 6, '#09090b');
+    sRect(ctx, -9, -43 + bob, 4, 5, '#09090b');
+    sRect(ctx, -2, -45 + bob, 5, 7, '#09090b');
+    sRect(ctx, 5, -42 + bob, 4, 5, '#09090b');
+    sRect(ctx, -18, -14 + bob, 9, 10, '#09090b');
+    sRect(ctx, -17, -18 + bob, 3, 4, '#f8fafc');
+    sRect(ctx, 5.5 + attackThrust, -20.5 + bob, 18, 4, '#09060b');
+    sRect(ctx, 6 + attackThrust, -20 + bob, 17, 3, '#334155');
+    sRect(ctx, 8 + attackThrust, -19 + bob, 14, 1, '#38bdf8');
   } else if (duel.challengerId === 'kento_nanami') {
-    // Kento Nanami: Tan business suit, dotted yellow tie, blonde side-parted hair, tinted green glasses, wrapped blunt cleaver!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#d6d3d1');
-    pRect(ctx, -2, -24 + bob, 4, 14, '#f8fafc');
-    pRect(ctx, -1, -23 + bob, 2, 11, '#ca8a04');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, 1, -31 + bob, 5, 3, '#10b981');
-    pRect(ctx, -7, -38 + bob, 14, 5, '#fde047');
-    pRect(ctx, -4, -39 + bob, 8, 3, '#facc15');
-    pRect(ctx, 6 + attackThrust, -22 + bob, 15, 5, '#e7e5e4');
-    pRect(ctx, 9 + attackThrust, -21 + bob, 3, 3, '#f8fafc');
-    pRect(ctx, 15 + attackThrust, -21 + bob, 3, 3, '#f8fafc');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#d6d3d1');
+    sRect(ctx, -2, -24 + bob, 4, 14, '#f8fafc');
+    sRect(ctx, -1, -23 + bob, 2, 11, '#ca8a04');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, 1, -31 + bob, 5, 3, '#10b981');
+    sRect(ctx, -7, -38 + bob, 14, 5, '#fde047');
+    sRect(ctx, -4, -39 + bob, 8, 3, '#facc15');
+    sRect(ctx, 5.5 + attackThrust, -22.5 + bob, 16, 6, '#09060b');
+    sRect(ctx, 6 + attackThrust, -22 + bob, 15, 5, '#e7e5e4');
+    sRect(ctx, 9 + attackThrust, -21 + bob, 3, 3, '#f8fafc');
+    sRect(ctx, 15 + attackThrust, -21 + bob, 3, 3, '#f8fafc');
     if (attackThrust > 0) {
-      pRect(ctx, 21 + attackThrust, -24 + bob, 2, 9, '#facc15');
+      sRect(ctx, 21 + attackThrust, -24 + bob, 2, 9, '#facc15');
     }
   } else if (duel.challengerId === 'yuji_itadori') {
-    // Yuji Itadori: Dark Jujutsu High uniform, signature bright crimson hoodie collar, spiky salmon-pink hair, Black Flash gauntlets!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#0f172a');
-    pRect(ctx, -9, -27 + bob, 18, 5, '#ef4444'); // Red hoodie!
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
-    pRect(ctx, 2, -31 + bob, 3, 2, '#78350f');
-    pRect(ctx, 1, -28 + bob, 3, 1, '#9f1239'); // Battle scar
-    pRect(ctx, -7, -39 + bob, 14, 6, '#fda4af'); // Salmon-pink hair
-    pRect(ctx, -4, -42 + bob, 8, 4, '#fb7185');
-    pRect(ctx, 5 + attackThrust, -21 + bob, 9, 6, '#09090b'); // Black Flash crimson-black fist
-    pRect(ctx, 8 + attackThrust, -20 + bob, 6, 4, '#ef4444');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#0f172a');
+    sRect(ctx, -9, -27 + bob, 18, 5, '#ef4444');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#78350f');
+    sRect(ctx, 1, -28 + bob, 3, 1, '#9f1239');
+    sRect(ctx, -7, -39 + bob, 14, 6, '#fda4af');
+    sRect(ctx, -4, -42 + bob, 8, 4, '#fb7185');
+    sRect(ctx, 5 + attackThrust, -21 + bob, 9, 6, '#09090b');
+    sRect(ctx, 8 + attackThrust, -20 + bob, 6, 4, '#ef4444');
   } else if (duel.challengerId === 'suguru_geto') {
-    // Suguru Geto: Deep indigo-purple monk kesa robes w/ gold sash, long black half-bun hair + bangs, Playful Cloud 3-section staff!
-    pRect(ctx, -9, -25 + bob, 18, 19, flash ? '#ffffff' : '#4c1d95');
-    pRect(ctx, -7, -24 + bob, 14, 5, '#eab308'); // Gold monk kesa
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, -2, -34 + bob, 6, 1, '#09090b'); // Forehead stitches
-    pRect(ctx, -8, -38 + bob, 16, 5, '#09090b');
-    pRect(ctx, -4, -43 + bob, 6, 5, '#09090b'); // Top bun
-    pRect(ctx, 4, -34 + bob, 2, 6, '#09090b'); // Signature bang
-    pRect(ctx, 7 + attackThrust, -24 + bob, 14, 3, '#dc2626'); // Playful Cloud crimson staff
-    pRect(ctx, 13 + attackThrust, -25 + bob, 2, 5, '#fbbf24');
+    sRect(ctx, -9, -25 + bob, 18, 19, flash ? '#ffffff' : '#4c1d95');
+    sRect(ctx, -7, -24 + bob, 14, 5, '#eab308');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, -2, -34 + bob, 6, 1, '#09090b');
+    sRect(ctx, -8, -38 + bob, 16, 5, '#09090b');
+    sRect(ctx, -4, -43 + bob, 6, 5, '#09090b');
+    sRect(ctx, 4, -34 + bob, 2, 6, '#09090b');
+    sRect(ctx, 6.5 + attackThrust, -24.5 + bob, 15, 4, '#09060b');
+    sRect(ctx, 7 + attackThrust, -24 + bob, 14, 3, '#dc2626');
+    sRect(ctx, 13 + attackThrust, -25 + bob, 2, 5, '#fbbf24');
   } else if (duel.challengerId === 'maki_zenin') {
-    // Maki Zenin: Dark Jujutsu combat gear, crimson waist wrap, sea-green ponytail hair, burn scars, glowing Split Soul Katana!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#18181b');
-    pRect(ctx, -8, -14 + bob, 16, 4, '#be123c');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, 0, -33 + bob, 4, 4, '#fb7185'); // Scar
-    pRect(ctx, -8, -39 + bob, 15, 6, '#059669'); // Sea-green hair
-    pRect(ctx, -12, -37 + bob, 5, 11, '#047857'); // Ponytail
-    pRect(ctx, 6 + attackThrust, -21 + bob, 19, 3, '#e2e8f0'); // Split Soul Katana
-    pRect(ctx, 9 + attackThrust, -22 + bob, 15, 1, '#34d399');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#18181b');
+    sRect(ctx, -8, -14 + bob, 16, 4, '#be123c');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, 0, -33 + bob, 4, 4, '#fb7185');
+    sRect(ctx, -8, -39 + bob, 15, 6, '#059669');
+    sRect(ctx, -12, -37 + bob, 5, 11, '#047857');
+    sRect(ctx, 5.5 + attackThrust, -21.5 + bob, 20, 4, '#09060b');
+    sRect(ctx, 6 + attackThrust, -21 + bob, 19, 3, '#e2e8f0');
+    sRect(ctx, 9 + attackThrust, -22 + bob, 15, 1, '#34d399');
   } else if (duel.challengerId === 'kinji_hakari') {
-    // Kinji Hakari: White fur-trimmed coat w/ purple accents, blonde pompadour, neon emerald jagged aura!
-    pRect(ctx, -9, -25 + bob, 18, 18, flash ? '#ffffff' : '#f8fafc');
-    pRect(ctx, -6, -24 + bob, 12, 5, '#9333ea');
-    pRect(ctx, -3, -21 + bob, 6, 12, '#fde6d8');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, -7, -40 + bob, 15, 7, '#fef08a'); // Blonde pompadour
-    pRect(ctx, 2, -42 + bob, 7, 4, '#fde047');
-    pRect(ctx, 6 + attackThrust, -21 + bob, 9, 6, '#22c55e'); // Rough emerald fist
-    pRect(ctx, -16, -22 + bob, 6, 6, '#fde047'); // Floating 777 Pachinko orb
+    sRect(ctx, -9, -25 + bob, 18, 18, flash ? '#ffffff' : '#f8fafc');
+    sRect(ctx, -6, -24 + bob, 12, 5, '#9333ea');
+    sRect(ctx, -3, -21 + bob, 6, 12, '#fde6d8');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, -7, -40 + bob, 15, 7, '#fef08a');
+    sRect(ctx, 2, -42 + bob, 7, 4, '#fde047');
+    sRect(ctx, 6 + attackThrust, -21 + bob, 9, 6, '#22c55e');
+    sRect(ctx, -16, -22 + bob, 6, 6, '#fde047');
   } else if (duel.challengerId === 'hajime_kashimo') {
-    // Hajime Kashimo: White ancient kimono robes, electric cyan hair & lightning cheek scars, cyan Nyoi Staff!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#f8fafc');
-    pRect(ctx, -7, -15 + bob, 14, 3, '#0891b2');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
-    pRect(ctx, 2, -30 + bob, 3, 4, '#06b6d4'); // Lightning scar!
-    pRect(ctx, -8, -40 + bob, 16, 7, '#67e8f9'); // Mint-cyan spiky hair
-    pRect(ctx, -10, -35 + bob, 4, 8, '#22d3ee');
-    pRect(ctx, 8 + attackThrust, -32 + bob, 3, 28, '#bae6fd'); // Electric Nyoi Staff
-    pRect(ctx, 7 + attackThrust, -34 + bob, 5, 4, '#22d3ee');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#f8fafc');
+    sRect(ctx, -7, -15 + bob, 14, 3, '#0891b2');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, 2, -30 + bob, 3, 4, '#06b6d4');
+    sRect(ctx, -8, -40 + bob, 16, 7, '#67e8f9');
+    sRect(ctx, -10, -35 + bob, 4, 8, '#22d3ee');
+    sRect(ctx, 7.5 + attackThrust, -32.5 + bob, 4, 29, '#09060b');
+    sRect(ctx, 8 + attackThrust, -32 + bob, 3, 28, '#bae6fd');
+    sRect(ctx, 7 + attackThrust, -34 + bob, 5, 4, '#22d3ee');
   } else if (duel.challengerId === 'mahito') {
-    // Mahito: Stitched grey-blue skin & hair, patchwork black scars, dark tunic, spiked purple transfigured blade-arm!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e293b');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#cbd5e1'); // Pale grey-blue face
-    pRect(ctx, -4, -33 + bob, 8, 2, '#09090b'); // Stitches
-    pRect(ctx, 2, -31 + bob, 2, 2, '#06b6d4');
-    pRect(ctx, 0, -28 + bob, 4, 2, '#09090b');
-    pRect(ctx, -9, -39 + bob, 18, 7, '#94a3b8'); // Long messy grey-blue hair
-    pRect(ctx, -10, -34 + bob, 4, 14, '#64748b');
-    pRect(ctx, 6 + attackThrust, -23 + bob, 18, 6, '#a855f7'); // Transfigured Spike Blade Arm!
-    pRect(ctx, 18 + attackThrust, -21 + bob, 6, 3, '#2dd4bf');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e293b');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#cbd5e1');
+    sRect(ctx, -4, -33 + bob, 8, 2, '#09090b');
+    sRect(ctx, 2, -31 + bob, 2, 2, '#06b6d4');
+    sRect(ctx, 0, -28 + bob, 4, 2, '#09090b');
+    sRect(ctx, -9, -39 + bob, 18, 7, '#94a3b8');
+    sRect(ctx, -10, -34 + bob, 4, 14, '#64748b');
+    sRect(ctx, 5.5 + attackThrust, -23.5 + bob, 19, 7, '#09060b');
+    sRect(ctx, 6 + attackThrust, -23 + bob, 18, 6, '#a855f7');
+    sRect(ctx, 18 + attackThrust, -21 + bob, 6, 3, '#2dd4bf');
   } else if (duel.challengerId === 'jogo') {
-    // Jogo: Dark monk cloak, charred grey-black body, huge single cyclops eye, volcanic crater head erupting magma!
-    pRect(ctx, -9, -24 + bob, 18, 17, flash ? '#ffffff' : '#1c1917');
-    pRect(ctx, -7, -23 + bob, 14, 4, '#7c2d12');
-    pRect(ctx, -7, -36 + bob, 14, 13, flash ? '#ffffff' : '#44403c'); // Volcano head!
-    pRect(ctx, -4, -41 + bob, 8, 5, '#dc2626'); // Glowing crater rim
-    pRect(ctx, -3, -45 - Math.abs(bob), 6, 5, '#fde047'); // Erupting flame!
-    pRect(ctx, 0, -32 + bob, 5, 5, '#ffffff'); // Cyclops eye
-    pRect(ctx, 2, -31 + bob, 2, 3, '#09090b');
-    pRect(ctx, 6 + attackThrust, -21 + bob, 10, 7, '#f97316'); // Magma fist
+    sRect(ctx, -9, -24 + bob, 18, 17, flash ? '#ffffff' : '#1c1917');
+    sRect(ctx, -7, -23 + bob, 14, 4, '#7c2d12');
+    sRect(ctx, -7, -36 + bob, 14, 13, flash ? '#ffffff' : '#44403c');
+    sRect(ctx, -4, -41 + bob, 8, 5, '#dc2626');
+    sRect(ctx, -3, -45 - Math.abs(bob), 6, 5, '#fde047');
+    sRect(ctx, 0, -32 + bob, 5, 5, '#ffffff');
+    sRect(ctx, 2, -31 + bob, 2, 3, '#09090b');
+    sRect(ctx, 6 + attackThrust, -21 + bob, 10, 7, '#f97316');
   } else if (duel.challengerId === 'choso') {
-    // Choso: Dark purple coat & crimson shawl, black twin-ponytail hair, horizontal nose stripe, orbiting Blood Supernova orbs!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#312e81');
-    pRect(ctx, -9, -26 + bob, 18, 6, '#881337');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
-    pRect(ctx, -4, -30 + bob, 9, 2, '#be123c'); // Signature nose bridge stripe!
-    pRect(ctx, -7, -39 + bob, 14, 6, '#09090b');
-    pRect(ctx, -11, -39 + bob, 4, 9, '#09090b'); // High pigtails
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#312e81');
+    sRect(ctx, -9, -26 + bob, 18, 6, '#881337');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#f3cba5');
+    sRect(ctx, -4, -30 + bob, 9, 2, '#be123c');
+    sRect(ctx, -7, -39 + bob, 14, 6, '#09090b');
+    sRect(ctx, -11, -39 + bob, 4, 9, '#09090b');
     const ba = time * 5;
-    pRect(ctx, Math.round(Math.cos(ba) * 16) - 2, -22 + Math.round(Math.sin(ba) * 9), 5, 5, '#e11d48');
-    pRect(ctx, 6 + attackThrust, -21 + bob, 14, 4, '#fb7185'); // Piercing Blood jet
+    sRect(ctx, Math.cos(ba) * 16 - 2, -22 + Math.sin(ba) * 9, 5, 5, '#e11d48');
+    sRect(ctx, 6 + attackThrust, -21 + bob, 14, 4, '#fb7185');
   } else if (duel.challengerId === 'hiromi_higuruma') {
-    // Hiromi Higuruma: Dark prosecutor suit & gold tie, glasses, sleek black hair, blazing golden Executioner's Sword!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e293b');
-    pRect(ctx, -2, -24 + bob, 4, 13, '#f8fafc');
-    pRect(ctx, -1, -23 + bob, 2, 10, '#fbbf24');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
-    pRect(ctx, 1, -31 + bob, 5, 2, '#cbd5e1'); // Thin glasses
-    pRect(ctx, -7, -38 + bob, 14, 5, '#0f172a');
-    pRect(ctx, 6 + attackThrust, -21 + bob, 19, 4, '#fde047'); // Executioner's Sword!
-    pRect(ctx, 9 + attackThrust, -20 + bob, 14, 2, '#ffffff');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e293b');
+    sRect(ctx, -2, -24 + bob, 4, 13, '#f8fafc');
+    sRect(ctx, -1, -23 + bob, 2, 10, '#fbbf24');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, 1, -31 + bob, 5, 2, '#cbd5e1');
+    sRect(ctx, -7, -38 + bob, 14, 5, '#0f172a');
+    sRect(ctx, 5.5 + attackThrust, -21.5 + bob, 20, 5, '#09060b');
+    sRect(ctx, 6 + attackThrust, -21 + bob, 19, 4, '#fde047');
+    sRect(ctx, 9 + attackThrust, -20 + bob, 14, 2, '#ffffff');
   } else {
-    // Nobara Kugisaki: Dark navy Jujutsu uniform, orange-auburn bob hair, wooden Cursed Hammer + floating glowing nails!
-    pRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e1b4b');
-    pRect(ctx, -6, -13 + bob, 12, 4, '#be185d');
-    pRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
-    pRect(ctx, 2, -31 + bob, 3, 2, '#f97316');
-    pRect(ctx, -8, -39 + bob, 16, 7, '#ea580c'); // Auburn bob hair
-    pRect(ctx, -9, -35 + bob, 3, 7, '#c2410c');
-    pRect(ctx, 6 + attackThrust, -20 + bob, 11, 3, '#92400e'); // Cursed Hammer
-    pRect(ctx, 14 + attackThrust, -24 + bob, 5, 10, '#e2e8f0');
-    pRect(ctx, -15, -24 + bob, 5, 2, '#38bdf8'); // Floating cursed nail
-    pRect(ctx, -15, -18 + bob, 5, 2, '#f43f5e');
+    sRect(ctx, -8, -25 + bob, 16, 18, flash ? '#ffffff' : '#1e1b4b');
+    sRect(ctx, -6, -13 + bob, 12, 4, '#be185d');
+    sRect(ctx, -6, -34 + bob, 12, 9, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, 2, -31 + bob, 3, 2, '#f97316');
+    sRect(ctx, -8, -39 + bob, 16, 7, '#ea580c');
+    sRect(ctx, -9, -35 + bob, 3, 7, '#c2410c');
+    sRect(ctx, 5.5 + attackThrust, -20.5 + bob, 12, 4, '#09060b');
+    sRect(ctx, 6 + attackThrust, -20 + bob, 11, 3, '#92400e');
+    sRect(ctx, 13.5 + attackThrust, -24.5 + bob, 6, 11, '#09060b');
+    sRect(ctx, 14 + attackThrust, -24 + bob, 5, 10, '#e2e8f0');
+    sRect(ctx, -15, -24 + bob, 5, 2, '#38bdf8');
+    sRect(ctx, -15, -18 + bob, 5, 2, '#f43f5e');
   }
 
   // Active Cursed Energy Guard Barrier
@@ -3360,78 +3675,80 @@ export function drawTownRaidBoss(
   ctx.scale(raid.facing, 1);
 
   if (raid.raiderId === 'rimuru_tempest') {
-    // 1. Long cascading silver-ice-blue back hair flowing past Demon Lord coat
-    pRect(ctx, -16, -46 + bob, 22, 34, flash ? '#ffffff' : '#38bdf8');
-    pRect(ctx, -14, -44 + bob, 18, 30, flash ? '#ffffff' : '#7dd3fc');
-    // 2. Boots
-    pRect(ctx, -10 + stride, -11, 6, 11, '#09090b');
-    pRect(ctx, 4 - stride, -11, 6, 11, '#1e293b');
-    // 3. White-and-gold kimono tunic + loose dark Demon Lord trousers
-    pRect(ctx, -11, -34 + bob, 22, 24, '#f8fafc');
-    pRect(ctx, -10, -24 + bob, 20, 4, '#eab308');
-    // 4. Deep midnight-blue / black Demon Lord Haori Coat with gold border trims!
-    pRect(ctx, -15, -36 + bob, 30, 26, flash ? '#ffffff' : '#0f172a');
-    pRect(ctx, -13, -34 + bob, 8, 22, '#1e1b4b');
-    pRect(ctx, 5, -34 + bob, 8, 22, '#1e1b4b');
-    pRect(ctx, -15, -13 + bob, 30, 3, '#fbbf24'); // Gold coat hem
-    pRect(ctx, -15, -36 + bob, 3, 24, '#fbbf24'); // Gold front piping
-    pRect(ctx, 12, -36 + bob, 3, 24, '#fbbf24');
-    // 5. Plush Ranga Direwolf Fur Collar Scarf around neck/shoulders!
-    pRect(ctx, -16, -38 + bob, 32, 7, '#e2e8f0');
-    pRect(ctx, -14, -39 + bob, 28, 4, '#f8fafc');
-    pRect(ctx, -12, -35 + bob, 24, 3, '#cbd5e1');
-    // 6. Head & Luminous Golden Eyes + Bangs
-    pRect(ctx, -9, -51 + bob, 18, 13, flash ? '#ffffff' : '#fde6d8');
-    pRect(ctx, 1, -46 + bob, 5, 3, '#fbbf24'); // Golden eyes
-    pRect(ctx, -10, -54 + bob, 20, 7, '#7dd3fc'); // Silver-blue top hair
-    pRect(ctx, -12, -50 + bob, 5, 12, '#bae6fd'); // Side hair lock
-    pRect(ctx, 6, -50 + bob, 4, 10, '#38bdf8');
-    // Shizue's Antique White Mask worn angled on side of temple (red stripe markings!)
-    pRect(ctx, -11, -55 + bob, 9, 8, '#ffffff');
-    pRect(ctx, -9, -53 + bob, 4, 2, '#f43f5e');
-    // 7. Demon Lord Katana + Orbiting Translucent Blue Demon Slime Form!
-    pRect(ctx, 10 + atkThrust, -26 + bob, 24, 3, '#e2e8f0');
-    pRect(ctx, 8 + atkThrust, -27 + bob, 4, 5, '#fbbf24');
-    const orbY = -42 + Math.round(Math.sin(time * 4.5) * 4);
+    sRect(ctx, -17, -47 + bob, 24, 36, '#09060b');
+    sRect(ctx, -16, -46 + bob, 22, 34, flash ? '#ffffff' : '#38bdf8');
+    sRect(ctx, -14, -44 + bob, 18, 30, flash ? '#ffffff' : '#7dd3fc');
+    sRect(ctx, -10.5 + stride, -11.5, 7, 11.5, '#09060b');
+    sRect(ctx, 3.5 - stride, -11.5, 7, 11.5, '#09060b');
+    sRect(ctx, -10 + stride, -11, 6, 11, '#09090b');
+    sRect(ctx, 4 - stride, -11, 6, 11, '#1e293b');
+    sRect(ctx, -11, -34 + bob, 22, 24, '#f8fafc');
+    sRect(ctx, -10, -24 + bob, 20, 4, '#eab308');
+    sRect(ctx, -15.8, -36.8 + bob, 31.6, 27.6, '#09060b');
+    sRect(ctx, -15, -36 + bob, 30, 26, flash ? '#ffffff' : '#0f172a');
+    sRect(ctx, -13, -34 + bob, 8, 22, '#1e1b4b');
+    sRect(ctx, 5, -34 + bob, 8, 22, '#1e1b4b');
+    sRect(ctx, -15, -13 + bob, 30, 3, '#fbbf24');
+    sRect(ctx, -15, -36 + bob, 3, 24, '#fbbf24');
+    sRect(ctx, 12, -36 + bob, 3, 24, '#fbbf24');
+    sRect(ctx, -16.8, -38.8 + bob, 33.6, 8.6, '#09060b');
+    sRect(ctx, -16, -38 + bob, 32, 7, '#e2e8f0');
+    sRect(ctx, -14, -39 + bob, 28, 4, '#f8fafc');
+    sRect(ctx, -12, -35 + bob, 24, 3, '#cbd5e1');
+    sRect(ctx, -10, -52 + bob, 20, 14.5, '#09060b');
+    sRect(ctx, -9, -51 + bob, 18, 13, flash ? '#ffffff' : '#fde6d8');
+    sRect(ctx, 1, -46 + bob, 5, 3, '#fbbf24');
+    sRect(ctx, 2, -45.5 + bob, 2, 1.5, '#ffffff');
+    sRect(ctx, -10, -54 + bob, 20, 7, '#7dd3fc');
+    sRect(ctx, -12, -50 + bob, 5, 12, '#bae6fd');
+    sRect(ctx, 6, -50 + bob, 4, 10, '#38bdf8');
+    sRect(ctx, -11.5, -55.5 + bob, 10, 9, '#09060b');
+    sRect(ctx, -11, -55 + bob, 9, 8, '#ffffff');
+    sRect(ctx, -9, -53 + bob, 4, 2, '#f43f5e');
+    sRect(ctx, 9.5 + atkThrust, -26.5 + bob, 25, 4, '#09060b');
+    sRect(ctx, 10 + atkThrust, -26 + bob, 24, 3, '#e2e8f0');
+    sRect(ctx, 8 + atkThrust, -27 + bob, 4, 5, '#fbbf24');
+    const orbY = -42 + Math.sin(time * 4.5) * 4;
     ctx.fillStyle = 'rgba(56, 189, 248, 0.78)';
     ctx.beginPath();
     ctx.arc(-22, orbY, 7, 0, Math.PI * 2);
     ctx.fill();
-    pRect(ctx, -24, orbY - 2, 4, 2, '#e0f2fe');
+    sRect(ctx, -24, orbY - 2, 4, 2, '#e0f2fe');
   } else {
-    // GOBLIN SLAYER: Rugged Boiled Leather & Worn Silver Plate + Cut-Horn Full Helm + Glowing Red Eye + Crimson Plume!
-    const plumeWave = Math.round(Math.sin(time * 9) * 3);
-    // 1. Flowing Crimson Cloth Plume streaming behind helmet
-    pRect(ctx, -24, -49 + bob + plumeWave, 14, 5, '#dc2626');
-    pRect(ctx, -28, -46 + bob - plumeWave, 10, 4, '#991b1b');
-    // 2. Greaves & boots
-    pRect(ctx, -10 + stride, -12, 7, 12, '#334155');
-    pRect(ctx, 3 - stride, -12, 7, 12, '#475569');
-    // 3. Boiled dark-leather tunic + chainmail skirt + steel chestplate
-    pRect(ctx, -14, -36 + bob, 28, 25, flash ? '#ffffff' : '#1e293b');
-    pRect(ctx, -12, -35 + bob, 24, 14, flash ? '#ffffff' : '#475569'); // Worn chestplate
-    pRect(ctx, -16, -37 + bob, 9, 8, '#64748b'); // Steel pauldrons
-    pRect(ctx, 7, -37 + bob, 9, 8, '#64748b');
-    // Utility Belt w/ Potion Vials & Scroll
-    pRect(ctx, -14, -20 + bob, 28, 4, '#78350f');
-    pRect(ctx, -10, -21 + bob, 4, 6, '#ef4444'); // Red healing flask
-    pRect(ctx, -3, -21 + bob, 4, 6, '#fef08a'); // Gate Scroll case
-    // 4. Rounded Full-Coverage Silver Steel Helmet (horns sawed off!)
-    pRect(ctx, -10, -52 + bob, 20, 16, flash ? '#ffffff' : '#94a3b8');
-    pRect(ctx, -8, -54 + bob, 16, 4, '#cbd5e1');
-    pRect(ctx, -11, -50 + bob, 3, 3, '#475569'); // Cut-off left horn stub
-    pRect(ctx, 8, -50 + bob, 3, 3, '#475569'); // Cut-off right horn stub
-    // Dark Vertical Grill Visor + Glowing Scarlet-Red Eye Streak!
-    pRect(ctx, -4, -47 + bob, 14, 8, '#09090b');
-    pRect(ctx, 0, -45 + bob, 9, 2, '#94a3b8');
-    pRect(ctx, 2, -45 + bob, 4, 3, '#ef4444'); // Gleaming crimson eye
-    pRect(ctx, -8, -45 + bob, 10, 2, 'rgba(239, 68, 68, 0.72)'); // Trailing red eye glare!
-    // 5. Practical Short Sword (right hand) + Spiked Round Steel Buckler Shield (left/front!)
-    pRect(ctx, 10 + atkThrust, -28 + bob, 17, 4, '#cbd5e1');
-    pRect(ctx, 11 + atkThrust, -30 + bob, 3, 8, '#475569');
-    pRect(ctx, -4 + Math.round(atkThrust * 0.5), -32 + bob, 13, 15, '#64748b');
-    pRect(ctx, -2 + Math.round(atkThrust * 0.5), -30 + bob, 9, 11, '#94a3b8');
-    pRect(ctx, 1 + Math.round(atkThrust * 0.5), -26 + bob, 3, 3, '#e2e8f0');
+    const plumeWave = Math.sin(time * 9) * 3;
+    sRect(ctx, -25, -49.5 + bob + plumeWave, 16, 6, '#09060b');
+    sRect(ctx, -24, -49 + bob + plumeWave, 14, 5, '#dc2626');
+    sRect(ctx, -28, -46 + bob - plumeWave, 10, 4, '#991b1b');
+    sRect(ctx, -10.5 + stride, -12.5, 8, 12.5, '#09060b');
+    sRect(ctx, 2.5 - stride, -12.5, 8, 12.5, '#09060b');
+    sRect(ctx, -10 + stride, -12, 7, 12, '#334155');
+    sRect(ctx, 3 - stride, -12, 7, 12, '#475569');
+    sRect(ctx, -14.8, -36.8 + bob, 29.6, 26.6, '#09060b');
+    sRect(ctx, -14, -36 + bob, 28, 25, flash ? '#ffffff' : '#1e293b');
+    sRect(ctx, -12, -35 + bob, 24, 14, flash ? '#ffffff' : '#475569');
+    sRect(ctx, -16.8, -37.8 + bob, 10, 9, '#09060b');
+    sRect(ctx, -16, -37 + bob, 9, 8, '#64748b');
+    sRect(ctx, 6.2, -37.8 + bob, 10, 9, '#09060b');
+    sRect(ctx, 7, -37 + bob, 9, 8, '#64748b');
+    sRect(ctx, -14, -20 + bob, 28, 4, '#78350f');
+    sRect(ctx, -10, -21 + bob, 4, 6, '#ef4444');
+    sRect(ctx, -3, -21 + bob, 4, 6, '#fef08a');
+    sRect(ctx, -10.8, -52.8 + bob, 21.6, 17.5, '#09060b');
+    sRect(ctx, -10, -52 + bob, 20, 16, flash ? '#ffffff' : '#94a3b8');
+    sRect(ctx, -8, -54 + bob, 16, 4, '#cbd5e1');
+    sRect(ctx, -11, -50 + bob, 3, 3, '#475569');
+    sRect(ctx, 8, -50 + bob, 3, 3, '#475569');
+    sRect(ctx, -4, -47 + bob, 14, 8, '#09090b');
+    sRect(ctx, 0, -45 + bob, 9, 2, '#94a3b8');
+    sRect(ctx, 2, -45 + bob, 4, 3, '#ef4444');
+    sRect(ctx, -8, -45 + bob, 10, 2, 'rgba(239, 68, 68, 0.72)');
+    sRect(ctx, 9.5 + atkThrust, -28.5 + bob, 18, 5, '#09060b');
+    sRect(ctx, 10 + atkThrust, -28 + bob, 17, 4, '#cbd5e1');
+    sRect(ctx, 11 + atkThrust, -30 + bob, 3, 8, '#475569');
+    sRect(ctx, -4.8 + atkThrust * 0.5, -32.8 + bob, 14.6, 16.6, '#09060b');
+    sRect(ctx, -4 + atkThrust * 0.5, -32 + bob, 13, 15, '#64748b');
+    sRect(ctx, -2 + atkThrust * 0.5, -30 + bob, 9, 11, '#94a3b8');
+    sRect(ctx, 1 + atkThrust * 0.5, -26 + bob, 3, 3, '#e2e8f0');
   }
 
   if ((raid.stunTimer ?? 0) > 0 || frozen) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SKILLS, WEAPONS } from '../game/data';
 import type { AnimeExpression } from '../game/pixelArtAtlas';
 import type { BossBattleSnapshot, HudSnapshot, OrbId, SkillId } from '../game/types';
@@ -34,6 +34,107 @@ export const BossBattleOverlay: React.FC<BossBattleOverlayProps> = ({
   onTogglePause = () => {},
 }) => {
   const [subMenu, setSubMenu] = useState<'root' | 'fight' | 'potions'>('root');
+  const [fxState, setFxState] = useState<{ mode: 'none' | 'crit' | 'skill'; key: number }>({
+    mode: 'none',
+    key: 0,
+  });
+
+  const prevBossSnapshotRef = useRef<{
+    index: number;
+    hp: number;
+    skillPhase: string;
+    skillName: string | null;
+    burstStreak: number;
+    critCount: number;
+  } | null>(null);
+  const prevBattleSnapshotRef = useRef<{
+    phase: string;
+    activeSkillName: string | null;
+    lastPlayerDamage: number | null;
+  } | null>(null);
+
+  // Trigger shake & flash cleanly on critical hits or special boss skills in real-time Citadel fights
+  useEffect(() => {
+    if (!activeBoss) {
+      prevBossSnapshotRef.current = null;
+      return;
+    }
+    const prev = prevBossSnapshotRef.current;
+    const critCount = activeBoss.critCount ?? 0;
+    const nextSnapshot = {
+      index: activeBoss.index,
+      hp: activeBoss.hp,
+      skillPhase: activeBoss.skillPhase,
+      skillName: activeBoss.skillName,
+      burstStreak: activeBoss.burstStreak,
+      critCount,
+    };
+    prevBossSnapshotRef.current = nextSnapshot;
+    if (!prev || prev.index !== activeBoss.index) return;
+
+    const isSpecialSkill =
+      (activeBoss.skillPhase !== prev.skillPhase &&
+        (activeBoss.skillPhase === 'ram_windup' ||
+          activeBoss.skillPhase === 'ram_charge' ||
+          activeBoss.skillPhase === 'barrage_charge' ||
+          activeBoss.skillPhase === 'barrage_unleash' ||
+          activeBoss.skillPhase === 'burst_grab' ||
+          activeBoss.skillPhase === 'burst_slam')) ||
+      (activeBoss.skillName !== null && activeBoss.skillName !== prev.skillName) ||
+      activeBoss.burstStreak > prev.burstStreak;
+
+    const isCritHit =
+      critCount > prev.critCount ||
+      (prev.hp - activeBoss.hp >= Math.max(18, Math.round(activeBoss.maxHp * 0.08)));
+
+    if (isSpecialSkill) {
+      setFxState((s) => ({ mode: 'skill', key: s.key + 1 }));
+    } else if (isCritHit) {
+      setFxState((s) => ({ mode: 'crit', key: s.key + 1 }));
+    }
+  }, [
+    activeBoss?.index,
+    activeBoss?.hp,
+    activeBoss?.maxHp,
+    activeBoss?.skillPhase,
+    activeBoss?.skillName,
+    activeBoss?.burstStreak,
+    activeBoss?.critCount,
+    activeBoss,
+  ]);
+
+  // Trigger shake & flash cleanly in turn-based Boss Battle overlay
+  useEffect(() => {
+    if (!battle) {
+      prevBattleSnapshotRef.current = null;
+      return;
+    }
+    const prev = prevBattleSnapshotRef.current;
+    prevBattleSnapshotRef.current = {
+      phase: battle.phase,
+      activeSkillName: battle.activeSkillName ?? null,
+      lastPlayerDamage: battle.lastPlayerDamage,
+    };
+    if (!prev) return;
+    if (battle.phase === 'enemy_anim' && prev.phase !== 'enemy_anim' && battle.activeSkillName) {
+      setFxState((s) => ({ mode: 'skill', key: s.key + 1 }));
+    } else if (
+      battle.phase === 'player_anim' &&
+      prev.phase !== 'player_anim' &&
+      (battle.lastPlayerDamage ?? 0) >= Math.max(20, Math.round(battle.bossMaxHp * 0.08))
+    ) {
+      setFxState((s) => ({ mode: 'crit', key: s.key + 1 }));
+    }
+  }, [battle]);
+
+  // Auto-clear FX timer after animation completes
+  useEffect(() => {
+    if (fxState.mode === 'none') return;
+    const t = window.setTimeout(() => {
+      setFxState((s) => ({ ...s, mode: 'none' }));
+    }, 390);
+    return () => window.clearTimeout(t);
+  }, [fxState.key, fxState.mode]);
 
   // Reset submenu back to root whenever it becomes the player's turn again
   useEffect(() => {
@@ -66,96 +167,123 @@ export const BossBattleOverlay: React.FC<BossBattleOverlayProps> = ({
             ? 'Burst Crush!'
             : null);
 
+    const shakeClass =
+      fxState.mode === 'skill'
+        ? 'boss-overlay-shake-skill'
+        : fxState.mode === 'crit'
+          ? 'boss-overlay-shake-crit'
+          : '';
+
     return (
-      <div
-        className="fixed inset-x-0 top-14 z-20 pointer-events-none flex flex-col items-center px-3"
-        data-testid="citadel-boss-overlay"
-      >
-        {/* Dynamic Sarcastic JoJo Dialogue directly ABOVE the Boss Health Bar */}
-        <div
-          data-testid="citadel-boss-jojo-dialogue"
-          className="mb-1.5 max-w-[540px] w-full bg-[#160812]/95 border border-amber-400/85 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2"
-        >
-          <span className="font-pixel-mono text-[10px] sm:text-[11px] text-amber-100 leading-snug">
-            {activeBoss.skillDialogue ?? `${activeBoss.name} [${activeBoss.standName}]: "${activeBoss.voiceLine}"`}
-          </span>
-          {skillTag && (
-            <span
-              data-testid="citadel-boss-skill-tag"
-              className="px-2 py-0.5 bg-rose-950 border border-rose-400 font-pixel-mono text-[9px] font-bold text-rose-200 whitespace-nowrap shrink-0"
-            >
-              {skillTag.toUpperCase()}
-              {skillTag === 'Burst Crush!' ? ` (${activeBoss.burstStreak}/3)` : ''}
-            </span>
-          )}
-        </div>
-
-        {/* Dedicated Top Boss Health Bar with 1.9x Scaled HP Readout */}
-        <div
-          data-testid="citadel-boss-hp-bar"
-          className="relative flex items-center gap-3 bg-[#12090f]/95 border-2 border-amber-400 px-3.5 py-2 w-full max-w-[540px] shadow-[0_6px_22px_rgba(0,0,0,0.9)]"
-        >
-          <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
-          <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
-          <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
-          <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
-
-          <PixelBossPortrait
-            bossIndex={activeBoss.index}
-            megaArchetype={activeBoss.megaArchetype}
-            isGyroBoss={activeBoss.isGyroBoss}
-            expression={expr}
-            size={48}
+      <>
+        {fxState.mode !== 'none' && (
+          <div
+            key={`flash-${fxState.key}`}
+            data-testid="boss-screen-flash"
+            data-flash-mode={fxState.mode}
+            className={`fixed inset-0 z-30 pointer-events-none boss-screen-flash ${
+              fxState.mode === 'skill' ? 'bg-rose-500/35' : 'bg-amber-300/30'
+            }`}
           />
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-display font-bold text-xs sm:text-sm text-amber-50 truncate">
-                  {activeBoss.name}
-                </span>
-                <span className="font-pixel-mono text-[10px] text-amber-300 truncate">
-                  [{activeBoss.standName}]
-                </span>
-              </div>
-              <span className="font-pixel-mono text-[10px] font-bold text-cyan-200 whitespace-nowrap shrink-0">
-                {activeBoss.isGyroBoss
-                  ? 'FINAL BOSS'
-                  : activeBoss.isMegaBoss
-                    ? 'MEGA BREACH'
-                    : `Floor ${activeBoss.index}`}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 font-pixel-mono text-[9px] text-amber-200/85 mt-0.5 tabular-nums">
-              <span className="truncate">{activeBoss.climateLabel}</span>
-              <span data-testid="citadel-boss-scale-info" className="text-yellow-300 font-bold shrink-0">
-                1.9x HP Scale: {activeBoss.defeatedScale.toFixed(2)}x ({activeBoss.bossesDefeated} KO) · ATK {activeBoss.bossAtk} (0.5x Player)
-              </span>
-            </div>
-
-            <div className="mt-1 flex items-center gap-2">
-              <span className="font-pixel-mono text-[10px] text-amber-300 font-bold">HP</span>
-              <div className="relative flex-1 h-3 bg-[#26141b] border border-amber-500/50 overflow-hidden">
-                <div
-                  className="absolute inset-y-0 left-0 bg-amber-100/80 transition-[width] duration-400"
-                  style={{ width: `${bossHpPct}%` }}
-                />
-                <div
-                  className={`relative h-full ${bossHpColor} transition-[width] duration-150`}
-                  style={{ width: `${bossHpPct}%` }}
-                />
-              </div>
+        )}
+        <div
+          key={`citadel-boss-wrap-${fxState.mode === 'none' ? 'idle' : fxState.key}`}
+          className={`fixed inset-x-0 top-14 z-20 pointer-events-none flex flex-col items-center px-3 ${shakeClass}`}
+          data-testid="citadel-boss-overlay"
+          data-shake-mode={fxState.mode}
+        >
+          {/* Dynamic Sarcastic JoJo Dialogue directly ABOVE the Boss Health Bar */}
+          <div
+            data-testid="citadel-boss-jojo-dialogue"
+            className="mb-1.5 max-w-[540px] w-full bg-[#160812]/95 border border-amber-400/85 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2"
+          >
+            <span className="font-pixel-mono text-[10px] sm:text-[11px] text-amber-100 leading-snug">
+              {activeBoss.skillDialogue ?? `${activeBoss.name} [${activeBoss.standName}]: "${activeBoss.voiceLine}"`}
+            </span>
+            {skillTag && (
               <span
-                data-testid="citadel-boss-hp-text"
-                className="font-pixel-mono text-[11px] font-bold text-amber-50 tabular-nums shrink-0"
+                data-testid="citadel-boss-skill-tag"
+                className="px-2 py-0.5 bg-rose-950 border border-rose-400 font-pixel-mono text-[9px] font-bold text-rose-200 whitespace-nowrap shrink-0"
               >
-                {activeBoss.hp.toLocaleString()} / {activeBoss.maxHp.toLocaleString()}
+                {skillTag.toUpperCase()}
+                {skillTag === 'Burst Crush!' ? ` (${activeBoss.burstStreak}/3)` : ''}
               </span>
+            )}
+          </div>
+
+          {/* Dedicated Top Boss Health Bar with 1.9x Scaled HP Readout */}
+          <div
+            data-testid="citadel-boss-hp-bar"
+            className={`relative flex items-center gap-3 bg-[#12090f]/95 border-2 px-3.5 py-2 w-full max-w-[540px] shadow-[0_6px_22px_rgba(0,0,0,0.9)] ${
+              fxState.mode === 'skill'
+                ? 'border-rose-400'
+                : fxState.mode === 'crit'
+                  ? 'border-yellow-200'
+                  : 'border-amber-400'
+            }`}
+          >
+            <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+            <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+            <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+            <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+
+            <PixelBossPortrait
+              bossIndex={activeBoss.index}
+              megaArchetype={activeBoss.megaArchetype}
+              isGyroBoss={activeBoss.isGyroBoss}
+              expression={expr}
+              size={48}
+            />
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-display font-bold text-xs sm:text-sm text-amber-50 truncate">
+                    {activeBoss.name}
+                  </span>
+                  <span className="font-pixel-mono text-[10px] text-amber-300 truncate">
+                    [{activeBoss.standName}]
+                  </span>
+                </div>
+                <span className="font-pixel-mono text-[10px] font-bold text-cyan-200 whitespace-nowrap shrink-0">
+                  {activeBoss.isGyroBoss
+                    ? 'FINAL BOSS'
+                    : activeBoss.isMegaBoss
+                      ? 'MEGA BREACH'
+                      : `Floor ${activeBoss.index}`}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 font-pixel-mono text-[9px] text-amber-200/85 mt-0.5 tabular-nums">
+                <span className="truncate">{activeBoss.climateLabel}</span>
+                <span data-testid="citadel-boss-scale-info" className="text-yellow-300 font-bold shrink-0">
+                  1.9x HP Scale: {activeBoss.defeatedScale.toFixed(2)}x ({activeBoss.bossesDefeated} KO) · ATK {activeBoss.bossAtk} (0.5x Player)
+                </span>
+              </div>
+
+              <div className="mt-1 flex items-center gap-2">
+                <span className="font-pixel-mono text-[10px] text-amber-300 font-bold">HP</span>
+                <div className="relative flex-1 h-3 bg-[#26141b] border border-amber-500/50 overflow-hidden">
+                  <div
+                    className="absolute inset-y-0 left-0 bg-amber-100/80 transition-[width] duration-400"
+                    style={{ width: `${bossHpPct}%` }}
+                  />
+                  <div
+                    className={`relative h-full ${bossHpColor} transition-[width] duration-150`}
+                    style={{ width: `${bossHpPct}%` }}
+                  />
+                </div>
+                <span
+                  data-testid="citadel-boss-hp-text"
+                  className="font-pixel-mono text-[11px] font-bold text-amber-50 tabular-nums shrink-0"
+                >
+                  {activeBoss.hp.toLocaleString()} / {activeBoss.maxHp.toLocaleString()}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -212,13 +340,33 @@ export const BossBattleOverlay: React.FC<BossBattleOverlayProps> = ({
           ? 'menacing'
           : 'smirk';
 
+  const battleShakeClass =
+    fxState.mode === 'skill'
+      ? 'boss-overlay-shake-skill'
+      : fxState.mode === 'crit'
+        ? 'boss-overlay-shake-crit'
+        : '';
+
   return (
-    <div
-      className="fixed inset-0 z-20 pointer-events-none flex flex-col justify-between p-3 sm:p-5"
-      data-testid="pokemon-boss-overlay"
-    >
-      {/* Top Row: Opponent Info Card (Top-Left) + Utility Icons (Top-Right) */}
-      <div className="flex items-start justify-between gap-3">
+    <>
+      {fxState.mode !== 'none' && (
+        <div
+          key={`battle-flash-${fxState.key}`}
+          data-testid="boss-screen-flash"
+          data-flash-mode={fxState.mode}
+          className={`fixed inset-0 z-30 pointer-events-none boss-screen-flash ${
+            fxState.mode === 'skill' ? 'bg-rose-500/35' : 'bg-amber-300/30'
+          }`}
+        />
+      )}
+      <div
+        key={`pokemon-boss-wrap-${fxState.mode === 'none' ? 'idle' : fxState.key}`}
+        className={`fixed inset-0 z-20 pointer-events-none flex flex-col justify-between p-3 sm:p-5 ${battleShakeClass}`}
+        data-testid="pokemon-boss-overlay"
+        data-shake-mode={fxState.mode}
+      >
+        {/* Top Row: Opponent Info Card (Top-Left) + Utility Icons (Top-Right) */}
+        <div className="flex items-start justify-between gap-3">
         <div className="relative flex items-center gap-2.5 bg-[#120b10]/95 border-2 border-amber-400/80 px-3 py-2.5 w-[275px] sm:w-[345px] shadow-[4px_4px_0_rgba(0,0,0,0.85)]">
           {/* Gold pixel corner ticks */}
           <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
@@ -661,5 +809,6 @@ export const BossBattleOverlay: React.FC<BossBattleOverlayProps> = ({
         </div>
       </div>
     </div>
+    </>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TOTAL_BOSSES } from '../game/data';
 import type { OnlineWorldSummary, WorldRole } from '../game/types';
 
 interface WorldsModalProps {
@@ -204,7 +205,7 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
                     </div>
                     <div className="font-pixel-mono text-[10px] text-amber-200/80 mt-1 flex flex-wrap gap-x-3">
                       <span>Biome: {String(w.biome).toUpperCase()}</span>
-                      <span>Bosses: {w.bossesDefeated}/120</span>
+                      <span>Bosses: {w.bossesDefeated}/{TOTAL_BOSSES}</span>
                       <span>Knights: {w.playerCount}</span>
                     </div>
                   </div>

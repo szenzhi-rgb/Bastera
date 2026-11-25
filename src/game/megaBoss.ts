@@ -89,7 +89,7 @@ export function createMegaBossDef(
 ): BossDef {
   const safeFloor = Math.max(1, floorIndex);
   const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
-  const baseMaxHp = Math.max(380, Math.round((190 + safeFloor * 26) * 2.15));
+  const baseMaxHp = Math.max(760, Math.round((190 + safeFloor * 26) * 4.3));
   const scaledHp = Math.round(baseMaxHp * defeatedScale);
 
   if (archetype === 'mega_dio') {

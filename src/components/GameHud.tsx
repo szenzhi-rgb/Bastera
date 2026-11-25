@@ -1,5 +1,5 @@
 import React from 'react';
-import { SKILLS, STANDS, STAND_SKILL_TAGS, WEAPONS } from '../game/data';
+import { SKILLS, STANDS, STAND_SKILL_TAGS, TOTAL_BOSSES, WEAPONS } from '../game/data';
 import type { HudSnapshot, OrbId, SkillId, StatKey } from '../game/types';
 import {
   PixelBossPortrait,
@@ -24,6 +24,7 @@ interface GameHudProps {
   onOpenCaravanRider: () => void;
   onOpenDuelingArena: () => void;
   onOpenStandShrine: () => void;
+  onOpenSideQuests: () => void;
   onAllocateStat: (statKey: StatKey) => void;
   onTogglePause: () => void;
   onToggleMute: () => void;
@@ -48,6 +49,7 @@ const TOWN_LANDMARKS = [
   { id: 'shrine', label: 'Stand Shrine', x: 1558 },
   { id: 'onsen', label: 'Hot Spring', x: 2630 },
   { id: 'colosseum', label: 'Colosseum', x: 3285 },
+  { id: 'east_gate', label: 'East Gate', x: 3760 },
 ] as const;
 
 export const GameHud: React.FC<GameHudProps> = ({
@@ -66,6 +68,7 @@ export const GameHud: React.FC<GameHudProps> = ({
   onOpenCaravanRider,
   onOpenDuelingArena,
   onOpenStandShrine,
+  onOpenSideQuests,
   onAllocateStat,
   onTogglePause,
   onToggleMute,
@@ -89,6 +92,10 @@ export const GameHud: React.FC<GameHudProps> = ({
   const nearVanceInTown = hud.realm === 'isekai_town' && Math.abs(playerApproxX - 482) <= 125;
   const nearStandShrine = hud.realm === 'isekai_town' && Math.abs(playerApproxX - 1558) <= 125;
   const nearCaravanExterior = hud.realm === 'dungeon_exterior' && Math.abs(playerApproxX - 110) <= 135;
+  const activeSideQuest =
+    hud.sideQuests.find((q) => q.id === hud.trackedSideQuestId) ??
+    hud.sideQuests.find((q) => q.progress.stage === 1 || q.progress.stage === 2) ??
+    null;
 
   return (
     <div className="fixed inset-0 z-10 pointer-events-none flex flex-col justify-between p-3 sm:p-4">
@@ -398,6 +405,35 @@ export const GameHud: React.FC<GameHudProps> = ({
                   </div>
                 </div>
               )}
+
+              {activeSideQuest && activeSideQuest.progress.stage !== 3 && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  data-testid="side-quest-tracker-banner"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    onOpenSideQuests();
+                  }}
+                  className="text-left px-2 py-1 bg-[#1f0b12]/94 hover:bg-[#2d1019] border border-rose-400/75 font-pixel-mono text-[9px] text-amber-100 cursor-pointer tabular-nums"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-rose-300 font-bold truncate">
+                      ✦ SQ #{activeSideQuest.index}: {activeSideQuest.title}
+                    </span>
+                    <span className="text-yellow-300 shrink-0">
+                      {activeSideQuest.progress.twistRevealed
+                        ? 'BOSS ACTIVE'
+                        : `${Math.min(activeSideQuest.progress.kills, activeSideQuest.twistTriggerKills)}/${activeSideQuest.twistTriggerKills}`}
+                    </span>
+                  </div>
+                  <div className="text-amber-200/80 truncate mt-0.5">
+                    {activeSideQuest.progress.twistRevealed
+                      ? `Slay ${activeSideQuest.bossName} in ${activeSideQuest.targetRealm === 'outskirts_caves' ? 'Outskirts Caves' : 'Outskirts Forest'}`
+                      : `Zone: ${activeSideQuest.targetRealm === 'outskirts_caves' ? 'Outskirts Caves' : 'Outskirts Forest'}`}
+                  </div>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -687,48 +723,157 @@ export const GameHud: React.FC<GameHudProps> = ({
               </div>
             )}
 
-          {/* JJK Colosseum Active Duel VS Panel */}
+          {/* JJK Colosseum Top Best-of-3 Scoreboard Bar & Centered Countdown Overlay */}
           {hud.realm === 'dueling_arena' && hud.arenaDuel && (
-            <div
-              data-testid="arena-duel-hud"
-              className="bg-[#180a1c]/95 border-2 border-purple-400 px-4 py-2 min-w-[270px] max-w-[400px] shadow-[0_6px_20px_rgba(0,0,0,0.88)]"
-            >
-              <div className="flex items-center justify-between gap-2 text-[10px] font-pixel-mono">
-                <span className="text-amber-300 font-bold truncate">
-                  ⚔ {hud.arenaDuel.name} · {hud.arenaDuel.title}
-                </span>
-                <span className="text-purple-200 shrink-0">
-                  {hud.arenaDuel.hp}/{hud.arenaDuel.maxHp}
-                </span>
+            <>
+              <div
+                data-testid="arena-duel-hud"
+                className="fixed inset-x-0 top-14 z-20 pointer-events-none flex flex-col items-center px-3"
+              >
+                <div className="w-full max-w-[660px] bg-[#14091a]/95 border-2 border-purple-400 px-3.5 py-2 shadow-[0_6px_22px_rgba(0,0,0,0.9)]">
+                  {/* Top Win / Loss Counter Row */}
+                  <div className="grid grid-cols-12 items-center gap-2">
+                    {/* Left: Player Wins & Losses */}
+                    <div className="col-span-4 min-w-0">
+                      <div className="flex items-center justify-between gap-1 text-[10px] font-pixel-mono tabular-nums">
+                        <span className="text-amber-200 font-bold truncate">YOU</span>
+                        <span data-testid="arena-player-record" className="text-emerald-300 font-bold whitespace-nowrap">
+                          {hud.arenaDuel.playerRoundWins}W · {hud.arenaDuel.opponentRoundWins}L
+                        </span>
+                      </div>
+                      <div className="w-full h-2.5 bg-[#2a1230] border border-amber-400/60 mt-1 overflow-hidden">
+                        <div
+                          className="h-full bg-amber-400 transition-[width] duration-150"
+                          style={{ width: `${hpPct}%` }}
+                        />
+                      </div>
+                      <div className="text-[9px] font-pixel-mono text-amber-100/85 mt-0.5 tabular-nums">
+                        {hud.hp}/{hud.maxHp} HP
+                      </div>
+                    </div>
+
+                    {/* Center: Round Counter & Round History Pips */}
+                    <div className="col-span-4 flex flex-col items-center text-center">
+                      <div
+                        data-testid="arena-round-label"
+                        className="font-pixel-mono text-[10px] font-bold tracking-wider text-cyan-200 tabular-nums"
+                      >
+                        ROUND {hud.arenaDuel.roundNumber} / 3
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {[0, 1, 2].map((idx) => {
+                          const res = hud.arenaDuel!.roundHistory[idx];
+                          return (
+                            <span
+                              key={idx}
+                              className={`px-1.5 py-0.5 border text-[9px] font-pixel-mono font-bold tabular-nums ${
+                                res === 'player'
+                                  ? 'bg-amber-950 border-amber-300 text-amber-200'
+                                  : res === 'opponent'
+                                    ? 'bg-fuchsia-950 border-fuchsia-400 text-fuchsia-200'
+                                    : idx + 1 === hud.arenaDuel!.roundNumber
+                                      ? 'bg-cyan-950 border-cyan-300 text-cyan-100'
+                                      : 'bg-[#1f1026] border-purple-700/60 text-purple-300/60'
+                              }`}
+                            >
+                              R{idx + 1}
+                              {res === 'player' ? ' W' : res === 'opponent' ? ' L' : ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <div className="text-[9px] font-pixel-mono text-purple-200/80 mt-0.5 tabular-nums">
+                        ATK:{hud.arenaDuel.matchedAtk} · BEST OF 3
+                      </div>
+                    </div>
+
+                    {/* Right: Opponent Wins & Losses */}
+                    <div className="col-span-4 min-w-0 text-right">
+                      <div className="flex items-center justify-between gap-1 text-[10px] font-pixel-mono tabular-nums">
+                        <span data-testid="arena-opponent-record" className="text-fuchsia-300 font-bold whitespace-nowrap">
+                          {hud.arenaDuel.opponentRoundWins}W · {hud.arenaDuel.playerRoundWins}L
+                        </span>
+                        <span className="text-amber-300 font-bold truncate">
+                          {hud.arenaDuel.name}
+                        </span>
+                      </div>
+                      <div className="w-full h-2.5 bg-[#2a1230] border border-fuchsia-400/60 mt-1 overflow-hidden">
+                        <div
+                          className="h-full bg-fuchsia-500 transition-[width] duration-150 ml-auto"
+                          style={{
+                            width: `${Math.max(0, (hud.arenaDuel.hp / Math.max(1, hud.arenaDuel.maxHp)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-1 text-[9px] font-pixel-mono text-purple-200/85 mt-0.5 tabular-nums">
+                        <span className="text-yellow-300 font-bold truncate">
+                          {hud.arenaDuel.aiActionTag ?? hud.arenaDuel.title}
+                        </span>
+                        <span className="shrink-0">
+                          {hud.arenaDuel.hp}/{hud.arenaDuel.maxHp}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {hud.arenaDuel.activeDomain && (
+                    <div
+                      data-testid="arena-domain-hud"
+                      className="mt-1.5 px-2 py-0.5 bg-[#290b3d] border border-cyan-300 text-center font-pixel-mono text-[9px] font-bold text-cyan-100 tabular-nums"
+                    >
+                      DOMAIN EXPANSION: {hud.arenaDuel.activeDomain.name.toUpperCase()} ({hud.arenaDuel.activeDomain.secondsLeft.toFixed(1)}s)
+                    </div>
+                  )}
+                  {hud.arenaDuel.activeSkillBanner && (
+                    <div className="mt-1 px-2 py-0.5 bg-purple-950 border border-fuchsia-300 text-center font-pixel-mono text-[10px] font-bold text-amber-200">
+                      {hud.arenaDuel.activeSkillBanner}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="w-full h-2.5 bg-[#2a1230] border border-purple-400/50 mt-1">
+
+              {(hud.arenaDuel.roundPhase === 'countdown' ||
+                hud.arenaDuel.roundPhase === 'round_over' ||
+                (hud.arenaDuel.roundPhase === 'fighting' && hud.arenaDuel.fightBannerActive)) && (
                 <div
-                  className="h-full bg-fuchsia-500 transition-[width] duration-150"
-                  style={{
-                    width: `${Math.max(0, (hud.arenaDuel.hp / Math.max(1, hud.arenaDuel.maxHp)) * 100)}%`,
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-between gap-2 text-[9px] font-pixel-mono text-cyan-200 mt-1">
-                <span>3x MATCH HP · ATK:{hud.arenaDuel.matchedAtk}</span>
-                {hud.arenaDuel.aiActionTag && (
-                  <span className="text-yellow-300 font-bold">{hud.arenaDuel.aiActionTag}</span>
-                )}
-              </div>
-              {hud.arenaDuel.activeDomain && (
-                <div
-                  data-testid="arena-domain-hud"
-                  className="mt-1 px-2 py-0.5 bg-[#290b3d] border border-cyan-300 text-center font-pixel-mono text-[9px] font-bold text-cyan-100"
+                  data-testid="arena-countdown-overlay"
+                  className="fixed inset-0 z-20 pointer-events-none flex items-center justify-center"
                 >
-                  🌀 DOMAIN EXPANSION: {hud.arenaDuel.activeDomain.name.toUpperCase()} ({hud.arenaDuel.activeDomain.secondsLeft.toFixed(1)}s)
+                  <div className="bg-[#120718]/92 border-2 border-amber-300 px-8 py-4 text-center shadow-[0_8px_32px_rgba(0,0,0,0.92)]">
+                    {hud.arenaDuel.roundPhase === 'countdown' && (
+                      <>
+                        <div className="font-pixel-mono text-xs font-bold tracking-widest text-cyan-300">
+                          ROUND {hud.arenaDuel.roundNumber} OF 3
+                        </div>
+                        <div className="font-display text-4xl sm:text-5xl font-bold text-amber-300 mt-1 tabular-nums">
+                          {hud.arenaDuel.countdownSeconds > 0 ? hud.arenaDuel.countdownSeconds : 'READY'}
+                        </div>
+                        <div className="font-pixel-mono text-[10px] text-purple-200 mt-1">
+                          FIRST TO 2 WINS · CONTROLS LOCKED
+                        </div>
+                      </>
+                    )}
+                    {hud.arenaDuel.roundPhase === 'fighting' && hud.arenaDuel.fightBannerActive && (
+                      <div className="font-display text-4xl sm:text-5xl font-bold tracking-wider text-yellow-300">
+                        FIGHT!
+                      </div>
+                    )}
+                    {hud.arenaDuel.roundPhase === 'round_over' && (
+                      <>
+                        <div className="font-display text-2xl sm:text-3xl font-bold text-amber-200">
+                          {hud.arenaDuel.lastRoundWinner === 'player'
+                            ? `ROUND ${hud.arenaDuel.roundNumber} WON!`
+                            : `ROUND ${hud.arenaDuel.roundNumber} LOST!`}
+                        </div>
+                        <div className="font-pixel-mono text-xs text-cyan-200 mt-1 tabular-nums">
+                          SCORE: YOU {hud.arenaDuel.playerRoundWins} - {hud.arenaDuel.opponentRoundWins} {hud.arenaDuel.name.toUpperCase()}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
-              {hud.arenaDuel.activeSkillBanner && (
-                <div className="mt-1 px-2 py-0.5 bg-purple-950 border border-fuchsia-300 text-center font-pixel-mono text-[10px] font-bold text-amber-200">
-                  ✦ {hud.arenaDuel.activeSkillBanner}
-                </div>
-              )}
-            </div>
+            </>
           )}
 
           {hud.worldRole === 'guest' && (
@@ -770,7 +915,7 @@ export const GameHud: React.FC<GameHudProps> = ({
               className="flex items-center gap-3 bg-[#1a0514]/96 border-2 border-yellow-300 px-4 py-2 shadow-[0_6px_24px_rgba(244,63,94,0.65)] max-w-[420px]"
             >
               <PixelBossPortrait
-                bossIndex={hud.megaCutscene.archetype === 'gyro_zeppeli' ? 101 : 901}
+                bossIndex={hud.megaCutscene.archetype === 'gyro_zeppeli' ? TOTAL_BOSSES + 1 : 901}
                 megaArchetype={
                   hud.megaCutscene.archetype === 'gyro_zeppeli' ? undefined : hud.megaCutscene.archetype
                 }
@@ -842,6 +987,20 @@ export const GameHud: React.FC<GameHudProps> = ({
             className="px-2 h-9 flex items-center justify-center bg-[#101e30] border border-cyan-400/65 hover:border-cyan-200 font-pixel-mono text-[10px] font-bold text-cyan-200 cursor-pointer whitespace-nowrap"
           >
             WORLDS ({hud.worldPlayerCount})
+          </button>
+          <button
+            type="button"
+            aria-label="Open Side Quests Journal"
+            title="Outskirts Side Quests [Q]"
+            data-testid="open-side-quests-btn"
+            tabIndex={-1}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onOpenSideQuests();
+            }}
+            className="px-2.5 h-9 flex items-center justify-center bg-[#2a0f18] border border-rose-400/70 hover:border-rose-200 font-pixel-mono text-[10px] font-bold text-rose-200 cursor-pointer whitespace-nowrap"
+          >
+            QUESTS [Q]
           </button>
           <button
             type="button"

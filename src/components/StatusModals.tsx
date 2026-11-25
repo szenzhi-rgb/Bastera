@@ -41,7 +41,7 @@ export const StatusModals: React.FC<StatusModalsProps> = ({
           {isPause
             ? 'Even citadel guardians wait politely while you catch your breath.'
             : isVictory
-              ? 'You survived 120 dramatic villains and a terrifying wax budget.'
+              ? 'You survived 15 dramatic villains, Gyro Zeppeli, and a terrifying wax budget.'
               : 'Your bones decorate the royal carpet. Try again from the last brazier.'}
         </p>
 

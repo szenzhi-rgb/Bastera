@@ -28,6 +28,9 @@ import type {
   PurpleFlameKind,
   PurpleFlameZone,
   RealmMode,
+  SideQuestDef,
+  SideQuestId,
+  SideQuestProgress,
   TownHouseDamage,
   TownRaiderId,
   WeaponId,
@@ -270,7 +273,7 @@ export const WARDROBE_CATALOG: WardrobeCatalogItem[] = [
 
 export const ISEKAI_ROOM_BOUNDS: Record<RealmMode, { minX: number; maxX: number }> = {
   citadel: { minX: -640, maxX: 80000 },
-  isekai_town: { minX: 20, maxX: 3680 },
+  isekai_town: { minX: 20, maxX: 3960 },
   isekai_guild: { minX: 24, maxX: 860 },
   isekai_wardrobe: { minX: 24, maxX: 460 },
   isekai_potion_shop: { minX: 24, maxX: 520 },
@@ -281,7 +284,495 @@ export const ISEKAI_ROOM_BOUNDS: Record<RealmMode, { minX: number; maxX: number 
   demon_realm: { minX: 20, maxX: 999999 },
   demon_king_arena: { minX: 24, maxX: 1480 },
   dueling_arena: { minX: 24, maxX: 1240 },
+  outskirts_forest: { minX: 20, maxX: 2400 },
+  outskirts_caves: { minX: 20, maxX: 2200 },
 };
+
+export const SIDE_QUESTS: SideQuestDef[] = [
+  {
+    id: 'sq_01_crimson_tithe',
+    index: 1,
+    title: 'The Crimson Tithe of East Gate',
+    giverName: 'Warden Kaelen',
+    giverRoleLabel: 'Disgraced Gate Captain',
+    giverRealm: 'isekai_town',
+    giverX: 3630,
+    coatColor: '#7f1d1d',
+    hairColor: '#cbd5e1',
+    shirtColor: '#1e293b',
+    targetRealm: 'outskirts_forest',
+    twistTriggerKills: 3,
+    hookSummary:
+      'Kaelen begs you to cull feral highwaymen beyond the Royal Gate who supposedly butchered his tax caravan.',
+    giverOpeningDialogue: [
+      'Knight! Bandits ambushed my royal tax sled just outside the Solaris East Gate and slit every courier’s throat!',
+      'Slaughter 3 Cutthroats in the Outskirts Forest and flush out their scarred butcher, Vane, before nightfall.',
+    ],
+    twistTitle: 'PLOT TWIST: STAGED SLAUGHTER',
+    twistRevelation:
+      'A dying courier’s ledger proves Kaelen sold the patrol route to Vane and paid him to murder the witnesses so Kaelen could embezzle the crown’s bullion.',
+    twistDialogue: [
+      'A torn manifest falls from the corpse — Warden Kaelen’s wax seal authorized the ambush to silence the tax clerks!',
+      'Butcher Vane steps through the bloody ferns, grinning: "Kaelen paid double for fresh knight ribs!"',
+    ],
+    bossName: 'Butcher Vane the Tollkeeper',
+    bossTitle: 'Hired Massacre Enforcer',
+    bossArchetype: 'bandit_brute',
+    bossSpawnX: 1480,
+    bossHp: 340,
+    bossDamage: 18,
+    bossDefeatLine: 'Tell Kaelen... the ledger still has his bastard’s name on page four...',
+    rewardGold: 260,
+    rewardStatPoints: 3,
+    rewardStarStones: 2,
+  },
+  {
+    id: 'sq_02_butcher_well',
+    index: 2,
+    title: 'Bones in the Butcher’s Well',
+    giverName: 'Widow Marlowe',
+    giverRoleLabel: 'Weeping Seamstress',
+    giverRealm: 'isekai_town',
+    giverX: 1960,
+    coatColor: '#312e81',
+    hairColor: '#f8fafc',
+    shirtColor: '#be185d',
+    targetRealm: 'outskirts_forest',
+    twistTriggerKills: 4,
+    hookSummary:
+      'Her apprentice vanished gathering crimson berries near the cursed forest hollow — only a bloodstained thimble returned.',
+    giverOpeningDialogue: [
+      'Every full moon, wolves drag apprentices from Solaris toward the eastern timberline and leave gnawed boots at my door.',
+      'Hunt 4 beasts in the Outskirts Forest and bring me the head of whatever lurks beside the Dry Well!',
+    ],
+    twistTitle: 'PLOT TWIST: THE SKIN-THREADER’S CONTRACT',
+    twistRevelation:
+      'The missing youths were stitched into living armor by Marlowe’s own twin, Flesh-Weaver Orlov, using thread spun inside her cellar.',
+    twistDialogue: [
+      'A silver sewing needle stamped "M. Marlowe" skewers a forest corpse — she didn’t lose her apprentices, she supplied the hide!',
+      'Out of the hollow charges Flesh-Weaver Orlov, waving blood-soaked shears!',
+    ],
+    bossName: 'Flesh-Weaver Orlov',
+    bossTitle: 'Hollow-Well Bone Skinner',
+    bossArchetype: 'bandit_assassin',
+    bossSpawnX: 1680,
+    bossHp: 380,
+    bossDamage: 21,
+    bossDefeatLine: 'Sis swore no knight would check the teeth inside the lining...',
+    rewardGold: 310,
+    rewardStatPoints: 3,
+    rewardStarStones: 2,
+  },
+  {
+    id: 'sq_03_glass_bride',
+    index: 3,
+    title: 'Vows of the Glass Bride',
+    giverName: 'Father Severin',
+    giverRoleLabel: 'Excommunicated Confessor',
+    giverRealm: 'isekai_town',
+    giverX: 2890,
+    coatColor: '#18181b',
+    hairColor: '#94a3b8',
+    shirtColor: '#991b1b',
+    targetRealm: 'outskirts_caves',
+    twistTriggerKills: 3,
+    hookSummary:
+      'Severin claims cultists abducted a noble bride into the Outskirts Caves for a midnight wedding of blood.',
+    giverOpeningDialogue: [
+      'Heretics dragged Lady Isolde down into the Outskirts Caves, promising to crown her in molten glass and bone!',
+      'Cut down 3 horrors inside the caves and shatter their High Celebrant before the bell tolls.',
+    ],
+    twistTitle: 'PLOT TWIST: NO VICTIM LEFT ALIVE',
+    twistRevelation:
+      'Lady Isolde slaughtered her own wedding party to ascend as a Demon Bride, and Severin sent you down solely as her final sacrificial groom.',
+    twistDialogue: [
+      'The severed fingers on the cavern altar belong to Severin’s own acolytes — Isolde herself signed the pact in arterial ink!',
+      'Bride of Shattered Glass Isolde descends on crimson wings: "Severin promised me a knight’s warm spine!"',
+    ],
+    bossName: 'Isolde, Bride of Shattered Glass',
+    bossTitle: 'Ascended Blood-Vow Fiend',
+    bossArchetype: 'demon_succubus',
+    bossSpawnX: 1320,
+    bossHp: 420,
+    bossDamage: 22,
+    bossDefeatLine: 'Till death... finally tears the veil...',
+    rewardGold: 360,
+    rewardStatPoints: 4,
+    rewardStarStones: 3,
+  },
+  {
+    id: 'sq_04_plague_apothecary',
+    index: 4,
+    title: 'Bitter Marrow Tonic',
+    giverName: 'Sawbones Gideon',
+    giverRoleLabel: 'Alleyway Chirurgeon',
+    giverRealm: 'isekai_town',
+    giverX: 745,
+    coatColor: '#064e3b',
+    hairColor: '#d97706',
+    shirtColor: '#f1f5f9',
+    targetRealm: 'outskirts_forest',
+    twistTriggerKills: 4,
+    hookSummary:
+      'A blight boils out of the Outskirts Forest, turning travelers’ veins black — Gideon wants samples to brew an antidote.',
+    giverOpeningDialogue: [
+      'Three refugees staggered in this morning coughing black tar and clawing their own throats open!',
+      'Cull 4 infected Stalkers in the Outskirts Forest so I can isolate the source before it poisons Solaris Town.',
+    ],
+    twistTitle: 'PLOT TWIST: PATIENT ZERO BY DESIGN',
+    twistRevelation:
+      'Gideon spiked Solaris Town’s cheap ale with cave-spore rot so he could sell the antidote at extortionate prices — the "source" is his hired plague carrier.',
+    twistDialogue: [
+      'Every flask strapped to the fallen forest stalkers bears Gideon’s crimson apothecary stamp!',
+      'Plague-Bearer Malrik erupts from the brush, swinging an infected censer: "Nobody stops Sawbones’ harvest!"',
+    ],
+    bossName: 'Plague-Bearer Malrik',
+    bossTitle: 'Walking Blight Vector',
+    bossArchetype: 'bandit_pyromancer',
+    bossSpawnX: 1840,
+    bossHp: 450,
+    bossDamage: 24,
+    bossDefeatLine: 'Drink... the well water... Gideon already poured it...',
+    rewardGold: 410,
+    rewardStatPoints: 4,
+    rewardStarStones: 3,
+  },
+  {
+    id: 'sq_05_hollow_bell',
+    index: 5,
+    title: 'Tolling of the Hollow Bell',
+    giverName: 'Ranger Lyra',
+    giverRoleLabel: 'Bloodied Forest Tracker',
+    giverRealm: 'outskirts_forest',
+    giverX: 290,
+    coatColor: '#14532d',
+    hairColor: '#fbbf24',
+    shirtColor: '#451a03',
+    targetRealm: 'outskirts_forest',
+    twistTriggerKills: 5,
+    hookSummary:
+      'Lyra’s squad was ambushed near the moss cliffs by goblin raiders wearing stolen royal tabards.',
+    giverOpeningDialogue: [
+      'My scout company walked into ironwire snares while mapping the eastern trail — only I crawled out with half a quiver!',
+      'Clear 5 raiders out of the Outskirts Forest and track down the Hobgoblin War-Ringer mocking us with our captain’s bell.',
+    ],
+    twistTitle: 'PLOT TWIST: THE TRAITOR’S WHISTLE',
+    twistRevelation:
+      'Lyra cut her own forearm and blew the snare whistle to purge her whistleblowing squadmates before they reported her smuggling Demon Realm iron.',
+    twistDialogue: [
+      'A goblin corpse clutches a gold-inlaid scout whistle — identical to the one hanging inside Lyra’s cloak!',
+      'War-Ringer Grakthar slams his spiked maul: "Green-cloak girl sold soft knights cheap!"',
+    ],
+    bossName: 'War-Ringer Grakthar',
+    bossTitle: 'Iron-Snare Hobgoblin Tyrant',
+    bossArchetype: 'hobgoblin',
+    bossSpawnX: 1980,
+    bossHp: 490,
+    bossDamage: 25,
+    bossDefeatLine: 'Little ranger... lied to... both of us...',
+    rewardGold: 460,
+    rewardStatPoints: 4,
+    rewardStarStones: 3,
+  },
+  {
+    id: 'sq_06_twin_fang_oath',
+    index: 6,
+    title: 'The Twin-Fang Blood Oath',
+    giverName: 'Sellsword Thorne',
+    giverRoleLabel: 'One-Armed Deserter',
+    giverRealm: 'outskirts_forest',
+    giverX: 1080,
+    coatColor: '#3f3f46',
+    hairColor: '#dc2626',
+    shirtColor: '#09090b',
+    targetRealm: 'outskirts_caves',
+    twistTriggerKills: 4,
+    hookSummary:
+      'Thorne asks you to kill his estranged brother inside the Outskirts Caves for abandoning their garrison.',
+    giverOpeningDialogue: [
+      'My brother took our twin heirloom blades and fled into the Outskirts Caves when the demons struck.',
+      'Carve through 4 cave fiends and execute the coward Garret before he sells his soul deeper underground!',
+    ],
+    twistTitle: 'PLOT TWIST: THE SEVERED ARM’S DEBT',
+    twistRevelation:
+      'Garret stayed behind holding the cave mouth for three days so Thorne could escape — Thorne took the credit, blamed Garret as a deserter, and wants him silenced forever.',
+    twistDialogue: [
+      'Torn garrison banners line the cavern floor — Garret held this choke point alone while Thorne ran!',
+      'Phantom Duelist Garret raises a jagged phantom blade: "Did my brother tell you whose blood bought his pension?!"',
+    ],
+    bossName: 'Garret the Betrayed',
+    bossTitle: 'Vengeful Garrison Specter',
+    bossArchetype: 'cursed_armor',
+    bossSpawnX: 1460,
+    bossHp: 540,
+    bossDamage: 27,
+    bossDefeatLine: 'Tell Thorne... my watch... is finally over...',
+    rewardGold: 520,
+    rewardStatPoints: 5,
+    rewardStarStones: 4,
+  },
+  {
+    id: 'sq_07_ash_archivist',
+    index: 7,
+    title: 'Codex of Flayed Ink',
+    giverName: 'Archivist Vesper',
+    giverRoleLabel: 'Burned Royal Scribe',
+    giverRealm: 'outskirts_forest',
+    giverX: 1790,
+    coatColor: '#4c1d95',
+    hairColor: '#e2e8f0',
+    shirtColor: '#0f172a',
+    targetRealm: 'outskirts_caves',
+    twistTriggerKills: 5,
+    hookSummary:
+      'Heretics stole a royal grimoire from Vesper’s wagon and retreated into the dark basalt shafts.',
+    giverOpeningDialogue: [
+      'My face was blistered when cinder-cultists torched my archive coach and carried the Solar Codex into the caves!',
+      'Destroy 5 cavern fiends and slay High Censor Morvath before he transcribes the forbidden seal.',
+    ],
+    twistTitle: 'PLOT TWIST: THE CODEX WRITTEN ON SKIN',
+    twistRevelation:
+      'The "Solar Codex" isn’t a history book — it is a sacrificial summoning ledger authored by Vesper himself to feed Solaris citizens to a Demon Tank.',
+    twistDialogue: [
+      'Pages torn from the stolen codex show Solaris Town’s census bound inside tanned human parchment in Vesper’s handwriting!',
+      'High Censor Morvath ignites the cavern: "At least I burned that monster’s script — now die with the secret!"',
+    ],
+    bossName: 'High Censor Morvath',
+    bossTitle: 'Heretic Flame Judge',
+    bossArchetype: 'cultist_mage',
+    bossSpawnX: 1620,
+    bossHp: 580,
+    bossDamage: 29,
+    bossDefeatLine: 'Burn Vesper’s library... before the last page turns...',
+    rewardGold: 590,
+    rewardStatPoints: 5,
+    rewardStarStones: 4,
+  },
+  {
+    id: 'sq_08_chained_hound',
+    index: 8,
+    title: 'Blood for the Chained Hound',
+    giverName: 'Miner Balthus',
+    giverRoleLabel: 'Half-Blinded Pit Foreman',
+    giverRealm: 'outskirts_caves',
+    giverX: 250,
+    coatColor: '#78350f',
+    hairColor: '#475569',
+    shirtColor: '#f59e0b',
+    targetRealm: 'outskirts_caves',
+    twistTriggerKills: 5,
+    hookSummary:
+      'A cave-in trapped Balthus’s crew behind feral cavern gargoyles — he pleads for someone strong to break through.',
+    giverOpeningDialogue: [
+      'Twelve miners are coughing in the dark behind that basalt collapse while winged stone beasts tear at the timber props!',
+      'Smash 5 beasts inside the Outskirts Caves and butcher the Obsidian Maw guarding the lower shaft.',
+    ],
+    twistTitle: 'PLOT TWIST: SEALED BY THE FOREMAN',
+    twistRevelation:
+      'There were no survivors to rescue — Balthus intentionally detonated the supports to bury twelve union miners who discovered his cursed blood-stone vein.',
+    twistDialogue: [
+      'Blasting caps and iron wedges sit on the outside of the rubble — someone sealed those twelve men in from here!',
+      'Obsidian Maw Ravager drops from the vault ceiling, jaws dripping with red quartz!',
+    ],
+    bossName: 'Obsidian Maw Ravager',
+    bossTitle: 'Cursed Vein Gargoyle Alpha',
+    bossArchetype: 'gargoyle_charger',
+    bossSpawnX: 1760,
+    bossHp: 640,
+    bossDamage: 31,
+    bossDefeatLine: '*Shatters into twelve weeping crimson shards*',
+    rewardGold: 660,
+    rewardStatPoints: 5,
+    rewardStarStones: 4,
+  },
+  {
+    id: 'sq_09_velvet_gallows',
+    index: 9,
+    title: 'Sermon of the Velvet Gallows',
+    giverName: 'Inquisitor Mireille',
+    giverRoleLabel: 'Crimson Judiciary Envoy',
+    giverRealm: 'outskirts_caves',
+    giverX: 760,
+    coatColor: '#9f1239',
+    hairColor: '#09090b',
+    shirtColor: '#fef3c7',
+    targetRealm: 'outskirts_caves',
+    twistTriggerKills: 6,
+    hookSummary:
+      'Mireille hunts a bloodthirsty executioner who turned the deep gallery into an open slaughterhouse.',
+    giverOpeningDialogue: [
+      'The Crown ordered me to purge an apostate executioner hiding in the deep caverns with stolen demon lightning.',
+      'Cut down 6 cave monsters and put Lord Hangman Cassian in his own iron collar!',
+    ],
+    twistTitle: 'PLOT TWIST: THE CROWN’S CLEANUP BLADE',
+    twistRevelation:
+      'Cassian WAS Mireille’s loyal torture-master — she ordered every prisoner murdered and now uses you to liquidate Cassian so no royal court can testify.',
+    twistDialogue: [
+      'Cassian’s gallows warrants carry Mireille’s own gilded dagger signature beside every prisoner number!',
+      'Hangman Cassian crackles with violet arcs: "So Mireille sent an outsider to chop off her own right hand?!"',
+    ],
+    bossName: 'Lord Hangman Cassian',
+    bossTitle: 'Tempest Gallows Executioner',
+    bossArchetype: 'demon_lightning',
+    bossSpawnX: 1900,
+    bossHp: 710,
+    bossDamage: 33,
+    bossDefeatLine: 'Watch your throat... knight... Mireille keeps sharp velvet...',
+    rewardGold: 740,
+    rewardStatPoints: 6,
+    rewardStarStones: 5,
+  },
+  {
+    id: 'sq_10_pale_regent',
+    index: 10,
+    title: 'Throne of the Pale Regent',
+    giverName: 'Prince Alistair the Exiled',
+    giverRoleLabel: 'Hooded Royal Heir',
+    giverRealm: 'outskirts_caves',
+    giverX: 1210,
+    coatColor: '#1e1b4b',
+    hairColor: '#fef08a',
+    shirtColor: '#be123c',
+    targetRealm: 'outskirts_caves',
+    twistTriggerKills: 6,
+    hookSummary:
+      'The exiled prince claims an Abyssal Usurper poisoned his father’s bloodline and nested inside the deepest cave.',
+    giverOpeningDialogue: [
+      'My father’s crown was stolen by a demon warlord hiding beneath these caves — only his heart can cleanse Solaris Town!',
+      'Slay 6 cave fiends to draw out Dread Usurper Behemoth and reclaim the murdered king’s honor!',
+    ],
+    twistTitle: 'PLOT TWIST: THE PATRICIDE PRINCE',
+    twistRevelation:
+      'Alistair poisoned the Old King himself and forged an oath with the Abyssal Vanguard — the creature in the deep cave was the last loyal Royal Champion mutated while defending the king!',
+    twistDialogue: [
+      'A shattered royal signet bears tooth-marks and Alistair’s own poison vial — the usurper was NEVER the beast!',
+      'Dread Champion Malakor-Vane roars in agony: "ALISTAIR SLAUGHTERED HIS OWN FATHER — SPARE NONE OF HIS LIES!!"',
+    ],
+    bossName: 'Dread Champion Vane-Rex',
+    bossTitle: 'Mutated Loyal Shield of Old Solaris',
+    bossArchetype: 'demon_tank',
+    bossSpawnX: 2040,
+    bossHp: 820,
+    bossDamage: 36,
+    bossDefeatLine: 'For the true king... strike down... the lying prince...',
+    rewardGold: 980,
+    rewardStatPoints: 8,
+    rewardStarStones: 6,
+  },
+];
+
+export function createInitialSideQuestProgress(): Partial<Record<SideQuestId, SideQuestProgress>> {
+  const out: Partial<Record<SideQuestId, SideQuestProgress>> = {};
+  for (const q of SIDE_QUESTS) {
+    out[q.id] = {
+      stage: 0,
+      kills: 0,
+      twistRevealed: false,
+      bossSpawned: false,
+    };
+  }
+  return out;
+}
+
+export function isQuestTargetEnemyKill(
+  quest: SideQuestDef,
+  realm: RealmMode,
+  enemy: EnemyState,
+): boolean {
+  if (enemy.sideQuestId) return false;
+  return realm === quest.targetRealm;
+}
+
+export function createOutskirtsAmbientEnemies(
+  realm: 'outskirts_forest' | 'outskirts_caves',
+  playerLevel = 1,
+): EnemyState[] {
+  const levelMult = Math.max(1, 1 + (Math.max(1, playerLevel) - 1) * 0.14);
+  if (realm === 'outskirts_forest') {
+    const specs: { arch: EnemyArchetype; name: string; x: number; w: number; h: number; hp: number; dmg: number; yOff?: number }[] = [
+      { arch: 'bandit_fighter', name: 'Forest Cutthroat', x: 460, w: 18, h: 26, hp: 78, dmg: 13 },
+      { arch: 'goblin_normal', name: 'Briar Stalker Goblin', x: 690, w: 17, h: 22, hp: 56, dmg: 10 },
+      { arch: 'bandit_archer', name: 'Canopy Crossbowman', x: 920, w: 18, h: 26, hp: 62, dmg: 13 },
+      { arch: 'bandit_assassin', name: 'Thorn-Cloak Flanker', x: 1180, w: 18, h: 25, hp: 72, dmg: 16 },
+      { arch: 'hobgoblin', name: 'Mire Hobgoblin Marauder', x: 1440, w: 22, h: 30, hp: 108, dmg: 16 },
+      { arch: 'bandit_pyromancer', name: 'Ash-Bramble Pyromancer', x: 1700, w: 18, h: 27, hp: 76, dmg: 17 },
+      { arch: 'bandit_brute', name: 'Timber-Gate Enforcer', x: 1960, w: 24, h: 32, hp: 132, dmg: 19 },
+    ];
+    return specs.map((s, i) =>
+      makeEnemy(
+        `out_for_${Date.now()}_${i}`,
+        s.arch,
+        s.name,
+        s.x,
+        FLOOR_Y - (s.yOff ?? s.h),
+        Math.round(s.hp * levelMult),
+        s.w,
+        s.h,
+        'forest',
+        Math.round(22 * levelMult),
+        Math.round(s.dmg * levelMult),
+        false,
+        1.02,
+      ),
+    );
+  }
+  const specs: { arch: EnemyArchetype; name: string; x: number; w: number; h: number; hp: number; dmg: number; yOff?: number }[] = [
+    { arch: 'shadow_bat', name: 'Blood-Cavern Bat', x: 420, w: 16, h: 16, hp: 58, dmg: 12, yOff: 54 },
+    { arch: 'gargoyle_charger', name: 'Basalt Cave Gargoyle', x: 680, w: 20, h: 26, hp: 114, dmg: 17 },
+    { arch: 'cultist_mage', name: 'Subterranean Blood-Cantor', x: 960, w: 20, h: 26, hp: 96, dmg: 18 },
+    { arch: 'cursed_armor', name: 'Entombed Crypt Knight', x: 1240, w: 22, h: 28, hp: 138, dmg: 20 },
+    { arch: 'demon_lightning', name: 'Abyssal Cave Striker', x: 1510, w: 20, h: 28, hp: 124, dmg: 21 },
+    { arch: 'demon_succubus', name: 'Deep Vault Succubus', x: 1780, w: 20, h: 28, hp: 110, dmg: 19, yOff: 66 },
+    { arch: 'demon_tank', name: 'Cavern Obsidian Juggernaut', x: 2020, w: 24, h: 32, hp: 172, dmg: 24 },
+  ];
+  return specs.map((s, i) =>
+    makeEnemy(
+      `out_cav_${Date.now()}_${i}`,
+      s.arch,
+      s.name,
+      s.x,
+      FLOOR_Y - (s.yOff ?? s.h),
+      Math.round(s.hp * levelMult),
+      s.w,
+      s.h,
+      'volcano',
+      Math.round(30 * levelMult),
+      Math.round(s.dmg * levelMult),
+      false,
+      1.06,
+      0.16,
+    ),
+  );
+}
+
+export function createSideQuestBossEnemy(
+  quest: SideQuestDef,
+  bossesDefeated = 0,
+): EnemyState {
+  const scale = 1 + Math.min(2.5, Math.max(0, bossesDefeated) * 0.12);
+  const hp = Math.round(quest.bossHp * scale);
+  const dmg = Math.round(quest.bossDamage * (1 + Math.min(1.5, Math.max(0, bossesDefeated) * 0.08)));
+  const isFly = quest.bossArchetype === 'demon_succubus';
+  const en = makeEnemy(
+    `sq_boss_${quest.id}`,
+    quest.bossArchetype,
+    quest.bossName,
+    quest.bossSpawnX,
+    FLOOR_Y - (isFly ? 68 : 34),
+    hp,
+    24,
+    34,
+    quest.targetRealm === 'outskirts_caves' ? 'volcano' : 'forest',
+    quest.rewardGold,
+    dmg,
+    true,
+    1.36,
+    quest.targetRealm === 'outskirts_caves' ? 0.24 : 0.1,
+    quest.targetRealm === 'outskirts_caves' ? 'void_eclipse' : 'crimson_ash',
+  );
+  en.sideQuestId = quest.id;
+  return en;
+}
 
 export const DUNGEON_SECTOR_WIDTH = 960;
 
@@ -1454,6 +1945,20 @@ export function buildIsekaiRoomPlatforms(realm: RealmMode): Platform[] {
       { id: 'arena_dais_m', x: 540, y: FLOOR_Y - 72, w: 160, h: 12, kind: 'bridge' },
       { id: 'arena_dais_r', x: 910, y: FLOOR_Y - 48, w: 120, h: 12, kind: 'bridge' },
     );
+  } else if (realm === 'outskirts_forest') {
+    plats.push(
+      { id: 'for_bough_1', x: 380, y: FLOOR_Y - 46, w: 110, h: 10, kind: 'bridge' },
+      { id: 'for_bough_2', x: 840, y: FLOOR_Y - 64, w: 120, h: 10, kind: 'bridge' },
+      { id: 'for_bough_3', x: 1340, y: FLOOR_Y - 50, w: 116, h: 10, kind: 'bridge' },
+      { id: 'for_bough_4', x: 1880, y: FLOOR_Y - 58, w: 110, h: 10, kind: 'bridge' },
+    );
+  } else if (realm === 'outskirts_caves') {
+    plats.push(
+      { id: 'cav_ledge_1', x: 350, y: FLOOR_Y - 48, w: 110, h: 12, kind: 'brick' },
+      { id: 'cav_ledge_2', x: 820, y: FLOOR_Y - 68, w: 126, h: 12, kind: 'brick' },
+      { id: 'cav_ledge_3', x: 1360, y: FLOOR_Y - 52, w: 120, h: 12, kind: 'brick' },
+      { id: 'cav_ledge_4', x: 1820, y: FLOOR_Y - 62, w: 114, h: 12, kind: 'brick' },
+    );
   }
   return plats;
 }
@@ -1584,6 +2089,101 @@ export function buildIsekaiRoomInteractables(realm: RealmMode): InteractableProp
         dialogue: ['Stepping inside the massive tiered Solaris Grand Colosseum!'],
         activated: false,
       },
+      {
+        id: 'prop_town_east_gate',
+        x: 3760,
+        y: FLOOR_Y - 92,
+        w: 72,
+        h: 92,
+        kind: 'town_gate_out',
+        label: 'Royal Town East Gate -> Outskirts Forest [F]',
+        speaker: 'Solaris Gatehouse',
+        dialogue: ['Passing through the Royal East Gate into the Outskirts Forest...'],
+        activated: false,
+      },
+      ...SIDE_QUESTS.filter((q) => q.giverRealm === 'isekai_town').map((q) => ({
+        id: `sq_npc_${q.id}`,
+        x: q.giverX,
+        y: FLOOR_Y - 34,
+        w: 24,
+        h: 34,
+        kind: 'side_quest_npc' as const,
+        label: `${q.giverName} (${q.giverRoleLabel}) · ${q.title} [F]`,
+        speaker: q.giverName,
+        dialogue: q.giverOpeningDialogue,
+        activated: false,
+        sideQuestId: q.id,
+      })),
+    ];
+  }
+  if (realm === 'outskirts_forest') {
+    return [
+      {
+        id: 'prop_forest_return_town',
+        x: 36,
+        y: FLOOR_Y - 82,
+        w: 58,
+        h: 82,
+        kind: 'outskirts_return_town',
+        label: 'Royal Gate -> Return to Solaris Town [F]',
+        speaker: 'Solaris Gatehouse',
+        dialogue: ['Returning inside the fortified walls of Solaris Town...'],
+        activated: false,
+      },
+      {
+        id: 'prop_forest_cave_mouth',
+        x: 2240,
+        y: FLOOR_Y - 90,
+        w: 112,
+        h: 90,
+        kind: 'outskirts_cave_entrance',
+        label: 'Descend into Outskirts Blood-Vein Caves [F]',
+        speaker: 'Cavern Descent',
+        dialogue: ['Stepping down into the damp Outskirts Caves...'],
+        activated: false,
+      },
+      ...SIDE_QUESTS.filter((q) => q.giverRealm === 'outskirts_forest').map((q) => ({
+        id: `sq_npc_${q.id}`,
+        x: q.giverX,
+        y: FLOOR_Y - 34,
+        w: 24,
+        h: 34,
+        kind: 'side_quest_npc' as const,
+        label: `${q.giverName} (${q.giverRoleLabel}) · ${q.title} [F]`,
+        speaker: q.giverName,
+        dialogue: q.giverOpeningDialogue,
+        activated: false,
+        sideQuestId: q.id,
+      })),
+    ];
+  }
+  if (realm === 'outskirts_caves') {
+    return [
+      {
+        id: 'prop_caves_exit_forest',
+        x: 36,
+        y: FLOOR_Y - 80,
+        w: 44,
+        h: 80,
+        kind: 'outskirts_cave_exit',
+        label: 'Climb Rope -> Outskirts Forest [F]',
+        speaker: 'Cavern Ascent',
+        dialogue: ['Climbing back out into the Outskirts Forest...'],
+        activated: false,
+      },
+      ...SIDE_QUESTS.filter((q) => q.giverRealm === 'outskirts_caves').map((q) => ({
+        id: `sq_npc_${q.id}`,
+        x: q.giverX,
+        y: FLOOR_Y - 34,
+        w: 24,
+        h: 34,
+        kind: 'side_quest_npc' as const,
+        label: `${q.giverName} (${q.giverRoleLabel}) · ${q.title} [F]`,
+        speaker: q.giverName,
+        dialogue: q.giverOpeningDialogue,
+        activated: false,
+        sideQuestId: q.id,
+      })),
     ];
   }
   if (realm === 'dungeon_exterior') {
@@ -1930,7 +2530,7 @@ export function createDungeonSectorEnemies(
             sectorIdx >= 2 || depth > 1 ? `Abyss Hobgoblin S${sectorIdx + 1}` : 'Rocky Cavern Hobgoblin',
             x,
             FLOOR_Y - 30,
-            Math.round((74 + tier * 24) * strengthMult * 3),
+            Math.round((74 + tier * 24) * strengthMult * 1.5),
             22,
             30,
             'castle',
@@ -1949,7 +2549,7 @@ export function createDungeonSectorEnemies(
             sectorIdx >= 2 || depth > 1 ? `Shadow Goblin S${sectorIdx + 1}` : 'Cavern Goblin',
             x,
             FLOOR_Y - 22,
-            Math.round((38 + tier * 12) * strengthMult * 3),
+            Math.round((38 + tier * 12) * strengthMult * 1.5),
             17,
             22,
             'castle',
@@ -1975,7 +2575,7 @@ export function createDungeonSectorEnemies(
           sectorIdx >= 2 || depth > 1 ? `Abyssal ${s.name}` : s.name,
           x,
           FLOOR_Y - s.yOff,
-          Math.round(s.hp * strengthMult * 3),
+          Math.round(s.hp * strengthMult * 1.5),
           s.w,
           s.h,
           'volcano',
@@ -2018,7 +2618,7 @@ export function createGoblinDungeonWave(
           depth > 1 || i > count * 0.65 ? `Abyssal Hobgoblin` : 'Rocky Cavern Hobgoblin',
           x,
           FLOOR_Y - 30,
-          Math.round((72 + tier * 24) * strengthMult * 3),
+          Math.round((72 + tier * 24) * strengthMult * 1.5),
           22,
           30,
           'castle',
@@ -2037,7 +2637,7 @@ export function createGoblinDungeonWave(
           depth > 1 || i > count * 0.65 ? `Shadow Goblin` : 'Cavern Goblin',
           x,
           FLOOR_Y - 22,
-          Math.round((36 + tier * 12) * strengthMult * 3),
+          Math.round((36 + tier * 12) * strengthMult * 1.5),
           17,
           22,
           'castle',
@@ -2073,7 +2673,7 @@ export function createDungeonDeepBoss(
       `Depth ${depth} Caldera Demon Overlord`,
       spawnX,
       FLOOR_Y - 32,
-      Math.round(380 * strengthMult * defeatedMult),
+      Math.round(760 * strengthMult * defeatedMult),
       26,
       32,
       'volcano',
@@ -2090,7 +2690,7 @@ export function createDungeonDeepBoss(
     `Depth ${depth} Granite Hobgoblin Warlord`,
     spawnX,
     FLOOR_Y - 30,
-    Math.round(260 * strengthMult * defeatedMult),
+    Math.round(520 * strengthMult * defeatedMult),
     24,
     30,
     'castle',
@@ -2235,7 +2835,7 @@ export function createBanditWave(
         spec.name,
         sx,
         FLOOR_Y - spec.h,
-        spec.hp * 3,
+        Math.round(spec.hp * 1.5),
         spec.w,
         spec.h,
         'forest',
@@ -2266,7 +2866,7 @@ export function createDemonRealmWave(depth = 1, bossesDefeated = 0): EnemyState[
         depth > 1 || i > count * 0.65 ? `Abyss ${s.name}` : s.name,
         x,
         FLOOR_Y - s.yOff,
-        Math.round(s.hp * strengthMult * 3),
+        Math.round(s.hp * strengthMult * 1.5),
         s.w,
         s.h,
         'volcano',
@@ -2348,22 +2948,22 @@ export function createDemonKingStageMinions(stage: number, isSeventeenMode = fal
   if (!isSeventeenMode) {
     if (stage === 1) {
       return [
-        makeEnemy('dk1_m0', 'demon_tank', 'Crimson Ash Bone-Goliath', 240, FLOOR_Y - 32, 145 * 3, 24, 32, 'volcano', 36, 17, false, 1.12, 0.14, 'crimson_ash'),
-        makeEnemy('dk1_m1', 'gargoyle_charger', 'Hellbound Obsidian Gargoyle', 330, FLOOR_Y - 26, 98 * 3, 20, 26, 'volcano', 28, 15, false, 1.08, 0.12, 'crimson_ash'),
-        makeEnemy('dk1_m2', 'cultist_mage', 'Ashen Blood-Chant Warlock', 410, FLOOR_Y - 26, 86 * 3, 20, 26, 'volcano', 26, 14, false, 1.04, 0.12, 'crimson_ash'),
+        makeEnemy('dk1_m0', 'demon_tank', 'Crimson Ash Bone-Goliath', 240, FLOOR_Y - 32, Math.round(145 * 1.5), 24, 32, 'volcano', 36, 17, false, 1.12, 0.14, 'crimson_ash'),
+        makeEnemy('dk1_m1', 'gargoyle_charger', 'Hellbound Obsidian Gargoyle', 330, FLOOR_Y - 26, Math.round(98 * 1.5), 20, 26, 'volcano', 28, 15, false, 1.08, 0.12, 'crimson_ash'),
+        makeEnemy('dk1_m2', 'cultist_mage', 'Ashen Blood-Chant Warlock', 410, FLOOR_Y - 26, Math.round(86 * 1.5), 20, 26, 'volcano', 26, 14, false, 1.04, 0.12, 'crimson_ash'),
       ];
     }
     if (stage === 2) {
       return [
-        makeEnemy('dk2_m0', 'demon_succubus', 'Abyssal Frost-Hex Seraph', 250, FLOOR_Y - 68, 128 * 3, 20, 28, 'volcano', 42, 18, false, 1.12, 0.22, 'frost_seraph'),
-        makeEnemy('dk2_m1', 'cursed_armor', 'Frostbound Fallen Paladin', 350, FLOOR_Y - 28, 165 * 3, 22, 28, 'volcano', 45, 20, false, 1.18, 0.25, 'frost_seraph'),
-        makeEnemy('dk2_m2', 'phantom_wisp', 'Glacial Soul-Banshee', 440, FLOOR_Y - 56, 96 * 3, 20, 26, 'volcano', 34, 16, false, 1.08, 0.2, 'frost_seraph'),
+        makeEnemy('dk2_m0', 'demon_succubus', 'Abyssal Frost-Hex Seraph', 250, FLOOR_Y - 68, Math.round(128 * 1.5), 20, 28, 'volcano', 42, 18, false, 1.12, 0.22, 'frost_seraph'),
+        makeEnemy('dk2_m1', 'cursed_armor', 'Frostbound Fallen Paladin', 350, FLOOR_Y - 28, Math.round(165 * 1.5), 22, 28, 'volcano', 45, 20, false, 1.18, 0.25, 'frost_seraph'),
+        makeEnemy('dk2_m2', 'phantom_wisp', 'Glacial Soul-Banshee', 440, FLOOR_Y - 56, Math.round(96 * 1.5), 20, 26, 'volcano', 34, 16, false, 1.08, 0.2, 'frost_seraph'),
       ];
     }
     return [
-      makeEnemy('dk3_m0', 'demon_lightning', 'Void-Eclipse Thunder Assassin', 240, FLOOR_Y - 28, 142 * 3, 20, 28, 'volcano', 50, 21, false, 1.16, 0.36, 'void_eclipse'),
-      makeEnemy('dk3_m1', 'demon_tank', 'Eclipse Shadow-Monarch Sentinel', 340, FLOOR_Y - 32, 210 * 3, 24, 32, 'volcano', 60, 23, false, 1.26, 0.42, 'void_eclipse'),
-      makeEnemy('dk3_m2', 'demon_succubus', 'Astral Void-Rift Enchantress', 435, FLOOR_Y - 68, 134 * 3, 20, 28, 'volcano', 48, 19, false, 1.14, 0.34, 'void_eclipse'),
+      makeEnemy('dk3_m0', 'demon_lightning', 'Void-Eclipse Thunder Assassin', 240, FLOOR_Y - 28, Math.round(142 * 1.5), 20, 28, 'volcano', 50, 21, false, 1.16, 0.36, 'void_eclipse'),
+      makeEnemy('dk3_m1', 'demon_tank', 'Eclipse Shadow-Monarch Sentinel', 340, FLOOR_Y - 32, Math.round(210 * 1.5), 24, 32, 'volcano', 60, 23, false, 1.26, 0.42, 'void_eclipse'),
+      makeEnemy('dk3_m2', 'demon_succubus', 'Astral Void-Rift Enchantress', 435, FLOOR_Y - 68, Math.round(134 * 1.5), 20, 28, 'volcano', 48, 19, false, 1.14, 0.34, 'void_eclipse'),
     ];
   }
 
@@ -2387,7 +2987,7 @@ export function createDemonKingStageMinions(stage: number, isSeventeenMode = fal
     { name: 'Nine-Circle Eclipse Familiar', arch: 'cultist_mage', variant: 'void_eclipse' },
   ];
   const spec = companionSpecs[(Math.max(1, stage) - 1) % companionSpecs.length];
-  const scaleHp = 260 + stage * 36;
+  const scaleHp = Math.round((260 + stage * 36) * 0.5);
   const scaleAtk = 18 + Math.floor(stage * 1.4);
   return [
     makeEnemy(
@@ -2455,8 +3055,8 @@ export function createThreeDemonKingsInit(
       vy: 0,
       w: 32,
       h: 46,
-      hp: Math.round(380 * defeatedMult),
-      maxHp: Math.round(380 * defeatedMult),
+      hp: Math.round(760 * defeatedMult),
+      maxHp: Math.round(760 * defeatedMult),
       facing: -1,
       hitFlash: 0,
       purpleFlameTimer: 1.5,
@@ -2491,8 +3091,8 @@ export function createThreeDemonKingsInit(
       vy: 0,
       w: 32,
       h: 48,
-      hp: Math.round(430 * defeatedMult),
-      maxHp: Math.round(430 * defeatedMult),
+      hp: Math.round(860 * defeatedMult),
+      maxHp: Math.round(860 * defeatedMult),
       facing: -1,
       hitFlash: 0,
       purpleFlameTimer: 1.65,
@@ -2527,8 +3127,8 @@ export function createThreeDemonKingsInit(
       vy: 0,
       w: 36,
       h: 52,
-      hp: Math.round(490 * defeatedMult),
-      maxHp: Math.round(490 * defeatedMult),
+      hp: Math.round(980 * defeatedMult),
+      maxHp: Math.round(980 * defeatedMult),
       facing: -1,
       hitFlash: 0,
       purpleFlameTimer: 1.8,
@@ -2925,7 +3525,7 @@ export function createSeventeenDemonKingsInit(
     const stage = i + 1;
     const h = Math.round(44 * bp.sizeScale);
     const w = Math.round(30 * bp.sizeScale);
-    const hp = Math.round(bp.hpBase * defeatedMult);
+    const hp = Math.round(bp.hpBase * 2 * defeatedMult);
     const shield = bp.shieldBase ? Math.round(bp.shieldBase * defeatedMult) : 0;
     return {
       id: `dk17_${stage}`,
@@ -3983,6 +4583,14 @@ export function createArenaDuelInit(
     domainCooldown: 4.2,
     domainName: JJK_DOMAINS[def.id].name,
     domainCastCount: 0,
+    roundNumber: 1,
+    playerRoundWins: 0,
+    opponentRoundWins: 0,
+    roundHistory: [],
+    roundPhase: 'countdown',
+    roundPhaseTimer: 3.3,
+    fightBannerTimer: 0,
+    lastRoundWinner: null,
   };
 }
 
@@ -3997,226 +4605,495 @@ export function createArenaSkillAttack(
   zones: PurpleFlameZone[];
   dashVelocityX: number;
   jumpVelocityY: number;
+  healAmount: number;
+  teleportBehindPlayer: boolean;
 } {
   const skill = duel.def.skills[Math.abs(skillIdx) % duel.def.skills.length];
   const projectiles: Projectile[] = [];
   const zones: PurpleFlameZone[] = [];
   let dashVelocityX = 0;
   let jumpVelocityY = 0;
+  let healAmount = 0;
+  let teleportBehindPlayer = false;
   const skillDmg = Math.max(10, Math.round(skill.damage));
   const clampZoneX = (cx: number, w: number) => Math.max(24, Math.min(1216 - w, Math.round(cx - w / 2)));
+  const uid = `${duel.challengerId}_${skill.id}_${Date.now()}_${Math.floor(Math.random() * 999)}`;
 
-  if (skill.kind === 'hollow_purple') {
-    zones.push({
-      id: `jjk_hpz_${duel.challengerId}_${Date.now()}`,
-      x: clampZoneX(playerX, 136),
-      y: floorY - 118,
-      w: 136,
-      h: 118,
-      life: 1.4,
-      maxLife: 1.4,
-      damage: Math.round(skillDmg * 0.9),
-      kind: 'jjk_hollow_purple',
-      hasHit: false,
-    });
-    projectiles.push({
-      id: `jjk_hp_${duel.challengerId}_${Date.now()}`,
-      x: duel.x + (duel.facing === 1 ? duel.w + 6 : -6),
-      y: duel.y + 14,
-      vx: duel.facing * 245,
-      vy: 0,
-      radius: 15,
-      damage: skillDmg,
-      fromPlayer: false,
-      color: skill.color,
-      life: 2.1,
-      kind: 'purple_flame',
-    });
-  } else if (skill.kind === 'limitless_blue_red') {
-    zones.push({
-      id: `jjk_rbz_${duel.challengerId}_${Date.now()}`,
-      x: clampZoneX(playerX, 120),
-      y: floorY - 104,
-      w: 120,
-      h: 104,
-      life: 1.3,
-      maxLife: 1.3,
-      damage: Math.round(skillDmg * 0.85),
-      kind: 'jjk_red_blue',
-      hasHit: false,
-    });
-    [-20, 0, 20].forEach((vyOff, i) => {
-      projectiles.push({
-        id: `jjk_lim_${duel.challengerId}_${i}_${Date.now()}`,
-        x: duel.x + (duel.facing === 1 ? duel.w : 0),
-        y: duel.y + 14,
-        vx: duel.facing * (225 + i * 18),
-        vy: vyOff,
-        radius: 11,
-        damage: Math.round(skillDmg * 0.8),
-        fromPlayer: false,
-        color: skill.color,
-        life: 1.9,
-        kind: skill.id === 'reversal_red' ? 'fireball' : 'gravity_orb',
-      });
-    });
-  } else if (skill.kind === 'shrine_cleave') {
-    zones.push({
-      id: `jjk_clz_${duel.challengerId}_${Date.now()}`,
-      x: clampZoneX(playerX, 132),
-      y: floorY - 110,
-      w: 132,
-      h: 110,
-      life: 1.25,
-      maxLife: 1.25,
-      damage: Math.round(skillDmg * 0.85),
-      kind: 'jjk_cleave_storm',
-      hasHit: false,
-    });
-    [-24, 0, 24].forEach((yOff, i) => {
-      projectiles.push({
-        id: `jjk_sl_${duel.challengerId}_${i}_${Date.now()}`,
-        x: duel.x + (duel.facing === 1 ? duel.w + 4 : -4),
-        y: Math.min(floorY - 12, duel.y + 16 + yOff * 0.45),
-        vx: duel.facing * (260 + i * 20),
-        vy: yOff * 0.35,
-        radius: 10,
-        damage: Math.round(skillDmg * 0.78),
-        fromPlayer: false,
-        color: skill.color,
-        life: 1.7,
-        kind: 'slash_wave',
-      });
-    });
-    dashVelocityX = duel.facing * 245;
-  } else if (skill.kind === 'divine_flame_fuga') {
-    [-70, 70].forEach((off, idx) => {
+  if (duel.challengerId === 'satoru_gojo') {
+    if (skill.id === 'lapse_blue') {
       zones.push({
-        id: `jjk_fuga_${duel.challengerId}_${idx}_${Date.now()}`,
-        x: clampZoneX(playerX + off, 96),
-        y: floorY - 124,
-        w: 96,
-        h: 124,
+        id: `jjk_${uid}_z`,
+        x: clampZoneX(playerX, 134),
+        y: floorY - 110,
+        w: 134,
+        h: 110,
+        life: 1.4,
+        maxLife: 1.4,
+        damage: Math.round(skillDmg * 0.85),
+        kind: 'jjk_red_blue',
+        hasHit: false,
+        telegraphTime: 0.25,
+      });
+      projectiles.push({
+        id: `jjk_${uid}_p`,
+        x: duel.x + duel.w / 2 + duel.facing * 12,
+        y: duel.y + 14,
+        vx: duel.facing * 205,
+        vy: 0,
+        radius: 13,
+        damage: skillDmg,
+        fromPlayer: false,
+        color: '#38bdf8',
+        life: 2.0,
+        kind: 'jjk_blue_pull',
+        pullPlayerStrength: 165,
+      });
+    } else if (skill.id === 'reversal_red') {
+      dashVelocityX = -duel.facing * 140;
+      projectiles.push({
+        id: `jjk_${uid}_p`,
+        x: duel.x + duel.w / 2 + duel.facing * 14,
+        y: duel.y + 14,
+        vx: duel.facing * 320,
+        vy: 0,
+        radius: 14,
+        damage: Math.round(skillDmg * 1.05),
+        fromPlayer: false,
+        color: '#ef4444',
+        life: 1.85,
+        kind: 'jjk_red_repulse',
+      });
+      zones.push({
+        id: `jjk_${uid}_z`,
+        x: clampZoneX(playerX + duel.facing * 32, 118),
+        y: floorY - 104,
+        w: 118,
+        h: 104,
+        life: 1.2,
+        maxLife: 1.2,
+        damage: Math.round(skillDmg * 0.85),
+        kind: 'jjk_red_blue',
+        hasHit: false,
+        telegraphTime: 0.22,
+      });
+    } else {
+      zones.push({
+        id: `jjk_${uid}_z`,
+        x: clampZoneX(playerX, 152),
+        y: floorY - 128,
+        w: 152,
+        h: 128,
+        life: 1.5,
+        maxLife: 1.5,
+        damage: Math.round(skillDmg * 0.95),
+        kind: 'jjk_hollow_purple',
+        hasHit: false,
+        telegraphTime: 0.35,
+      });
+      projectiles.push({
+        id: `jjk_${uid}_p`,
+        x: duel.x + (duel.facing === 1 ? duel.w + 8 : -8),
+        y: duel.y + 14,
+        vx: duel.facing * 260,
+        vy: 0,
+        radius: 17,
+        damage: skillDmg,
+        fromPlayer: false,
+        color: '#a855f7',
+        life: 2.2,
+        kind: 'jjk_hollow_sphere',
+      });
+    }
+  } else if (duel.challengerId === 'ryomen_sukuna') {
+    if (skill.id === 'divine_fuga') {
+      [-76, 76].forEach((off, idx) => {
+        zones.push({
+          id: `jjk_${uid}_fuga_${idx}`,
+          x: clampZoneX(playerX + off, 100),
+          y: floorY - 130,
+          w: 100,
+          h: 130,
+          life: 1.35,
+          maxLife: 1.35,
+          damage: Math.round(skillDmg * 0.9),
+          kind: 'jjk_jogo_volcano',
+          hasHit: false,
+          telegraphTime: 0.3,
+        });
+      });
+      projectiles.push({
+        id: `jjk_${uid}_fuga_p`,
+        x: duel.x + duel.w / 2,
+        y: duel.y + 14,
+        vx: duel.facing * 245,
+        vy: 0,
+        radius: 14,
+        damage: skillDmg,
+        fromPlayer: false,
+        color: '#f97316',
+        life: 1.85,
+        kind: 'fireball',
+      });
+    } else if (skill.id === 'cleave_web') {
+      dashVelocityX = duel.facing * 270;
+      zones.push({
+        id: `jjk_${uid}_wc`,
+        x: clampZoneX(playerX, 146),
+        y: floorY - 122,
+        w: 146,
+        h: 122,
+        life: 1.35,
+        maxLife: 1.35,
+        damage: Math.round(skillDmg * 0.9),
+        kind: 'jjk_world_cut',
+        hasHit: false,
+        telegraphTime: 0.25,
+      });
+      [-22, 0, 22].forEach((yOff, i) => {
+        projectiles.push({
+          id: `jjk_${uid}_sl_${i}`,
+          x: duel.x + duel.w / 2,
+          y: Math.min(floorY - 12, duel.y + 16 + yOff * 0.45),
+          vx: duel.facing * (270 + i * 20),
+          vy: yOff * 0.3,
+          radius: 11,
+          damage: Math.round(skillDmg * 0.8),
+          fromPlayer: false,
+          color: '#e11d48',
+          life: 1.7,
+          kind: 'slash_wave',
+        });
+      });
+    } else {
+      dashVelocityX = duel.facing * 220;
+      zones.push({
+        id: `jjk_${uid}_dis`,
+        x: clampZoneX(playerX, 134),
+        y: floorY - 112,
+        w: 134,
+        h: 112,
         life: 1.25,
         maxLife: 1.25,
         damage: Math.round(skillDmg * 0.88),
-        kind: duel.challengerId === 'megumi_fushiguro' ? 'jjk_domain_shadow' : 'jjk_jogo_volcano',
+        kind: 'jjk_cleave_storm',
         hasHit: false,
+        telegraphTime: 0.22,
       });
-    });
-    projectiles.push({
-      id: `jjk_fgp_${duel.challengerId}_${Date.now()}`,
-      x: duel.x + duel.w / 2,
-      y: duel.y + 14,
-      vx: duel.facing * 225,
-      vy: 0,
-      radius: 12,
-      damage: skillDmg,
-      fromPlayer: false,
-      color: skill.color,
-      life: 1.75,
-      kind: 'fireball',
-    });
-  } else if (skill.kind === 'heavenly_blitz' || skill.kind === 'inverted_spear') {
-    dashVelocityX = duel.facing * 355;
-    jumpVelocityY = -95;
+      projectiles.push({
+        id: `jjk_${uid}_dis_p`,
+        x: duel.x + duel.w / 2 + duel.facing * 8,
+        y: duel.y + 15,
+        vx: duel.facing * 305,
+        vy: 0,
+        radius: 11,
+        damage: skillDmg,
+        fromPlayer: false,
+        color: '#f43f5e',
+        life: 1.5,
+        kind: 'slash_wave',
+      });
+    }
+  } else if (duel.challengerId === 'toji_fushiguro') {
+    dashVelocityX = duel.facing * 365;
+    jumpVelocityY = -105;
+    if (skill.id === 'inverted_spear') {
+      teleportBehindPlayer = true;
+    }
     zones.push({
-      id: `jjk_hbz_${duel.challengerId}_${Date.now()}`,
-      x: clampZoneX(playerX, 112),
-      y: floorY - 96,
-      w: 112,
-      h: 96,
-      life: 1.1,
-      maxLife: 1.1,
-      damage: Math.round(skillDmg * 0.82),
-      kind: duel.challengerId === 'kento_nanami' ? 'jjk_domain_ratio' : 'jjk_domain_chains',
+      id: `jjk_${uid}_t`,
+      x: clampZoneX(playerX, 120),
+      y: floorY - 102,
+      w: 120,
+      h: 102,
+      life: 1.15,
+      maxLife: 1.15,
+      damage: Math.round(skillDmg * 0.84),
+      kind: 'jjk_tether_trap',
       hasHit: false,
+      telegraphTime: 0.2,
     });
     projectiles.push({
-      id: `jjk_hb_${duel.challengerId}_${Date.now()}`,
+      id: `jjk_${uid}_sp`,
       x: duel.x + duel.w / 2 + duel.facing * 12,
       y: duel.y + 15,
-      vx: duel.facing * 255,
-      vy: 0,
-      radius: 11,
-      damage: skillDmg,
-      fromPlayer: false,
-      color: skill.color,
-      life: 1.05,
-      kind: 'jjk_split_slash',
-    });
-  } else if (skill.kind === 'ten_shadows_summon') {
-    zones.push({
-      id: `jjk_tsz_${duel.challengerId}_${Date.now()}`,
-      x: clampZoneX(playerX, 126),
-      y: floorY - 106,
-      w: 126,
-      h: 106,
-      life: 1.35,
-      maxLife: 1.35,
-      damage: Math.round(skillDmg * 0.85),
-      kind: 'jjk_domain_shadow',
-      hasHit: false,
-    });
-    [-1, 1].forEach((dir, idx) => {
-      projectiles.push({
-        id: `jjk_ts_${duel.challengerId}_${idx}_${Date.now()}`,
-        x: duel.x + duel.w / 2,
-        y: duel.y + 12,
-        vx: dir === 1 ? duel.facing * 235 : duel.facing * 185,
-        vy: idx === 1 ? -18 : 10,
-        radius: 10,
-        damage: Math.round(skillDmg * 0.84),
-        fromPlayer: false,
-        color: skill.color,
-        life: 1.85,
-        kind: 'rune',
-      });
-    });
-    dashVelocityX = duel.facing * 215;
-  } else if (skill.kind === 'rika_manifest' || skill.kind === 'cursed_speech' || skill.kind === 'ratio_collapse') {
-    dashVelocityX = duel.facing * 265;
-    zones.push({
-      id: `jjk_rcz_${duel.challengerId}_${Date.now()}`,
-      x: clampZoneX(playerX, 128),
-      y: floorY - 110,
-      w: 128,
-      h: 110,
-      life: 1.3,
-      maxLife: 1.3,
-      damage: Math.round(skillDmg * 0.88),
-      kind: skill.kind === 'ratio_collapse' ? 'jjk_domain_ratio' : 'jjk_rika_beam',
-      hasHit: false,
-    });
-    projectiles.push({
-      id: `jjk_rc_${duel.challengerId}_${Date.now()}`,
-      x: duel.x + duel.w / 2 + duel.facing * 10,
-      y: duel.y + 14,
-      vx: duel.facing * 240,
+      vx: duel.facing * 290,
       vy: 0,
       radius: 12,
       damage: skillDmg,
       fromPlayer: false,
       color: skill.color,
-      life: 1.45,
-      kind: skill.kind === 'cursed_speech' ? 'gravity_orb' : 'slash_wave',
+      life: 1.35,
+      kind: 'jjk_chain_spear',
+    });
+  } else if (duel.challengerId === 'yuta_okkotsu') {
+    if (skill.id === 'cursed_speech') {
+      zones.push({
+        id: `jjk_${uid}_cs`,
+        x: clampZoneX(playerX, 136),
+        y: floorY - 108,
+        w: 136,
+        h: 108,
+        life: 1.25,
+        maxLife: 1.25,
+        damage: Math.round(skillDmg * 0.82),
+        kind: 'jjk_cursed_speech_wave',
+        hasHit: false,
+        telegraphTime: 0.22,
+      });
+      projectiles.push({
+        id: `jjk_${uid}_csp`,
+        x: duel.x + duel.w / 2 + duel.facing * 10,
+        y: duel.y + 14,
+        vx: duel.facing * 255,
+        vy: 0,
+        radius: 13,
+        damage: Math.round(skillDmg * 0.88),
+        fromPlayer: false,
+        color: '#fde047',
+        life: 1.5,
+        kind: 'gravity_orb',
+        slowSeconds: 1.35,
+      });
+    } else {
+      dashVelocityX = duel.facing * 245;
+      zones.push({
+        id: `jjk_${uid}_rk`,
+        x: clampZoneX(playerX, 140),
+        y: floorY - 118,
+        w: 140,
+        h: 118,
+        life: 1.35,
+        maxLife: 1.35,
+        damage: Math.round(skillDmg * 0.9),
+        kind: 'jjk_rika_beam',
+        hasHit: false,
+        telegraphTime: 0.28,
+      });
+      projectiles.push({
+        id: `jjk_${uid}_rkp`,
+        x: duel.x + duel.w / 2 + duel.facing * 14,
+        y: duel.y + 14,
+        vx: duel.facing * 270,
+        vy: 0,
+        radius: 15,
+        damage: skillDmg,
+        fromPlayer: false,
+        color: '#e879f9',
+        life: 1.6,
+        kind: 'jjk_rika_beam_orb',
+        beamLength: 36,
+      });
+    }
+  } else if (duel.challengerId === 'megumi_fushiguro') {
+    dashVelocityX = duel.facing * 225;
+    if (skill.id === 'nue_lightning') {
+      zones.push({
+        id: `jjk_${uid}_nue`,
+        x: clampZoneX(playerX, 128),
+        y: floorY - 116,
+        w: 128,
+        h: 116,
+        life: 1.25,
+        maxLife: 1.25,
+        damage: Math.round(skillDmg * 0.85),
+        kind: 'jjk_max_elephant',
+        hasHit: false,
+        telegraphTime: 0.26,
+      });
+      [-28, 28].forEach((ox, idx) => {
+        projectiles.push({
+          id: `jjk_${uid}_nb_${idx}`,
+          x: Math.max(40, Math.min(1200, playerX + ox)),
+          y: 16,
+          vx: idx === 0 ? 35 : -35,
+          vy: 195,
+          radius: 11,
+          damage: Math.round(skillDmg * 0.86),
+          fromPlayer: false,
+          color: '#facc15',
+          life: 1.8,
+          kind: 'jjk_nue_bolt',
+          gravityScale: 0.45,
+        });
+      });
+    } else {
+      zones.push({
+        id: `jjk_${uid}_sd`,
+        x: clampZoneX(playerX, 134),
+        y: floorY - 110,
+        w: 134,
+        h: 110,
+        life: 1.35,
+        maxLife: 1.35,
+        damage: Math.round(skillDmg * 0.88),
+        kind: 'jjk_domain_shadow',
+        hasHit: false,
+        telegraphTime: 0.24,
+      });
+      [-18, 18].forEach((vyOff, idx) => {
+        projectiles.push({
+          id: `jjk_${uid}_sdp_${idx}`,
+          x: duel.x + duel.w / 2,
+          y: duel.y + 13,
+          vx: duel.facing * (235 + idx * 25),
+          vy: vyOff * 0.4,
+          radius: 11,
+          damage: Math.round(skillDmg * 0.85),
+          fromPlayer: false,
+          color: '#38bdf8',
+          life: 1.8,
+          kind: 'rune',
+          homingStrength: 95,
+        });
+      });
+    }
+  } else if (duel.challengerId === 'kento_nanami') {
+    dashVelocityX = duel.facing * 275;
+    zones.push({
+      id: `jjk_${uid}_nn`,
+      x: clampZoneX(playerX, 132),
+      y: floorY - 108,
+      w: 132,
+      h: 108,
+      life: 1.3,
+      maxLife: 1.3,
+      damage: Math.round(skillDmg * 0.9),
+      kind: skill.id === 'collapse_ruin' ? 'jjk_collapse_rubble' : 'jjk_domain_ratio',
+      hasHit: false,
+      telegraphTime: 0.24,
+    });
+    projectiles.push({
+      id: `jjk_${uid}_nnp`,
+      x: duel.x + duel.w / 2 + duel.facing * 12,
+      y: duel.y + 10,
+      vx: duel.facing * 220,
+      vy: -95,
+      radius: 13,
+      damage: skillDmg,
+      fromPlayer: false,
+      color: skill.color,
+      life: 1.7,
+      kind: skill.id === 'collapse_ruin' ? 'jjk_collapse_boulder' : 'slash_wave',
+      gravityScale: skill.id === 'collapse_ruin' ? 0.55 : 0,
     });
   } else {
-    // 10 New JJK Character Signature Large Colorful Fluid Attacks!
     const kindMap: Record<
       string,
-      { zone: PurpleFlameKind; proj: Projectile['kind']; w: number; h: number; r: number; dash: number }
+      {
+        zone: PurpleFlameKind;
+        altZone?: PurpleFlameKind;
+        proj: Projectile['kind'];
+        w: number;
+        h: number;
+        r: number;
+        dash: number;
+        homing?: number;
+        grav?: number;
+        bounce?: boolean;
+        drainStam?: number;
+        beamLen?: number;
+        healRatio?: number;
+        tpBehind?: boolean;
+      }
     > = {
-      black_flash_rush: { zone: 'jjk_black_flash', proj: 'jjk_black_flash_orb', w: 128, h: 114, r: 13, dash: 310 },
-      cursed_uzumaki: { zone: 'jjk_uzumaki_vortex', proj: 'jjk_uzumaki', w: 148, h: 122, r: 15, dash: 180 },
-      split_soul_katana: { zone: 'jjk_split_soul_slash', proj: 'jjk_split_slash', w: 132, h: 106, r: 12, dash: 345 },
-      jackpot_pachinko: { zone: 'jjk_jackpot_fever', proj: 'jjk_pachinko_ball', w: 136, h: 112, r: 12, dash: 255 },
-      amber_lightning: { zone: 'jjk_kashimo_thunder', proj: 'jjk_lightning_bolt', w: 134, h: 128, r: 12, dash: 295 },
-      idle_transfiguration: { zone: 'jjk_idle_transfig', proj: 'jjk_transfig_orb', w: 136, h: 116, r: 13, dash: 260 },
-      disaster_flames: { zone: 'jjk_jogo_volcano', proj: 'jjk_magma_meteor', w: 152, h: 126, r: 15, dash: 165 },
-      blood_manipulation: { zone: 'jjk_piercing_blood', proj: 'jjk_piercing_blood', w: 148, h: 98, r: 12, dash: 210 },
-      deadly_sentencing: { zone: 'jjk_deadly_gavel', proj: 'jjk_exec_blade', w: 136, h: 118, r: 13, dash: 240 },
-      straw_doll_resonance: { zone: 'jjk_straw_resonance', proj: 'jjk_cursed_nail', w: 126, h: 110, r: 11, dash: 195 },
+      black_flash_rush: {
+        zone: 'jjk_black_flash',
+        altZone: 'jjk_divergent_burst',
+        proj: 'jjk_black_flash_orb',
+        w: 132,
+        h: 116,
+        r: 13,
+        dash: 325,
+        tpBehind: skill.id === 'black_flash_chain',
+      },
+      cursed_uzumaki: {
+        zone: 'jjk_uzumaki_vortex',
+        altZone: 'jjk_curse_swarm',
+        proj: 'jjk_uzumaki',
+        w: 150,
+        h: 124,
+        r: 15,
+        dash: 185,
+        homing: 120,
+      },
+      split_soul_katana: {
+        zone: 'jjk_split_soul_slash',
+        proj: 'jjk_split_slash',
+        w: 136,
+        h: 108,
+        r: 12,
+        dash: 355,
+        tpBehind: skill.id === 'split_soul_sever',
+      },
+      jackpot_pachinko: {
+        zone: 'jjk_jackpot_fever',
+        altZone: 'jjk_shutter_doors',
+        proj: 'jjk_pachinko_ball',
+        w: 138,
+        h: 114,
+        r: 12,
+        dash: 260,
+        bounce: true,
+        healRatio: skill.id === 'jackpot_777_fever' ? 0.14 : 0.05,
+      },
+      amber_lightning: {
+        zone: 'jjk_kashimo_thunder',
+        altZone: 'jjk_sky_lightning',
+        proj: 'jjk_lightning_bolt',
+        w: 136,
+        h: 130,
+        r: 12,
+        dash: 300,
+      },
+      idle_transfiguration: {
+        zone: 'jjk_idle_transfig',
+        altZone: 'jjk_soul_spikes',
+        proj: 'jjk_transfig_orb',
+        w: 138,
+        h: 118,
+        r: 13,
+        dash: 265,
+        homing: 80,
+      },
+      disaster_flames: {
+        zone: 'jjk_jogo_volcano',
+        altZone: 'jjk_meteor_crater',
+        proj: 'jjk_magma_meteor',
+        w: 154,
+        h: 128,
+        r: 15,
+        dash: 170,
+        grav: 0.48,
+      },
+      blood_manipulation: {
+        zone: 'jjk_piercing_blood',
+        altZone: 'jjk_supernova_ring',
+        proj: 'jjk_piercing_blood',
+        w: 152,
+        h: 102,
+        r: 12,
+        dash: 215,
+        beamLen: 44,
+      },
+      deadly_sentencing: {
+        zone: 'jjk_deadly_gavel',
+        altZone: 'jjk_gavel_verdict',
+        proj: 'jjk_exec_blade',
+        w: 138,
+        h: 120,
+        r: 13,
+        dash: 245,
+        drainStam: 22,
+      },
+      straw_doll_resonance: {
+        zone: 'jjk_straw_resonance',
+        altZone: 'jjk_hairpin_mine',
+        proj: 'jjk_cursed_nail',
+        w: 128,
+        h: 112,
+        r: 11,
+        dash: 200,
+      },
     };
     const cfg = kindMap[skill.kind] ?? {
       zone: 'jjk_black_flash' as PurpleFlameKind,
@@ -4227,8 +5104,13 @@ export function createArenaSkillAttack(
       dash: 250,
     };
     dashVelocityX = duel.facing * cfg.dash;
+    if (cfg.tpBehind) teleportBehindPlayer = true;
+    if (cfg.healRatio) {
+      healAmount = Math.max(12, Math.round(duel.maxHp * cfg.healRatio));
+    }
+    const useAlt = cfg.altZone && skillIdx % 2 === 0;
     zones.push({
-      id: `jjk_nz_${duel.challengerId}_${Date.now()}`,
+      id: `jjk_nz_${uid}`,
       x: clampZoneX(playerX, cfg.w),
       y: floorY - cfg.h,
       w: cfg.w,
@@ -4236,27 +5118,41 @@ export function createArenaSkillAttack(
       life: 1.45,
       maxLife: 1.45,
       damage: Math.round(skillDmg * 0.9),
-      kind: cfg.zone,
+      kind: useAlt ? cfg.altZone! : cfg.zone,
       hasHit: false,
+      telegraphTime: 0.25,
     });
     [-16, 0, 16].forEach((vyOff, idx) => {
       projectiles.push({
-        id: `jjk_np_${duel.challengerId}_${idx}_${Date.now()}`,
+        id: `jjk_np_${uid}_${idx}`,
         x: duel.x + duel.w / 2 + duel.facing * 12,
         y: duel.y + 13,
-        vx: duel.facing * (240 + idx * 18),
-        vy: vyOff * 0.6,
+        vx: duel.facing * (245 + idx * 18),
+        vy: cfg.grav ? -110 + vyOff * 0.5 : vyOff * 0.6,
         radius: cfg.r,
         damage: Math.round(skillDmg * (idx === 1 ? 1 : 0.76)),
         fromPlayer: false,
         color: skill.color,
         life: 1.85,
         kind: cfg.proj,
+        homingStrength: cfg.homing,
+        gravityScale: cfg.grav,
+        bounceFloor: cfg.bounce,
+        drainStamina: cfg.drainStam,
+        beamLength: cfg.beamLen,
       });
     });
   }
 
-  return { skill, projectiles, zones, dashVelocityX, jumpVelocityY };
+  return {
+    skill,
+    projectiles,
+    zones,
+    dashVelocityX,
+    jumpVelocityY,
+    healAmount,
+    teleportBehindPlayer,
+  };
 }
 
 export interface ArenaAiStepResult {
@@ -4266,14 +5162,16 @@ export interface ArenaAiStepResult {
   spawnedZones: PurpleFlameZone[];
   usedSkillName: string | null;
   hypeTrigger: boolean;
+  healAmount: number;
+  teleportBehindPlayer: boolean;
 }
 
 /**
  * Highly OP, reactive Jujutsu Kaisen Colosseum AI:
- * - 3x Match HP & equal ATK/MoveSpeed + Full Domain Expansion for ALL 16 JJK fighters!
+ * - Best-of-3 rounds with countdown freeze & full Domain Expansion for ALL 16 JJK fighters!
  * - Flash-step dodges incoming player attacks & projectiles with brief i-frames + counter-angle lunge.
  * - Activates Cursed Energy Guard when player closes in aggressively.
- * - Chains fast melee combos & colorful fluid JJK Cursed Techniques relentlessly!
+ * - Chains fast melee combos & 16 unique JJK Cursed Techniques!
  */
 export function stepArenaDuelAi(
   duel: ActiveArenaDuel,
@@ -4291,7 +5189,15 @@ export function stepArenaDuelAi(
     spawnedZones: [],
     usedSkillName: null,
     hypeTrigger: false,
+    healAmount: 0,
+    teleportBehindPlayer: false,
   };
+
+  if (duel.roundPhase !== 'fighting') {
+    duel.vx = 0;
+    applyArenaDuelGravityAndPlatforms(duel, platforms, dt, bounds, floorY);
+    return result;
+  }
 
   duel.hitFlash = Math.max(0, duel.hitFlash - dt);
   duel.invulnTimer = Math.max(0, duel.invulnTimer - dt);
@@ -4492,6 +5398,18 @@ export function stepArenaDuelAi(
       duel.activeSkillBanner = cast.skill.shout;
       duel.activeSkillTimer = 1.55;
       duel.aiActionTag = cast.skill.name.toUpperCase();
+      if (cast.teleportBehindPlayer) {
+        duel.x = Math.max(
+          bounds.minX + 20,
+          Math.min(bounds.maxX - duel.w - 20, player.x - player.facing * 42),
+        );
+        duel.facing = player.facing;
+        result.teleportBehindPlayer = true;
+      }
+      if (cast.healAmount > 0) {
+        duel.hp = Math.min(duel.maxHp, duel.hp + cast.healAmount);
+        result.healAmount = cast.healAmount;
+      }
       if (cast.dashVelocityX !== 0) duel.vx = cast.dashVelocityX;
       if (cast.jumpVelocityY !== 0 && duel.onGround) {
         duel.vy = cast.jumpVelocityY;
@@ -4546,7 +5464,7 @@ function applyArenaDuelGravityAndPlatforms(
   }
 }
 
-export const TOWN_RAID_INTERVAL_SECONDS = 1200; // Every 20 minutes
+export const TOWN_RAID_INTERVAL_SECONDS = 300; // Every 5 minutes
 export const TOWN_RAID_REWARD_GOLD = 1000;
 
 export function createTownHouseStates(): TownHouseDamage[] {
@@ -4597,7 +5515,7 @@ export function createTownRaidBoss(
   spawnX?: number,
 ): ActiveTownRaid {
   const isRimuru = raiderId === 'rimuru_tempest';
-  const hp = Math.max(120, Math.round(playerMaxHp * 3));
+  const hp = Math.max(240, Math.round(playerMaxHp * 6));
   const atk = Math.max(8, Math.round(playerAttack));
   const w = 38;
   const h = 52;

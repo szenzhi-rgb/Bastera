@@ -1689,23 +1689,34 @@ const weaponIconCache = new Map<WeaponId, HTMLCanvasElement>();
 const skillIconCache = new Map<SkillId, HTMLCanvasElement>();
 
 /**
- * Baked 32x32 pixel-art item icons for Inventory & Battle Potion slots.
+ * Baked 64x64 high-resolution pixel-art item icons for Inventory & Battle Potion slots.
  */
 export function getBakedItemIcon(itemId: string): HTMLCanvasElement {
   const existing = itemIconCache.get(itemId);
   if (existing) return existing;
 
   const c = document.createElement('canvas');
-  c.width = 32;
-  c.height = 32;
+  c.width = 64;
+  c.height = 64;
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
-  // Dark ornate gothic velvet slot background
-  px(ctx, 0, 0, 32, 32, '#120a0e');
-  px(ctx, 1, 1, 30, 30, '#1f1218');
+  // Ornate gothic velvet slot frame with gilded inner corner bevels
+  px(ctx, 0, 0, 64, 64, '#0c070a');
+  px(ctx, 2, 2, 60, 60, '#180e13');
+  px(ctx, 4, 4, 56, 56, '#21131a');
+  px(ctx, 4, 4, 6, 2, '#92400e');
+  px(ctx, 54, 4, 6, 2, '#92400e');
+  px(ctx, 4, 58, 6, 2, '#92400e');
+  px(ctx, 54, 58, 6, 2, '#92400e');
 
-  if (itemId === 'crimson_vial' || itemId === 'hi_ruby_potion' || itemId === 'royal_elixir_hp' || itemId === 'fury_draught' || itemId === 'titan_crimson_tonic') {
+  if (
+    itemId === 'crimson_vial' ||
+    itemId === 'hi_ruby_potion' ||
+    itemId === 'royal_elixir_hp' ||
+    itemId === 'fury_draught' ||
+    itemId === 'titan_crimson_tonic'
+  ) {
     const bodyDark =
       itemId === 'hi_ruby_potion'
         ? '#881337'
@@ -1736,220 +1747,362 @@ export function getBakedItemIcon(itemId: string): HTMLCanvasElement {
             : itemId === 'titan_crimson_tonic'
               ? '#67e8f9'
               : '#f87171';
-    px(ctx, 13, 3, 6, 4, '#09060b');
-    px(ctx, 14, 4, 4, 3, '#d97706');
-    px(ctx, 11, 7, 10, 4, '#fbbf24');
-    px(ctx, 12, 8, 8, 2, '#94a3b8');
-    px(ctx, 8, 12, 16, 15, '#09060b');
-    px(ctx, 6, 15, 20, 10, '#09060b');
-    px(ctx, 7, 15, 18, 10, bodyDark);
-    px(ctx, 9, 13, 14, 13, bodyDark);
-    px(ctx, 8, 17, 16, 7, liqMid);
-    px(ctx, 10, 19, 12, 4, liqHi);
-    px(ctx, 9, 14, 3, 8, '#ffffff');
-    px(ctx, 18, 20, 3, 3, '#fef08a');
-    if (itemId === 'fury_draught' || itemId === 'titan_crimson_tonic') {
-      // Glowing lightning / power sparks on Damage-Boost flasks
-      px(ctx, 4, 9, 3, 2, liqHi);
-      px(ctx, 25, 10, 3, 2, '#fde047');
+    // Cork & brass neck collar
+    px(ctx, 26, 6, 12, 8, '#09060b');
+    px(ctx, 28, 8, 8, 6, '#d97706');
+    px(ctx, 29, 8, 3, 5, '#fbbf24');
+    px(ctx, 22, 14, 20, 8, '#09060b');
+    px(ctx, 24, 15, 16, 6, '#94a3b8');
+    px(ctx, 25, 16, 14, 2, '#e2e8f0');
+    px(ctx, 26, 20, 12, 6, '#475569');
+    // Round apothecary glass flask with faceted ink silhouette
+    px(ctx, 16, 25, 32, 30, '#09060b');
+    px(ctx, 12, 30, 40, 21, '#09060b');
+    px(ctx, 14, 31, 36, 19, '#1e293b');
+    px(ctx, 18, 27, 28, 26, '#334155');
+    // Glowing alchemical liquid + bright meniscus
+    px(ctx, 16, 35, 32, 14, bodyDark);
+    px(ctx, 18, 32, 28, 19, bodyDark);
+    px(ctx, 17, 36, 30, 12, liqMid);
+    px(ctx, 20, 39, 24, 8, liqHi);
+    px(ctx, 18, 35, 28, 2, '#ffffff');
+    // Crisp specular glass shine & rising bubbles
+    px(ctx, 18, 29, 4, 16, '#ffffff');
+    px(ctx, 22, 28, 3, 5, '#e0f2fe');
+    px(ctx, 36, 40, 4, 4, '#fef08a');
+    px(ctx, 30, 44, 3, 3, '#ffffff');
+    if (itemId === 'fury_draught' || itemId === 'titan_crimson_tonic' || itemId === 'royal_elixir_hp') {
+      px(ctx, 8, 18, 6, 3, liqHi);
+      px(ctx, 10, 16, 2, 7, liqHi);
+      px(ctx, 50, 20, 6, 3, '#fde047');
+      px(ctx, 52, 18, 2, 7, '#fde047');
     }
   } else if (itemId === 'royal_ember') {
-    // Crown-wax blazing amber ember crystal
-    px(ctx, 13, 4, 6, 4, '#fef08a');
-    px(ctx, 10, 8, 12, 6, '#f97316');
-    px(ctx, 7, 13, 18, 12, '#09060b');
-    px(ctx, 8, 14, 16, 10, '#b45309');
-    px(ctx, 10, 12, 12, 10, '#f59e0b');
-    px(ctx, 12, 14, 8, 6, '#fde047');
-    px(ctx, 14, 15, 4, 4, '#ffffff');
-    px(ctx, 6, 9, 2, 2, '#fbbf24');
-    px(ctx, 24, 11, 2, 2, '#fde047');
+    px(ctx, 25, 8, 14, 8, '#fef08a');
+    px(ctx, 20, 15, 24, 12, '#f97316');
+    px(ctx, 14, 24, 36, 26, '#09060b');
+    px(ctx, 16, 26, 32, 22, '#9a3412');
+    px(ctx, 20, 21, 24, 22, '#ea580c');
+    px(ctx, 24, 25, 16, 14, '#fbbf24');
+    px(ctx, 27, 28, 10, 8, '#fef08a');
+    px(ctx, 29, 30, 5, 4, '#ffffff');
+    px(ctx, 11, 18, 4, 4, '#fbbf24');
+    px(ctx, 48, 22, 4, 4, '#fde047');
   } else if (itemId === 'ruin_shard') {
-    // Emerald moss-etched rune crystal prism
-    px(ctx, 14, 3, 4, 24, '#09060b');
-    px(ctx, 10, 7, 12, 17, '#09060b');
-    px(ctx, 7, 11, 18, 9, '#09060b');
-    px(ctx, 11, 8, 10, 15, '#059669');
-    px(ctx, 8, 12, 16, 7, '#10b981');
-    px(ctx, 12, 6, 8, 18, '#34d399');
-    px(ctx, 13, 8, 3, 12, '#a7f3d0');
-    px(ctx, 15, 13, 2, 5, '#ffffff');
-    px(ctx, 6, 19, 5, 3, '#22c55e'); // Moss cluster
+    px(ctx, 27, 6, 10, 50, '#09060b');
+    px(ctx, 19, 14, 26, 34, '#09060b');
+    px(ctx, 14, 22, 36, 18, '#09060b');
+    px(ctx, 21, 16, 22, 30, '#047857');
+    px(ctx, 16, 24, 32, 14, '#10b981');
+    px(ctx, 25, 12, 14, 36, '#34d399');
+    px(ctx, 26, 16, 5, 24, '#a7f3d0');
+    px(ctx, 30, 24, 4, 10, '#ffffff');
+    px(ctx, 12, 38, 10, 6, '#22c55e');
   } else if (itemId === 'magma_core') {
-    // Cracked obsidian volcanic orb oozing molten lava veins
-    px(ctx, 6, 6, 20, 20, '#09060b');
-    px(ctx, 7, 7, 18, 18, '#291515');
-    px(ctx, 9, 9, 14, 14, '#451a14');
-    px(ctx, 12, 8, 3, 16, '#ea580c');
-    px(ctx, 8, 14, 16, 3, '#f97316');
-    px(ctx, 11, 13, 8, 5, '#fde047');
-    px(ctx, 14, 14, 3, 3, '#ffffff');
-  } else if (itemId === 'orb_flame') {
-    // Blazing Crimson-Orange Flame Orb with white-hot solar core & rising sparks
-    px(ctx, 5, 5, 22, 22, '#09060b');
-    px(ctx, 6, 6, 20, 20, '#9a3412');
-    px(ctx, 8, 8, 16, 16, '#ea580c');
-    px(ctx, 9, 9, 14, 14, '#f97316');
-    px(ctx, 12, 10, 8, 11, '#fbbf24');
-    px(ctx, 14, 12, 5, 7, '#fef08a');
-    px(ctx, 15, 14, 3, 4, '#ffffff');
-    // Outer orbiting flame sparks
-    px(ctx, 5, 8, 3, 3, '#fb923c');
-    px(ctx, 24, 9, 3, 3, '#fde047');
-    px(ctx, 22, 23, 3, 3, '#ef4444');
-  } else if (itemId === 'orb_wind') {
-    // Emerald-Teal Swirling Gale Wind Orb
-    px(ctx, 5, 5, 22, 22, '#09060b');
-    px(ctx, 6, 6, 20, 20, '#0f766e');
-    px(ctx, 8, 8, 16, 16, '#14b8a6');
-    px(ctx, 9, 9, 14, 14, '#2dd4bf');
-    // Swirling wind ribbons inside sphere
-    px(ctx, 9, 11, 13, 3, '#ccfbf1');
-    px(ctx, 10, 15, 13, 3, '#99f6e4');
-    px(ctx, 12, 19, 9, 2, '#ffffff');
-    px(ctx, 11, 12, 3, 3, '#ffffff');
-    // Gust trail wisps
-    px(ctx, 4, 13, 4, 2, '#5eead4');
-    px(ctx, 24, 17, 4, 2, '#5eead4');
-  } else if (itemId === 'orb_electric') {
-    // High-Voltage Gold & Cyan Electrical Orb with crackling pixel lightning bolt
-    px(ctx, 5, 5, 22, 22, '#09060b');
-    px(ctx, 6, 6, 20, 20, '#a16207');
-    px(ctx, 8, 8, 16, 16, '#eab308');
-    px(ctx, 9, 9, 14, 14, '#facc15');
-    // Lightning bolt rune inside orb
-    px(ctx, 15, 9, 5, 3, '#ffffff');
-    px(ctx, 13, 12, 5, 3, '#fef9c3');
-    px(ctx, 12, 15, 8, 3, '#ffffff');
-    px(ctx, 15, 18, 5, 4, '#38bdf8');
-    // Electric cyan arc sparks
-    px(ctx, 4, 7, 3, 2, '#38bdf8');
-    px(ctx, 25, 8, 3, 2, '#7dd3fc');
-    px(ctx, 5, 22, 3, 2, '#38bdf8');
-    px(ctx, 24, 23, 3, 2, '#38bdf8');
+    px(ctx, 12, 12, 40, 40, '#09060b');
+    px(ctx, 14, 14, 36, 36, '#291515');
+    px(ctx, 18, 18, 28, 28, '#451a14');
+    px(ctx, 25, 15, 5, 34, '#ea580c');
+    px(ctx, 15, 28, 34, 5, '#f97316');
+    px(ctx, 22, 24, 18, 12, '#fde047');
+    px(ctx, 27, 27, 8, 6, '#ffffff');
+  } else if (itemId === 'orb_flame' || itemId === 'orb_wind' || itemId === 'orb_electric') {
+    const outer = itemId === 'orb_flame' ? '#9a3412' : itemId === 'orb_wind' ? '#0f766e' : '#a16207';
+    const mid = itemId === 'orb_flame' ? '#ea580c' : itemId === 'orb_wind' ? '#14b8a6' : '#eab308';
+    const hi = itemId === 'orb_flame' ? '#fbbf24' : itemId === 'orb_wind' ? '#5eead4' : '#fef08a';
+    // Faceted spherical shading
+    px(ctx, 10, 10, 44, 44, '#09060b');
+    px(ctx, 12, 12, 40, 40, outer);
+    px(ctx, 15, 14, 34, 34, mid);
+    px(ctx, 18, 16, 26, 26, hi);
+    px(ctx, 20, 18, 12, 12, '#ffffff');
+    if (itemId === 'orb_flame') {
+      px(ctx, 26, 22, 12, 18, '#fef08a');
+      px(ctx, 9, 16, 6, 6, '#fb923c');
+      px(ctx, 48, 18, 6, 6, '#fde047');
+    } else if (itemId === 'orb_wind') {
+      px(ctx, 16, 24, 28, 5, '#ccfbf1');
+      px(ctx, 18, 33, 28, 5, '#99f6e4');
+      px(ctx, 8, 26, 8, 4, '#5eead4');
+      px(ctx, 48, 34, 8, 4, '#5eead4');
+    } else {
+      px(ctx, 30, 18, 10, 6, '#ffffff');
+      px(ctx, 25, 24, 11, 6, '#fef9c3');
+      px(ctx, 23, 30, 16, 6, '#ffffff');
+      px(ctx, 29, 36, 10, 8, '#38bdf8');
+      px(ctx, 8, 14, 6, 4, '#38bdf8');
+      px(ctx, 50, 16, 6, 4, '#7dd3fc');
+    }
   } else if (itemId.startsWith('rank_badge_')) {
-    // Guild Rank Heraldic Badge
-    const rank = itemId.replace('rank_badge_', '');
+    const rank = itemId.replace('rank_badge_', '').toUpperCase();
     const badgeColor =
       rank === 'S' ? '#fbbf24' : rank === 'A' ? '#e11d48' : rank === 'B' ? '#a855f7' : rank === 'C' ? '#3b82f6' : '#94a3b8';
-    px(ctx, 5, 5, 22, 22, '#09060b');
-    px(ctx, 6, 6, 20, 20, badgeColor);
-    px(ctx, 9, 9, 14, 14, '#1e1b2e');
+    px(ctx, 10, 10, 44, 44, '#09060b');
+    px(ctx, 12, 12, 40, 40, badgeColor);
+    px(ctx, 17, 17, 30, 30, '#1e1b2e');
+    px(ctx, 19, 19, 26, 2, '#fde047');
     ctx.fillStyle = '#fef08a';
-    ctx.font = 'bold 12px monospace';
+    ctx.font = 'bold 22px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(rank, 16, 20);
+    ctx.fillText(rank, 32, 40);
   } else {
-    // Velvet Crest Relic (royal gold-trimmed crimson heraldic shield brooch)
-    px(ctx, 6, 5, 20, 15, '#09060b');
-    px(ctx, 8, 20, 16, 5, '#09060b');
-    px(ctx, 11, 25, 10, 3, '#09060b');
-    px(ctx, 7, 6, 18, 13, '#fbbf24');
-    px(ctx, 9, 19, 14, 5, '#d97706');
-    px(ctx, 12, 24, 8, 3, '#b45309');
-    px(ctx, 9, 8, 14, 11, '#9f1239');
-    px(ctx, 11, 19, 10, 4, '#7f1d1d');
-    px(ctx, 14, 10, 4, 10, '#fde047');
-    px(ctx, 11, 13, 10, 3, '#fde047');
+    px(ctx, 12, 10, 40, 30, '#09060b');
+    px(ctx, 16, 40, 32, 10, '#09060b');
+    px(ctx, 22, 50, 20, 6, '#09060b');
+    px(ctx, 14, 12, 36, 26, '#fbbf24');
+    px(ctx, 18, 38, 28, 10, '#d97706');
+    px(ctx, 24, 48, 16, 6, '#b45309');
+    px(ctx, 18, 16, 28, 22, '#9f1239');
+    px(ctx, 22, 38, 20, 8, '#7f1d1d');
+    px(ctx, 28, 20, 8, 20, '#fde047');
+    px(ctx, 22, 26, 20, 6, '#fde047');
   }
 
   itemIconCache.set(itemId, c);
   return c;
 }
 
+const weaponWorldCache = new Map<WeaponId, HTMLCanvasElement>();
+
 /**
- * Baked 32x32 pixel-art sword style sprites for Weapons inventory tab & Armory Showcase.
+ * Baked 24x64 high-res pixel sprite for held weapons, Armory displays & slash windups!
+ */
+export function getBakedWeaponWorldSprite(weaponId: WeaponId): HTMLCanvasElement {
+  const existing = weaponWorldCache.get(weaponId);
+  if (existing) return existing;
+
+  const wDef = WEAPONS[weaponId];
+  const W = 24;
+  const H = 64;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
+
+  const bladeRamp = makeRamp(wDef.color);
+  const accentRamp = makeRamp(wDef.accentColor);
+  const cx = 12;
+
+  // Hilt & Pommel at bottom (y=48..62)
+  px(ctx, cx - 2, 50, 4, 10, '#09060b');
+  px(ctx, cx - 1, 51, 2, 8, '#78350f');
+  px(ctx, cx - 1, 53, 2, 1, '#b45309');
+  px(ctx, cx - 1, 56, 2, 1, '#b45309');
+  px(ctx, cx - 3, 59, 6, 4, '#09060b');
+  px(ctx, cx - 2, 60, 4, 2, '#fbbf24');
+
+  // Ornate Crossguard (y=44..50)
+  if (weaponId === 'katana' || weaponId === 'thunder_odachi') {
+    px(ctx, cx - 6, 45, 12, 4, '#09060b');
+    px(ctx, cx - 5, 46, 10, 2, accentRamp.base);
+    px(ctx, cx - 4, 46, 8, 1, '#fde047');
+  } else if (weaponId === 'rapier' || weaponId === 'emerald_zephyr') {
+    px(ctx, cx - 7, 45, 14, 5, '#09060b');
+    px(ctx, cx - 6, 46, 12, 3, '#fbbf24');
+    px(ctx, cx - 4, 47, 8, 3, accentRamp.base);
+  } else {
+    px(ctx, cx - 8, 44, 16, 6, '#09060b');
+    px(ctx, cx - 7, 45, 14, 4, accentRamp.sh);
+    px(ctx, cx - 6, 45, 12, 2, accentRamp.hi);
+    px(ctx, cx - 1, 45, 2, 3, '#fef08a');
+  }
+
+  // Distinct High-Res Blade Silhouette (y=4..45)
+  if (weaponId === 'crimson_reaper') {
+    // Long curved Bloodmoon War Scythe
+    px(ctx, cx - 2, 10, 4, 38, '#09060b');
+    px(ctx, cx - 1, 11, 2, 36, '#78350f');
+    px(ctx, cx - 10, 4, 20, 12, '#09060b');
+    px(ctx, cx - 9, 5, 18, 7, bladeRamp.base);
+    px(ctx, cx - 9, 5, 16, 3, '#ffffff');
+    px(ctx, cx - 10, 12, 6, 7, bladeRamp.sh);
+    px(ctx, cx - 11, 16, 4, 4, '#fef08a');
+  } else if (weaponId === 'azure_glaive') {
+    // Frost-steel Polearm Halberd with crescent axe head + lance tip
+    px(ctx, cx - 2, 18, 4, 30, '#09060b');
+    px(ctx, cx - 1, 19, 2, 28, '#475569');
+    px(ctx, cx - 3, 4, 6, 18, '#09060b');
+    px(ctx, cx - 2, 6, 4, 15, bladeRamp.base);
+    px(ctx, cx - 1, 7, 2, 13, '#e0f2fe');
+    px(ctx, cx + 2, 12, 8, 14, '#09060b');
+    px(ctx, cx + 2, 13, 6, 12, bladeRamp.hi);
+    px(ctx, cx + 6, 14, 2, 10, '#ffffff');
+  } else if (weaponId === 'katana' || weaponId === 'thunder_odachi') {
+    // Sleek curved katana / odachi with luminous hamon edge
+    const bw = weaponId === 'thunder_odachi' ? 5 : 4;
+    for (let y = 5; y < 45; y++) {
+      const curve = Math.floor(((45 - y) * (45 - y)) / 420);
+      px(ctx, cx - 2 + curve, y, bw + 2, 2, '#09060b');
+      px(ctx, cx - 1 + curve, y, bw, 1, bladeRamp.sh);
+      px(ctx, cx + curve, y, bw - 1, 1, bladeRamp.base);
+      px(ctx, cx + bw - 2 + curve, y, 1, 1, '#ffffff');
+    }
+  } else if (weaponId === 'fire_sword') {
+    // Jagged blazing Flame Greatsword with white-hot magma spine
+    for (let y = 6; y < 45; y++) {
+      const serrate = y % 6 < 3 ? 1 : 0;
+      px(ctx, cx - 4 - serrate, y, 8 + serrate * 2, 2, '#09060b');
+      px(ctx, cx - 3 - serrate, y, 6 + serrate * 2, 1, '#dc2626');
+      px(ctx, cx - 2, y, 4, 1, '#fb923c');
+      px(ctx, cx - 1, y, 2, 1, '#fef08a');
+    }
+    px(ctx, cx - 2, 3, 4, 4, '#fef08a');
+    px(ctx, cx - 1, 2, 2, 2, '#ffffff');
+  } else if (weaponId === 'crescent' || weaponId === 'venom_twinblade') {
+    // Curved double-edge or dual-crescent saber
+    for (let y = 7; y < 45; y++) {
+      const sw = Math.round(Math.sin(((45 - y) / 38) * Math.PI) * 3);
+      px(ctx, cx - 3 + sw, y, 6, 2, '#09060b');
+      px(ctx, cx - 2 + sw, y, 4, 1, bladeRamp.base);
+      px(ctx, cx + sw, y, 2, 1, '#ffffff');
+    }
+  } else if (weaponId === 'rapier' || weaponId === 'emerald_zephyr') {
+    // Needle-sharp tapering foil/lance
+    px(ctx, cx - 2, 4, 4, 41, '#09060b');
+    px(ctx, cx - 1, 5, 2, 40, bladeRamp.base);
+    px(ctx, cx, 5, 1, 39, '#ffffff');
+  } else {
+    // Claymore / Runeblade / Solar Excalibur: broad beveled greatsword w/ fuller
+    const halfW = weaponId === 'runeblade' || weaponId === 'solar_excalibur' ? 4 : 3;
+    px(ctx, cx - halfW - 1, 8, halfW * 2 + 2, 37, '#09060b');
+    px(ctx, cx - 2, 4, 4, 5, '#09060b');
+    px(ctx, cx - 1, 5, 2, 4, '#ffffff');
+    px(ctx, cx - halfW, 9, halfW, 35, bladeRamp.hi);
+    px(ctx, cx, 9, halfW, 35, bladeRamp.sh);
+    px(ctx, cx - 1, 13, 2, 28, accentRamp.base); // Glowing central fuller rune
+    px(ctx, cx - halfW, 9, 1, 34, '#ffffff');
+  }
+
+  weaponWorldCache.set(weaponId, c);
+  return c;
+}
+
+/**
+ * Baked 64x64 crisp pixel-art sword style sprites for Weapons inventory tab & Armory Showcase.
  */
 export function getBakedWeaponIcon(weaponId: WeaponId): HTMLCanvasElement {
   const existing = weaponIconCache.get(weaponId);
   if (existing) return existing;
 
   const c = document.createElement('canvas');
-  c.width = 32;
-  c.height = 32;
+  c.width = 64;
+  c.height = 64;
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
   const weapon = WEAPONS[weaponId];
-  px(ctx, 0, 0, 32, 32, '#120a0e');
-  px(ctx, 1, 1, 30, 30, '#1c1016');
+  const bladeRamp = makeRamp(weapon.color);
+  const accentRamp = makeRamp(weapon.accentColor);
 
-  if (weaponId === 'katana' || weaponId === 'thunder_odachi') {
-    const len = weaponId === 'thunder_odachi' ? 22 : 20;
-    const thick = weaponId === 'thunder_odachi' ? 4 : 3;
+  // Ornate dark velvet slot frame with beveled corners
+  px(ctx, 0, 0, 64, 64, '#0c070a');
+  px(ctx, 2, 2, 60, 60, '#180d12');
+  px(ctx, 4, 4, 56, 56, '#211219');
+  // Subtle diagonal forge aura behind blade
+  px(ctx, 18, 18, 28, 28, 'rgba(255, 255, 255, 0.03)');
+
+  const diagBlade = (
+    len: number,
+    width: number,
+    curveDiv: number,
+    serrated = false,
+  ) => {
     for (let i = 0; i < len; i++) {
-      const curve = Math.floor((i * i) / 95);
-      px(ctx, 6 + i, 24 - i - curve, thick + 1, thick + 1, '#09060b');
-      px(ctx, 7 + i, 24 - i - curve, thick, thick, weapon.color);
-      px(ctx, 7 + i, 23 - i - curve, 1, 1, '#ffffff');
-    }
-    px(ctx, 7, 20, 7, 2, weapon.accentColor);
-    px(ctx, 4, 24, 4, 4, weapon.accentColor);
-  } else if (weaponId === 'crescent' || weaponId === 'crimson_reaper') {
-    for (let i = 0; i < 18; i++) {
-      px(ctx, 6 + i, 23 - i, 3, 3, weapon.color);
-      px(ctx, 8 + i, 25 - i, 2, 2, weapon.accentColor);
-    }
-    px(ctx, 16, 4, 11, 8, weapon.color);
-    px(ctx, 19, 7, 6, 5, '#1c1016');
-    px(ctx, 5, 23, 5, 4, weapon.accentColor);
-  } else if (weaponId === 'runeblade' || weaponId === 'solar_excalibur') {
-    for (let i = 0; i < 19; i++) {
-      px(ctx, 6 + i, 22 - i, 6, 6, '#09060b');
-      px(ctx, 7 + i, 22 - i, 4, 4, weapon.color);
-      px(ctx, 8 + i, 22 - i, 2, 2, '#ffffff');
-    }
-    px(ctx, 14, 15, 3, 3, weapon.accentColor);
-    px(ctx, 6, 20, 8, 4, weapon.accentColor);
-    px(ctx, 4, 24, 4, 4, '#fbbf24');
-  } else if (weaponId === 'rapier' || weaponId === 'emerald_zephyr') {
-    for (let i = 0; i < 21; i++) {
-      px(ctx, 6 + i, 24 - i, 2, 2, weapon.color);
-      px(ctx, 6 + i, 23 - i, 1, 1, '#ffffff');
-    }
-    px(ctx, 6, 20, 7, 7, '#09060b');
-    px(ctx, 7, 21, 5, 5, weapon.accentColor);
-    px(ctx, 8, 22, 2, 2, '#fef08a');
-  } else if (weaponId === 'azure_glaive') {
-    for (let i = 0; i < 20; i++) {
-      px(ctx, 5 + i, 24 - i, 3, 3, '#475569');
-    }
-    px(ctx, 19, 4, 9, 9, '#09060b');
-    px(ctx, 20, 5, 7, 7, weapon.color);
-    px(ctx, 21, 6, 4, 4, '#e0f2fe');
-  } else if (weaponId === 'venom_twinblade') {
-    for (let i = 0; i < 15; i++) {
-      px(ctx, 8 + i, 22 - i, 4, 4, '#09060b');
-      px(ctx, 9 + i, 22 - i, 2, 2, weapon.color);
-    }
-    px(ctx, 19, 9, 4, 4, '#bef264');
-    px(ctx, 7, 19, 5, 3, weapon.accentColor);
-  } else if (weaponId === 'fire_sword') {
-    // OP Fire Sword: serrated blazing crimson-orange flame blade with white-hot core!
-    px(ctx, 2, 2, 28, 28, '#1a0606');
-    for (let i = 0; i < 19; i++) {
-      px(ctx, 6 + i, 22 - i, 6, 6, '#450a0a');
-      px(ctx, 7 + i, 22 - i, 4, 4, '#dc2626');
-      px(ctx, 8 + i, 22 - i, 3, 3, '#fb923c');
-      px(ctx, 9 + i, 22 - i, 1, 1, '#fef08a');
-      if (i % 3 === 1) {
-        px(ctx, 6 + i, 19 - i, 2, 3, '#f97316');
-        px(ctx, 11 + i, 24 - i, 2, 3, '#ef4444');
+      const curve = curveDiv > 0 ? Math.floor((i * i) / curveDiv) : 0;
+      const sx = 14 + i;
+      const sy = 48 - i - curve;
+      const w = width + (serrated && i % 5 === 2 ? 2 : 0);
+      px(ctx, sx - 1, sy - 1, w + 2, w + 2, '#09060b');
+      px(ctx, sx, sy, w, w, bladeRamp.sh);
+      px(ctx, sx, sy, Math.max(2, w - 1), Math.max(2, w - 1), bladeRamp.base);
+      px(ctx, sx, sy, Math.max(1, Math.floor(w / 2)), Math.max(1, Math.floor(w / 2)), '#ffffff');
+      if (i > 4 && i < len - 5 && i % 4 === 0 && width >= 4) {
+        px(ctx, sx + 1, sy + 1, 2, 2, accentRamp.base);
       }
     }
-    px(ctx, 5, 19, 9, 3, '#fbbf24');
-    px(ctx, 8, 22, 3, 6, '#991b1b');
-    px(ctx, 4, 25, 4, 4, '#f97316');
+  };
+
+  if (weaponId === 'katana' || weaponId === 'thunder_odachi') {
+    const len = weaponId === 'thunder_odachi' ? 38 : 35;
+    const thick = weaponId === 'thunder_odachi' ? 5 : 4;
+    diagBlade(len, thick, 190);
+    // Round tsuba guard & diamond tsuka wrap
+    px(ctx, 13, 39, 10, 10, '#09060b');
+    px(ctx, 14, 40, 8, 8, '#fbbf24');
+    px(ctx, 16, 42, 4, 4, accentRamp.base);
+    px(ctx, 8, 49, 8, 8, '#09060b');
+    px(ctx, 9, 50, 6, 6, '#1e293b');
+    px(ctx, 10, 51, 2, 2, accentRamp.hi);
+    px(ctx, 7, 54, 4, 4, '#fbbf24');
+    if (weaponId === 'thunder_odachi') {
+      px(ctx, 24, 16, 4, 4, '#fde047');
+      px(ctx, 28, 12, 4, 4, '#38bdf8');
+      px(ctx, 42, 28, 4, 4, '#38bdf8');
+    }
+  } else if (weaponId === 'crescent' || weaponId === 'crimson_reaper') {
+    // Handle shaft
+    diagBlade(30, 3, 0);
+    // Sweeping crescent scythe / saber head
+    px(ctx, 28, 8, 26, 18, '#09060b');
+    px(ctx, 30, 10, 22, 13, bladeRamp.base);
+    px(ctx, 30, 10, 20, 5, '#ffffff');
+    px(ctx, 42, 20, 10, 12, bladeRamp.sh);
+    px(ctx, 46, 26, 6, 8, accentRamp.hi);
+    px(ctx, 35, 19, 10, 10, '#211219');
+    px(ctx, 10, 48, 8, 8, accentRamp.base);
+  } else if (weaponId === 'runeblade' || weaponId === 'solar_excalibur') {
+    diagBlade(35, 7, 0);
+    // Winged ornate royal crossguard + pommel jewel
+    px(ctx, 10, 36, 16, 16, '#09060b');
+    px(ctx, 11, 41, 14, 5, accentRamp.base);
+    px(ctx, 15, 37, 5, 14, accentRamp.base);
+    px(ctx, 16, 41, 4, 4, '#fef08a');
+    px(ctx, 8, 50, 7, 7, '#09060b');
+    px(ctx, 9, 51, 5, 5, '#fbbf24');
+  } else if (weaponId === 'rapier' || weaponId === 'emerald_zephyr') {
+    diagBlade(39, 3, 0);
+    // Filigree basket hilt
+    px(ctx, 10, 40, 14, 14, '#09060b');
+    px(ctx, 11, 41, 12, 12, accentRamp.base);
+    px(ctx, 13, 43, 8, 8, '#fbbf24');
+    px(ctx, 15, 45, 4, 4, '#ffffff');
+    px(ctx, 8, 50, 5, 5, '#fbbf24');
+  } else if (weaponId === 'azure_glaive') {
+    for (let i = 0; i < 36; i++) {
+      px(ctx, 10 + i, 52 - i, 4, 4, '#09060b');
+      px(ctx, 11 + i, 52 - i, 3, 3, '#475569');
+    }
+    px(ctx, 36, 8, 18, 18, '#09060b');
+    px(ctx, 38, 10, 14, 14, bladeRamp.base);
+    px(ctx, 40, 11, 8, 8, '#e0f2fe');
+    px(ctx, 44, 12, 4, 4, '#ffffff');
+  } else if (weaponId === 'venom_twinblade') {
+    diagBlade(30, 4, 240);
+    px(ctx, 40, 16, 8, 8, '#bef264');
+    px(ctx, 12, 42, 12, 6, '#09060b');
+    px(ctx, 13, 43, 10, 4, accentRamp.base);
+    px(ctx, 8, 50, 7, 7, '#bef264');
+  } else if (weaponId === 'fire_sword') {
+    px(ctx, 4, 4, 56, 56, '#1c0606');
+    diagBlade(36, 7, 0, true);
+    // Molten flame spines & glowing phoenix guard
+    for (let i = 6; i < 34; i += 5) {
+      px(ctx, 13 + i, 41 - i, 4, 5, '#f97316');
+      px(ctx, 20 + i, 48 - i, 4, 5, '#ef4444');
+    }
+    px(ctx, 10, 38, 16, 12, '#09060b');
+    px(ctx, 11, 41, 14, 5, '#fbbf24');
+    px(ctx, 15, 39, 5, 10, '#dc2626');
+    px(ctx, 8, 50, 7, 7, '#f97316');
   } else {
     // Claymore
-    for (let i = 0; i < 19; i++) {
-      px(ctx, 7 + i, 23 - i, 4, 4, '#09060b');
-      px(ctx, 8 + i, 23 - i, 3, 3, weapon.color);
-      px(ctx, 9 + i, 22 - i, 1, 1, '#ffffff');
-    }
-    px(ctx, 6, 19, 8, 3, '#d97706');
-    px(ctx, 9, 22, 3, 6, '#d97706');
-    px(ctx, 4, 25, 4, 4, '#fbbf24');
+    diagBlade(35, 6, 0);
+    px(ctx, 11, 38, 15, 14, '#09060b');
+    px(ctx, 12, 41, 13, 4, '#d97706');
+    px(ctx, 16, 39, 4, 12, '#b45309');
+    px(ctx, 16, 42, 4, 3, '#e11d48');
+    px(ctx, 8, 50, 7, 7, '#fbbf24');
   }
 
   weaponIconCache.set(weaponId, c);
@@ -1957,57 +2110,68 @@ export function getBakedWeaponIcon(weaponId: WeaponId): HTMLCanvasElement {
 }
 
 /**
- * Baked 32x32 pixel-art skill icons for 3-Slot Skills tab.
+ * Baked 64x64 crisp pixel-art skill icons for 3-Slot Skills tab.
  */
 export function getBakedSkillIcon(skillId: SkillId): HTMLCanvasElement {
   const existing = skillIconCache.get(skillId);
   if (existing) return existing;
 
   const c = document.createElement('canvas');
-  c.width = 32;
-  c.height = 32;
+  c.width = 64;
+  c.height = 64;
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
   const sk = SKILLS[skillId];
-  px(ctx, 0, 0, 32, 32, '#100a14');
-  px(ctx, 2, 2, 28, 28, '#1a1121');
+  px(ctx, 0, 0, 64, 64, '#0d0710');
+  px(ctx, 3, 3, 58, 58, '#1a1022');
+  px(ctx, 5, 5, 54, 54, '#231530');
 
   if (skillId === 'stand_rush') {
-    // Purple spiked Stand fist
-    px(ctx, 8, 10, 16, 13, '#09060b');
-    px(ctx, 9, 11, 14, 11, '#a78bfa');
-    px(ctx, 10, 12, 10, 4, '#ddd6fe');
-    px(ctx, 8, 14, 15, 3, '#fbbf24');
+    // Sculpted amethyst-violet Stand gauntlets punching forward
+    px(ctx, 12, 18, 36, 28, '#09060b');
+    px(ctx, 14, 20, 32, 24, '#7c3aed');
+    px(ctx, 16, 22, 22, 10, '#a78bfa');
+    px(ctx, 18, 23, 12, 5, '#ddd6fe');
+    // Spiked gold knuckle rings
+    px(ctx, 38, 19, 8, 26, '#fbbf24');
+    px(ctx, 41, 21, 3, 22, '#fef08a');
+    px(ctx, 48, 26, 8, 4, '#ffffff');
+    px(ctx, 50, 34, 6, 3, '#fbbf24');
   } else if (skillId === 'chrono_freeze') {
-    // Emerald stopped pocket-clock
-    px(ctx, 7, 7, 18, 18, '#09060b');
-    px(ctx, 8, 8, 16, 16, '#34d399');
-    px(ctx, 10, 10, 12, 12, '#064e3b');
-    px(ctx, 15, 11, 2, 6, '#fde047');
-    px(ctx, 16, 15, 5, 2, '#fde047');
+    // Ornate emerald pocket-chronometer stopping time
+    px(ctx, 26, 6, 12, 8, '#fbbf24');
+    px(ctx, 13, 13, 38, 38, '#09060b');
+    px(ctx, 15, 15, 34, 34, '#10b981');
+    px(ctx, 19, 19, 26, 26, '#064e3b');
+    px(ctx, 30, 21, 4, 13, '#fde047');
+    px(ctx, 31, 30, 11, 4, '#fde047');
+    px(ctx, 29, 29, 6, 6, '#ffffff');
   } else if (skillId === 'parry_guard') {
-    // Twin crossed golden shield & blade
-    px(ctx, 8, 7, 16, 18, '#f59e0b');
-    px(ctx, 10, 9, 12, 14, '#78350f');
-    px(ctx, 7, 22, 18, 3, '#ffffff');
-    px(ctx, 15, 6, 2, 18, '#fef08a');
+    // Royal crossed golden kite shield & counter blade
+    px(ctx, 14, 12, 36, 40, '#09060b');
+    px(ctx, 16, 14, 32, 34, '#f59e0b');
+    px(ctx, 20, 18, 24, 26, '#78350f');
+    px(ctx, 29, 10, 6, 42, '#fef08a');
+    px(ctx, 14, 42, 36, 6, '#ffffff');
   } else if (skillId === 'candlefire_wave') {
-    // Blazing fire crescent
-    px(ctx, 8, 12, 16, 12, '#f97316');
-    px(ctx, 11, 7, 10, 14, '#fb923c');
-    px(ctx, 13, 12, 6, 9, '#fef08a');
+    // Blazing multi-layered crimson-gold wave crest
+    px(ctx, 14, 24, 36, 26, '#7f1d1d');
+    px(ctx, 18, 16, 28, 30, '#ea580c');
+    px(ctx, 22, 10, 20, 30, '#fb923c');
+    px(ctx, 26, 18, 12, 20, '#fde047');
+    px(ctx, 29, 25, 6, 10, '#ffffff');
   } else if (skillId === 'blade_dash') {
-    // Supersonic gold speed arrows
-    px(ctx, 4, 14, 20, 4, sk.color);
-    px(ctx, 16, 9, 4, 14, '#fef08a');
-    px(ctx, 20, 12, 6, 8, '#ffffff');
+    px(ctx, 8, 27, 38, 10, sk.color);
+    px(ctx, 30, 16, 10, 32, '#fef08a');
+    px(ctx, 40, 22, 14, 20, '#ffffff');
+    px(ctx, 10, 30, 28, 4, '#ffffff');
   } else {
-    // Hamon Sunburst solar emblem
-    px(ctx, 9, 9, 14, 14, '#f59e0b');
-    px(ctx, 11, 11, 10, 10, '#fde047');
-    px(ctx, 15, 4, 2, 24, '#fef08a');
-    px(ctx, 4, 15, 24, 2, '#fef08a');
+    px(ctx, 16, 16, 32, 32, '#d97706');
+    px(ctx, 20, 20, 24, 24, '#fbbf24');
+    px(ctx, 24, 24, 16, 16, '#fef08a');
+    px(ctx, 30, 8, 4, 48, '#fef08a');
+    px(ctx, 8, 30, 48, 4, '#fef08a');
   }
 
   skillIconCache.set(skillId, c);
@@ -2017,173 +2181,347 @@ export function getBakedSkillIcon(skillId: SkillId): HTMLCanvasElement {
 const starPlatinumCache = new Map<string, HTMLCanvasElement>();
 
 /**
- * Baked 64x52 pixel-art Star Platinum guardian spirit styled in Bastera's dark royal armor theme:
- * Indigo-violet spiked hair, golden royal crown circlet, crimson sash, armored pauldrons, and spiked punch gauntlets.
+ * Baked 128x104 (drawn at 64x52 logical) HD pixel-art Star Platinum guardian spirit styled in Bastera's royal armor:
+ * Sculpted indigo-violet hair spikes, golden crown circlet, crimson sash, layered muscles, and ORA gauntlet barrage!
  */
 export function getBakedStarPlatinumSprite(frame: 0 | 1): HTMLCanvasElement {
-  const key = `sp_${frame}`;
+  const key = `sp_hd_${frame}`;
   const existing = starPlatinumCache.get(key);
   if (existing) return existing;
 
   const c = document.createElement('canvas');
-  c.width = 64;
-  c.height = 52;
+  c.width = 128;
+  c.height = 104;
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
   // Ethereal royal aura wisps behind spirit
-  px(ctx, 2, 10, 4, 22, 'rgba(167, 139, 250, 0.35)');
-  px(ctx, 6, 4, 6, 30, 'rgba(139, 92, 246, 0.25)');
+  px(ctx, 4, 18, 8, 48, 'rgba(167, 139, 250, 0.34)');
+  px(ctx, 12, 8, 12, 62, 'rgba(139, 92, 246, 0.24)');
 
   // Flowing indigo-violet spiky hair + royal golden Bastera circlet
-  px(ctx, 13, 3, 14, 10, '#09060b');
-  px(ctx, 14, 4, 12, 8, '#312e81');
-  px(ctx, 11, 6, 4, 4, '#4c1d95');
-  px(ctx, 15, 2, 4, 4, '#6366f1');
-  px(ctx, 21, 3, 4, 4, '#4f46e5');
-  // Face + glowing cyan eyes + determined brow
-  px(ctx, 16, 10, 10, 9, '#7c3aed');
-  px(ctx, 17, 11, 8, 7, '#a78bfa');
-  px(ctx, 16, 9, 11, 2, '#fbbf24'); // Golden royal headband
-  px(ctx, 20, 9, 2, 2, '#dc2626'); // Ruby centerpiece
-  px(ctx, 19, 12, 3, 2, '#09060b');
-  px(ctx, 23, 12, 3, 2, '#09060b');
-  px(ctx, 20, 12, 2, 2, '#22d3ee'); // Glowing cyan eyes
-  px(ctx, 24, 12, 2, 2, '#22d3ee');
+  px(ctx, 24, 4, 30, 22, '#09060b');
+  px(ctx, 26, 6, 26, 18, '#312e81');
+  px(ctx, 20, 12, 9, 8, '#4c1d95');
+  px(ctx, 29, 2, 8, 9, '#6366f1');
+  px(ctx, 41, 4, 8, 9, '#4f46e5');
+  // Face + glowing cyan eyes + determined shadow brow
+  px(ctx, 31, 19, 22, 19, '#09060b');
+  px(ctx, 32, 20, 20, 17, '#7c3aed');
+  px(ctx, 34, 22, 16, 13, '#a78bfa');
+  px(ctx, 32, 18, 22, 4, '#fbbf24');
+  px(ctx, 40, 18, 4, 4, '#dc2626');
+  px(ctx, 37, 24, 6, 4, '#09060b');
+  px(ctx, 45, 24, 6, 4, '#09060b');
+  px(ctx, 39, 25, 4, 3, '#22d3ee');
+  px(ctx, 47, 25, 4, 3, '#22d3ee');
+  px(ctx, 40, 25, 2, 1, '#ffffff');
+  px(ctx, 48, 25, 2, 1, '#ffffff');
 
-  // Muscular violet torso + royal crimson sash + golden Bastera shoulder pauldrons
-  px(ctx, 12, 19, 18, 17, '#09060b');
-  px(ctx, 13, 20, 16, 15, '#6d28d9');
-  px(ctx, 15, 21, 11, 8, '#8b5cf6');
-  px(ctx, 16, 22, 4, 4, '#a78bfa');
-  px(ctx, 21, 22, 4, 4, '#a78bfa');
-  // Royal crimson scarf & golden waist belt
-  px(ctx, 11, 19, 19, 3, '#9f1239');
-  px(ctx, 8, 22, 5, 10, '#be123c');
-  px(ctx, 14, 33, 14, 3, '#fbbf24');
+  // Sculpted violet torso + royal crimson sash + golden pauldrons
+  px(ctx, 23, 38, 38, 35, '#09060b');
+  px(ctx, 25, 40, 34, 31, '#6d28d9');
+  px(ctx, 29, 42, 24, 16, '#8b5cf6');
+  px(ctx, 31, 44, 9, 8, '#a78bfa');
+  px(ctx, 42, 44, 9, 8, '#a78bfa');
+  px(ctx, 33, 54, 16, 10, '#7c3aed');
+  // Crimson sash & star waist belt
+  px(ctx, 21, 38, 40, 6, '#9f1239');
+  px(ctx, 15, 44, 11, 20, '#be123c');
+  px(ctx, 27, 65, 30, 6, '#fbbf24');
+  px(ctx, 39, 65, 6, 6, '#fef08a');
   // Armored Pauldrons with golden trim
-  px(ctx, 9, 19, 6, 7, '#d97706');
-  px(ctx, 10, 20, 4, 4, '#fef08a');
-  px(ctx, 25, 19, 6, 7, '#d97706');
-  px(ctx, 26, 20, 4, 4, '#fef08a');
+  px(ctx, 17, 37, 13, 15, '#09060b');
+  px(ctx, 18, 38, 11, 13, '#d97706');
+  px(ctx, 20, 40, 8, 7, '#fef08a');
+  px(ctx, 50, 37, 13, 15, '#09060b');
+  px(ctx, 51, 38, 11, 13, '#d97706');
+  px(ctx, 53, 40, 8, 7, '#fef08a');
 
-  // Spectral lower taper (floating spirit silhouette)
-  px(ctx, 14, 36, 12, 8, '#4c1d95');
-  px(ctx, 16, 44, 8, 5, '#7c3aed');
-  px(ctx, 18, 48, 4, 3, '#c4b5fd');
+  // Spectral lower taper
+  px(ctx, 28, 72, 24, 16, '#4c1d95');
+  px(ctx, 32, 88, 16, 10, '#7c3aed');
+  px(ctx, 36, 96, 8, 6, '#c4b5fd');
 
-  // Rapid-fire ORA ORA spiked golden-violet punch barrage fists!
-  const f1X = frame === 0 ? 34 : 44;
-  const f2X = frame === 0 ? 46 : 32;
-  const f3X = frame === 0 ? 39 : 49;
+  // Rapid-fire ORA ORA spiked golden-violet punch barrage fists
+  const f1X = frame === 0 ? 68 : 88;
+  const f2X = frame === 0 ? 92 : 64;
+  const f3X = frame === 0 ? 78 : 98;
 
-  // Motion speed streaks
-  px(ctx, 27, 17, f1X - 25, 2, '#ddd6fe');
-  px(ctx, 27, 25, f2X - 25, 2, '#c4b5fd');
-  px(ctx, 27, 31, f3X - 25, 2, '#fbbf24');
+  px(ctx, 54, 34, f1X - 50, 4, '#ddd6fe');
+  px(ctx, 54, 50, f2X - 50, 4, '#c4b5fd');
+  px(ctx, 54, 62, f3X - 50, 4, '#fbbf24');
 
-  // Fist 1 (upper)
-  px(ctx, f1X, 14, 11, 7, '#09060b');
-  px(ctx, f1X + 1, 15, 9, 5, '#a78bfa');
-  px(ctx, f1X + 7, 15, 3, 5, '#fbbf24'); // Spiked brass knuckle
-  px(ctx, f1X + 11, 16, 2, 3, '#ffffff');
-
-  // Fist 2 (middle)
-  px(ctx, f2X, 22, 12, 7, '#09060b');
-  px(ctx, f2X + 1, 23, 10, 5, '#8b5cf6');
-  px(ctx, f2X + 8, 23, 3, 5, '#fef08a');
-  px(ctx, f2X + 12, 24, 2, 3, '#ffffff');
-
-  // Fist 3 (lower)
-  px(ctx, f3X, 29, 10, 6, '#09060b');
-  px(ctx, f3X + 1, 30, 8, 4, '#a78bfa');
-  px(ctx, f3X + 6, 30, 3, 4, '#fbbf24');
+  const drawFist = (fx: number, fy: number, w: number, h: number, main: string, knuck: string) => {
+    px(ctx, fx, fy, w, h, '#09060b');
+    px(ctx, fx + 2, fy + 2, w - 4, h - 4, main);
+    px(ctx, fx + 4, fy + 3, w - 10, 4, '#ddd6fe');
+    px(ctx, fx + w - 8, fy + 2, 6, h - 4, knuck);
+    px(ctx, fx + w, fy + 4, 5, h - 8, '#ffffff');
+  };
+  drawFist(f1X, 28, 22, 14, '#a78bfa', '#fbbf24');
+  drawFist(f2X, 44, 24, 14, '#8b5cf6', '#fef08a');
+  drawFist(f3X, 58, 20, 12, '#a78bfa', '#fbbf24');
 
   starPlatinumCache.set(key, c);
+  return c;
+}
+
+const standWorldSpriteCache = new Map<string, HTMLCanvasElement>();
+
+/**
+ * Baked 96x96 high-resolution world manifestation sprites for all 10 JJBA Stands!
+ */
+export function getBakedStandWorldSprite(standId: StandId, frame: 0 | 1): HTMLCanvasElement {
+  const key = `${standId}_${frame}`;
+  const existing = standWorldSpriteCache.get(key);
+  if (existing) return existing;
+
+  const def = STANDS[standId];
+  const c = document.createElement('canvas');
+  c.width = 96;
+  c.height = 96;
+  const ctx = c.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
+
+  const pRamp = makeRamp(def.primaryColor);
+  const sRamp = makeRamp(def.secondaryColor);
+  const aRamp = makeRamp(def.accentColor);
+  const bob = frame === 0 ? 0 : -2;
+
+  // Soft outer Stand energy halo
+  const rg = ctx.createRadialGradient(48, 48, 6, 48, 48, 44);
+  rg.addColorStop(0, `${def.primaryColor}66`);
+  rg.addColorStop(0.65, `${def.accentColor}22`);
+  rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, 0, 96, 96);
+
+  if (standId === 'gyro_ball') {
+    // High-res spherical emerald-gold Steel Ball with Golden Ratio rings
+    px(ctx, 20, 20 + bob, 56, 56, '#09060b');
+    px(ctx, 23, 23 + bob, 50, 50, '#064e3b');
+    px(ctx, 26, 26 + bob, 44, 44, '#15803d');
+    px(ctx, 30, 28 + bob, 34, 34, '#22c55e');
+    px(ctx, 34, 30 + bob, 20, 20, '#4ade80');
+    px(ctx, 27, 45 + bob, 42, 4, '#fbbf24');
+    px(ctx, 46, 26 + bob, 4, 44, '#fde047');
+    px(ctx, 36, 33 + bob, 9, 9, '#ffffff');
+    // Spin energy arcs
+    px(ctx, frame === 0 ? 12 : 74, 36, 10, 4, '#fef08a');
+    px(ctx, frame === 0 ? 74 : 12, 56, 10, 4, '#a855f7');
+    standWorldSpriteCache.set(key, c);
+    return c;
+  }
+
+  if (standId === 'scary_monsters') {
+    // Ferocious Emerald Velociraptor Stand Spirit
+    px(ctx, 18, 22 + bob, 44, 30, '#09060b');
+    px(ctx, 40, 24 + bob, 38, 18, '#09060b');
+    px(ctx, 20, 24 + bob, 40, 26, '#15803d');
+    px(ctx, 42, 26 + bob, 34, 14, '#16a34a');
+    px(ctx, 44, 39 + bob, 28, 5, '#f8fafc');
+    px(ctx, 46, 39 + bob, 3, 4, '#09060b');
+    px(ctx, 54, 39 + bob, 3, 4, '#09060b');
+    px(ctx, 62, 39 + bob, 3, 4, '#09060b');
+    px(ctx, 34, 28 + bob, 9, 6, '#fbbf24');
+    px(ctx, 38, 29 + bob, 3, 4, '#09060b');
+    px(ctx, 24, 15 + bob, 28, 8, '#fbbf24');
+    px(ctx, 22, 50 + bob, 32, 30, '#166534');
+    px(ctx, 30, 52 + bob, 18, 24, '#bef264');
+    // Razor slashes
+    const sx = frame === 0 ? 64 : 70;
+    px(ctx, sx, 46, 22, 4, '#fef08a');
+    px(ctx, sx + 2, 56, 22, 4, '#4ade80');
+    px(ctx, sx, 66, 22, 4, '#fef08a');
+    standWorldSpriteCache.set(key, c);
+    return c;
+  }
+
+  // Humanoid Stands (The Hand, Chili Pepper, Crazy Diamond, Killer Queen, Golden Experience, King Crimson, Silver Chariot, Star Platinum)
+  // Ink silhouette + muscular torso + shoulder pauldrons
+  px(ctx, 28, 12 + bob, 36, 26, '#09060b'); // Head
+  px(ctx, 22, 38 + bob, 48, 36, '#09060b'); // Torso
+  px(ctx, 30, 14 + bob, 32, 22, pRamp.base);
+  px(ctx, 24, 40 + bob, 44, 32, pRamp.sh);
+  px(ctx, 28, 42 + bob, 36, 24, pRamp.base);
+  px(ctx, 32, 44 + bob, 14, 12, pRamp.hi);
+  px(ctx, 48, 44 + bob, 14, 12, pRamp.hi);
+  // Pauldrons
+  px(ctx, 14, 38 + bob, 14, 14, '#09060b');
+  px(ctx, 16, 40 + bob, 10, 10, aRamp.base);
+  px(ctx, 64, 38 + bob, 14, 14, '#09060b');
+  px(ctx, 66, 40 + bob, 10, 10, aRamp.base);
+  // Spectral floating lower tail
+  px(ctx, 32, 74 + bob, 28, 14, pRamp.deep);
+  px(ctx, 38, 86 + bob, 16, 6, pRamp.base);
+
+  if (standId === 'the_hand') {
+    px(ctx, 30, 14 + bob, 32, 22, '#f8fafc');
+    px(ctx, 27, 20 + bob, 6, 14, '#0284c7'); // Cheek blinders
+    px(ctx, 59, 20 + bob, 6, 14, '#0284c7');
+    px(ctx, 35, 22 + bob, 22, 6, '#0f172a');
+    px(ctx, 38, 23 + bob, 5, 4, '#fde047');
+    px(ctx, 49, 23 + bob, 5, 4, '#fde047');
+    px(ctx, 32, 40 + bob, 28, 32, '#f8fafc');
+    px(ctx, 41, 46 + bob, 10, 14, '#fbbf24'); // Gold $ chest emblem
+    // Glowing right space-erasure palm thrusting out!
+    const pxX = frame === 0 ? 64 : 70;
+    px(ctx, pxX, 34, 22, 24, '#0ea5e9');
+    px(ctx, pxX + 3, 37, 16, 18, '#bae6fd');
+    px(ctx, pxX + 9, 32, 4, 28, '#ffffff');
+  } else if (standId === 'chili_pepper') {
+    px(ctx, 32, 4 + bob, 6, 12, '#facc15');
+    px(ctx, 54, 4 + bob, 6, 12, '#facc15');
+    px(ctx, 32, 16 + bob, 28, 20, '#fef08a');
+    px(ctx, 37, 23 + bob, 6, 4, '#09060b');
+    px(ctx, 49, 23 + bob, 6, 4, '#09060b');
+    px(ctx, 39, 24 + bob, 4, 3, '#22d3ee');
+    px(ctx, 51, 24 + bob, 4, 3, '#22d3ee');
+    // Electric lightning wings & tail
+    px(ctx, 8, 56, 18, 6, '#22d3ee');
+    px(ctx, 68, 40 + bob * 2, 24, 5, '#38bdf8');
+    px(ctx, 72, 42 + bob * 2, 18, 2, '#ffffff');
+  } else if (standId === 'crazy_diamond') {
+    px(ctx, 36, 7 + bob, 20, 12, '#f472b6'); // Heart helm
+    px(ctx, 42, 15 + bob, 8, 8, '#be185d');
+    px(ctx, 37, 24 + bob, 6, 4, '#38bdf8');
+    px(ctx, 49, 24 + bob, 6, 4, '#38bdf8');
+    px(ctx, 28, 40 + bob, 36, 32, '#e2e8f0');
+    px(ctx, 32, 42 + bob, 28, 26, '#ec4899');
+    px(ctx, 42, 48 + bob, 8, 8, '#fef08a');
+    px(ctx, frame === 0 ? 64 : 72, 44, 20, 14, '#f472b6');
+  } else if (standId === 'killer_queen') {
+    px(ctx, 28, 6 + bob, 8, 12, '#f9a8d4'); // Cat ears
+    px(ctx, 56, 6 + bob, 8, 12, '#f9a8d4');
+    px(ctx, 32, 16 + bob, 28, 20, '#fbcfe8');
+    px(ctx, 37, 23 + bob, 6, 5, '#fbbf24');
+    px(ctx, 49, 23 + bob, 6, 5, '#fbbf24');
+    px(ctx, 39, 46 + bob, 14, 14, '#18181b'); // Skull crest
+    px(ctx, 42, 50 + bob, 3, 4, '#fde047');
+    px(ctx, 47, 50 + bob, 3, 4, '#fde047');
+    px(ctx, 70, 22 + bob, 12, 12, '#f97316'); // Bomb spark
+  } else if (standId === 'golden_experience') {
+    px(ctx, 26, 16 + bob, 8, 12, '#fef08a'); // Winged helm
+    px(ctx, 58, 16 + bob, 8, 12, '#fef08a');
+    px(ctx, 37, 23 + bob, 6, 4, '#22c55e');
+    px(ctx, 49, 23 + bob, 6, 4, '#22c55e');
+    px(ctx, 41, 46 + bob, 10, 10, '#10b981'); // Ladybug crest
+    px(ctx, 18, 46 + bob, 8, 8, '#a3e635');
+    px(ctx, 66, 46 + bob, 8, 8, '#a3e635');
+  } else if (standId === 'king_crimson') {
+    px(ctx, 39, 14 + bob, 14, 8, '#fca5a5'); // Epitaph forehead face!
+    px(ctx, 36, 24 + bob, 8, 4, '#4ade80');
+    px(ctx, 48, 24 + bob, 8, 4, '#4ade80');
+    // Ivory-crimson diamond chest grid
+    px(ctx, 30, 42 + bob, 12, 12, '#f8fafc');
+    px(ctx, 50, 42 + bob, 12, 12, '#f8fafc');
+    px(ctx, 40, 54 + bob, 12, 12, '#f8fafc');
+    px(ctx, 12, 18, 72, 3, '#f43f5e');
+  } else if (standId === 'silver_chariot') {
+    px(ctx, 38, 2 + bob, 16, 18, '#ffffff');
+    px(ctx, 32, 14 + bob, 28, 22, '#e2e8f0');
+    px(ctx, 35, 22 + bob, 22, 6, '#1e293b');
+    px(ctx, 38, 23 + bob, 5, 4, '#38bdf8');
+    px(ctx, 49, 23 + bob, 5, 4, '#38bdf8');
+    // Chrome needle rapier thrust
+    const rx = frame === 0 ? 58 : 66;
+    px(ctx, rx, 46, 32, 4, '#f8fafc');
+    px(ctx, rx + 4, 47, 26, 2, '#38bdf8');
+  } else {
+    // Star Platinum fallback
+    px(ctx, 30, 18 + bob, 32, 4, '#fbbf24');
+    px(ctx, 37, 24 + bob, 6, 4, '#22d3ee');
+    px(ctx, 49, 24 + bob, 6, 4, '#22d3ee');
+    px(ctx, 24, 38 + bob, 44, 7, '#be123c');
+    px(ctx, frame === 0 ? 66 : 74, 44, 22, 14, sRamp.base);
+  }
+
+  standWorldSpriteCache.set(key, c);
   return c;
 }
 
 const floorStripCache = new Map<BiomeId, HTMLCanvasElement>();
 
 /**
- * Pre-baked seamless 640x46 biome floor strip (replaces 40+ per-tile fillRect calls per frame with 1 drawImage!).
+ * Pre-baked 2x-resolution seamless 1280x92 biome floor strip (drawn into 640x46 logical coords for sharp HD stone & gold trim!).
  */
 export function getBakedFloorStrip(biome: BiomeId): HTMLCanvasElement {
   const existing = floorStripCache.get(biome);
   if (existing) return existing;
 
-  const W = 640;
-  const H = 46;
+  const W = 1280;
+  const H = 92;
   const c = document.createElement('canvas');
   c.width = W;
   c.height = H;
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
-  // y=2 corresponds to plat.y (top surface bevel begins at y=0)
   if (biome === 'castle') {
-    px(ctx, 0, 2, W, 44, '#140e12');
-    px(ctx, 0, 0, W, 6, '#362730');
-    for (let bx = 0; bx < W; bx += 24) {
-      const tileIdx = Math.floor(bx / 24);
+    px(ctx, 0, 4, W, 88, '#140e12');
+    px(ctx, 0, 0, W, 12, '#362730');
+    for (let bx = 0; bx < W; bx += 48) {
+      const tileIdx = Math.floor(bx / 48);
       const broken = tileIdx % 5 === 0;
       const mossy = tileIdx % 7 === 0;
-      px(ctx, bx, 0, 22, 4, broken ? '#2a1e24' : '#4a3742');
-      px(ctx, bx, 0, 22, 1, '#6b5361');
-      px(ctx, bx + 22, 0, 2, 5, '#0b0709');
-      px(ctx, bx, 8, 22, 10, broken ? '#1b1318' : '#32242c');
-      px(ctx, bx, 8, 22, 2, '#4d3944');
-      px(ctx, bx + 8, 20, 22, 10, '#271c22');
-      px(ctx, bx + 8, 20, 22, 1, '#3d2d36');
-      px(ctx, bx, 32, 22, 12, '#1b1317');
+      px(ctx, bx, 0, 44, 8, broken ? '#2a1e24' : '#4a3742');
+      px(ctx, bx, 0, 44, 2, '#735867');
+      px(ctx, bx + 44, 0, 4, 10, '#0b0709');
+      px(ctx, bx, 16, 44, 20, broken ? '#1b1318' : '#32242c');
+      px(ctx, bx, 16, 44, 3, '#523c48');
+      px(ctx, bx + 16, 40, 44, 20, '#271c22');
+      px(ctx, bx + 16, 40, 44, 2, '#3d2d36');
+      px(ctx, bx, 64, 44, 24, '#1b1317');
       if (broken) {
-        px(ctx, bx + 6, 10, 2, 7, '#090609');
-        px(ctx, bx + 8, 13, 5, 2, '#090609');
+        px(ctx, bx + 12, 20, 3, 14, '#090609');
+        px(ctx, bx + 15, 26, 10, 3, '#090609');
       }
       if (mossy) {
-        px(ctx, bx + 2, 6, 7, 2, '#166534');
-        px(ctx, bx + 4, 8, 3, 2, '#22c55e');
+        px(ctx, bx + 4, 12, 14, 4, '#166534');
+        px(ctx, bx + 8, 16, 6, 4, '#22c55e');
       }
     }
-    px(ctx, 0, 1, W, 6, '#5c1118');
-    px(ctx, 0, 2, W, 4, '#be123c');
-    px(ctx, 0, 1, W, 1, '#fbbf24');
-    px(ctx, 0, 6, W, 1, '#b45309');
-    for (let gx = 4; gx < W; gx += 16) {
-      if (gx % 112 !== 0) {
-        px(ctx, gx, 3, 5, 2, '#fde047');
-        px(ctx, gx + 2, 2, 1, 4, '#fbbf24');
-        if (gx % 32 === 4) {
-          px(ctx, gx + 1, 7, 2, 2, '#f59e0b');
-        }
+    // Royal Bastera Crimson-and-Gold Velvet Floor Runner
+    px(ctx, 0, 2, W, 12, '#5c1118');
+    px(ctx, 0, 4, W, 8, '#be123c');
+    px(ctx, 0, 2, W, 2, '#fbbf24');
+    px(ctx, 0, 12, W, 2, '#b45309');
+    for (let gx = 8; gx < W; gx += 32) {
+      if (gx % 224 !== 0) {
+        px(ctx, gx, 6, 10, 4, '#fde047');
+        px(ctx, gx + 4, 4, 2, 8, '#fbbf24');
       } else {
-        px(ctx, gx - 2, 1, 9, 6, '#32242c');
-        px(ctx, gx - 3, 5, 2, 2, '#f59e0b');
-        px(ctx, gx + 7, 5, 2, 2, '#f59e0b');
+        px(ctx, gx - 4, 2, 18, 12, '#32242c');
+        px(ctx, gx - 6, 10, 4, 4, '#f59e0b');
+        px(ctx, gx + 14, 10, 4, 4, '#f59e0b');
       }
     }
   } else if (biome === 'forest') {
-    px(ctx, 0, 2, W, 44, '#0d1a16');
-    px(ctx, 0, 0, W, 6, '#1b4735');
-    px(ctx, 0, 0, W, 1, '#6ee7b7');
-    for (let bx = 0; bx < W; bx += 20) {
-      px(ctx, bx, 8, 18, 12, '#182b24');
-      px(ctx, bx, 8, 18, 2, '#284a3d');
-      px(ctx, bx + 4, 1, 8, 2, '#34d399');
+    px(ctx, 0, 4, W, 88, '#0d1a16');
+    px(ctx, 0, 0, W, 12, '#1b4735');
+    px(ctx, 0, 0, W, 2, '#6ee7b7');
+    for (let bx = 0; bx < W; bx += 40) {
+      px(ctx, bx, 16, 36, 24, '#182b24');
+      px(ctx, bx, 16, 36, 3, '#2d5445');
+      px(ctx, bx + 8, 2, 16, 4, '#34d399');
+      if (bx % 80 === 0) {
+        px(ctx, bx + 20, 4, 4, 4, '#fef08a');
+      }
     }
   } else {
-    px(ctx, 0, 2, W, 44, '#130505');
-    px(ctx, 0, 0, W, 6, '#431410');
-    px(ctx, 0, 0, W, 1, '#fb923c');
-    for (let bx = 0; bx < W; bx += 28) {
-      const tileIdx = Math.floor(bx / 28);
-      px(ctx, bx, 1, 25, 4, tileIdx % 3 === 0 ? '#5c1914' : '#42120f');
-      px(ctx, bx, 8, 24, 12, '#260b0a');
-      px(ctx, bx, 8, 24, 2, '#5e201a');
-      px(ctx, bx + 6, 21, 16, 12, '#1c0807');
-      px(ctx, bx + 4, 24, 16, 4, '#ea580c');
+    px(ctx, 0, 4, W, 88, '#130505');
+    px(ctx, 0, 0, W, 12, '#431410');
+    px(ctx, 0, 0, W, 2, '#fb923c');
+    for (let bx = 0; bx < W; bx += 56) {
+      const tileIdx = Math.floor(bx / 56);
+      px(ctx, bx, 2, 50, 8, tileIdx % 3 === 0 ? '#5c1914' : '#42120f');
+      px(ctx, bx, 16, 48, 24, '#260b0a');
+      px(ctx, bx, 16, 48, 3, '#6b251e');
+      px(ctx, bx + 12, 42, 32, 24, '#1c0807');
+      px(ctx, bx + 8, 48, 32, 8, '#ea580c');
       if (tileIdx % 4 === 0) {
-        px(ctx, bx + 9, 25, 6, 2, '#fde047');
+        px(ctx, bx + 18, 50, 12, 4, '#fde047');
       }
     }
   }
@@ -2193,7 +2531,7 @@ export function getBakedFloorStrip(biome: BiomeId): HTMLCanvasElement {
 }
 
 /**
- * Crisp 32x32-scaled pixelated portraits for all 10 JJBA-inspired Stands.
+ * Crisp 64x64 high-resolution pixelated portraits for all 10 JJBA-inspired Stands.
  */
 export function drawStandPortrait(
   ctx: CanvasRenderingContext2D,
@@ -2203,158 +2541,149 @@ export function drawStandPortrait(
   const def = STANDS[standId];
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.scale(size / 32, size / 32);
+  ctx.scale(size / 64, size / 64);
 
   // Obsidian royal frame & aura halo
-  px(ctx, 0, 0, 32, 32, '#09060d');
-  px(ctx, 1, 1, 30, 30, '#140c1f');
-  px(ctx, 2, 2, 28, 28, '#1e1230');
-  px(ctx, 3, 3, 26, 26, 'rgba(255, 255, 255, 0.04)');
+  px(ctx, 0, 0, 64, 64, '#09060d');
+  px(ctx, 2, 2, 60, 60, '#140c1f');
+  px(ctx, 4, 4, 56, 56, '#1e1230');
+  px(ctx, 6, 6, 52, 52, 'rgba(255, 255, 255, 0.04)');
 
   if (standId === 'star_platinum') {
-    // Indigo-violet hair + golden crown headband + glowing cyan eyes + ORA gauntlet
-    px(ctx, 7, 3, 18, 9, '#312e81');
-    px(ctx, 9, 1, 5, 4, '#4f46e5');
-    px(ctx, 17, 2, 6, 4, '#6366f1');
-    px(ctx, 10, 9, 12, 9, '#a78bfa');
-    px(ctx, 9, 8, 14, 2, '#fbbf24');
-    px(ctx, 15, 8, 2, 2, '#e11d48');
-    px(ctx, 12, 12, 3, 2, '#22d3ee');
-    px(ctx, 17, 12, 3, 2, '#22d3ee');
-    px(ctx, 7, 18, 18, 11, '#6d28d9');
-    px(ctx, 6, 18, 20, 3, '#be123c'); // Royal crimson sash
-    px(ctx, 20, 15, 9, 8, '#09060b');
-    px(ctx, 21, 16, 7, 6, '#8b5cf6');
-    px(ctx, 25, 16, 3, 6, '#fbbf24');
+    px(ctx, 13, 5, 38, 19, '#09060b');
+    px(ctx, 14, 6, 36, 17, '#312e81');
+    px(ctx, 18, 2, 10, 8, '#4f46e5');
+    px(ctx, 34, 4, 12, 8, '#6366f1');
+    px(ctx, 20, 18, 24, 18, '#a78bfa');
+    px(ctx, 18, 16, 28, 4, '#fbbf24');
+    px(ctx, 30, 16, 4, 4, '#e11d48');
+    px(ctx, 23, 24, 6, 4, '#09060b');
+    px(ctx, 35, 24, 6, 4, '#09060b');
+    px(ctx, 24, 24, 5, 3, '#22d3ee');
+    px(ctx, 36, 24, 5, 3, '#22d3ee');
+    px(ctx, 14, 36, 36, 22, '#6d28d9');
+    px(ctx, 12, 36, 40, 6, '#be123c');
+    px(ctx, 40, 30, 18, 16, '#09060b');
+    px(ctx, 42, 32, 14, 12, '#8b5cf6');
+    px(ctx, 50, 32, 6, 12, '#fbbf24');
   } else if (standId === 'the_hand') {
-    // Blue & white striped Stand + visor crest + '$' emblem + glowing right erase palm
-    px(ctx, 9, 4, 14, 13, '#f8fafc');
-    px(ctx, 10, 3, 4, 4, '#38bdf8');
-    px(ctx, 18, 3, 4, 4, '#38bdf8');
-    px(ctx, 8, 9, 3, 6, '#0284c7'); // Cheek blinders
-    px(ctx, 21, 9, 3, 6, '#0284c7');
-    px(ctx, 12, 10, 8, 3, '#0f172a');
-    px(ctx, 13, 11, 2, 2, '#fde047');
-    px(ctx, 17, 11, 2, 2, '#fde047');
-    px(ctx, 8, 18, 16, 11, '#0284c7');
-    px(ctx, 10, 18, 12, 11, '#f8fafc');
-    px(ctx, 14, 20, 4, 6, '#fbbf24'); // Gold $ chest plate
-    // Spatial-scrape glowing cyan palm
-    px(ctx, 22, 12, 8, 10, '#0ea5e9');
-    px(ctx, 23, 13, 6, 8, '#bae6fd');
-    px(ctx, 25, 11, 2, 12, '#ffffff');
+    px(ctx, 17, 7, 30, 28, '#09060b');
+    px(ctx, 18, 8, 28, 26, '#f8fafc');
+    px(ctx, 20, 5, 8, 8, '#38bdf8');
+    px(ctx, 36, 5, 8, 8, '#38bdf8');
+    px(ctx, 16, 18, 6, 12, '#0284c7');
+    px(ctx, 42, 18, 6, 12, '#0284c7');
+    px(ctx, 24, 20, 16, 6, '#0f172a');
+    px(ctx, 26, 22, 4, 3, '#fde047');
+    px(ctx, 34, 22, 4, 3, '#fde047');
+    px(ctx, 16, 36, 32, 22, '#0284c7');
+    px(ctx, 20, 36, 24, 22, '#f8fafc');
+    px(ctx, 28, 40, 8, 12, '#fbbf24');
+    px(ctx, 44, 24, 16, 20, '#0ea5e9');
+    px(ctx, 46, 26, 12, 16, '#bae6fd');
+    px(ctx, 50, 22, 4, 24, '#ffffff');
   } else if (standId === 'scary_monsters') {
-    // Pixelated Emerald-Gold Velociraptor Dinostand
-    px(ctx, 6, 7, 15, 10, '#15803d');
-    px(ctx, 14, 8, 12, 6, '#16a34a'); // Snout
-    px(ctx, 15, 14, 10, 3, '#e2e8f0'); // Razor teeth
-    px(ctx, 16, 14, 2, 2, '#09060b');
-    px(ctx, 20, 14, 2, 2, '#09060b');
-    px(ctx, 11, 9, 4, 3, '#fbbf24'); // Amber eye
-    px(ctx, 13, 10, 1, 2, '#09060b');
-    px(ctx, 8, 4, 11, 3, '#fbbf24'); // Feather crest
-    px(ctx, 6, 17, 13, 12, '#166534');
-    px(ctx, 9, 18, 8, 10, '#bef264');
-    // Curved razor claw slashes
-    px(ctx, 21, 18, 7, 2, '#fef08a');
-    px(ctx, 22, 22, 7, 2, '#4ade80');
-    px(ctx, 21, 26, 7, 2, '#fef08a');
+    px(ctx, 12, 14, 30, 20, '#15803d');
+    px(ctx, 28, 16, 24, 12, '#16a34a');
+    px(ctx, 30, 28, 20, 6, '#e2e8f0');
+    px(ctx, 32, 28, 4, 4, '#09060b');
+    px(ctx, 40, 28, 4, 4, '#09060b');
+    px(ctx, 22, 18, 8, 6, '#fbbf24');
+    px(ctx, 26, 20, 2, 4, '#09060b');
+    px(ctx, 16, 8, 22, 6, '#fbbf24');
+    px(ctx, 12, 34, 26, 24, '#166534');
+    px(ctx, 18, 36, 16, 20, '#bef264');
+    px(ctx, 42, 36, 14, 4, '#fef08a');
+    px(ctx, 44, 44, 14, 4, '#4ade80');
+    px(ctx, 42, 52, 14, 4, '#fef08a');
   } else if (standId === 'chili_pepper') {
-    // Golden-yellow Electric JJBA Stand + cyan lightning arcs
-    px(ctx, 10, 3, 3, 7, '#facc15');
-    px(ctx, 19, 3, 3, 7, '#facc15');
-    px(ctx, 10, 8, 12, 9, '#eab308');
-    px(ctx, 12, 9, 8, 7, '#fef08a');
-    px(ctx, 12, 11, 3, 2, '#09060b');
-    px(ctx, 17, 11, 3, 2, '#09060b');
-    px(ctx, 13, 11, 2, 2, '#38bdf8');
-    px(ctx, 18, 11, 2, 2, '#38bdf8');
-    px(ctx, 9, 17, 14, 12, '#ca8a04');
-    px(ctx, 11, 18, 10, 10, '#facc15');
-    // Crackling cyan lightning bolts
-    px(ctx, 4, 8, 4, 2, '#22d3ee');
-    px(ctx, 6, 10, 3, 4, '#e0f2fe');
-    px(ctx, 24, 14, 5, 2, '#22d3ee');
-    px(ctx, 22, 16, 4, 4, '#ffffff');
-    px(ctx, 25, 20, 4, 2, '#38bdf8');
+    px(ctx, 20, 6, 6, 14, '#facc15');
+    px(ctx, 38, 6, 6, 14, '#facc15');
+    px(ctx, 20, 16, 24, 18, '#eab308');
+    px(ctx, 24, 18, 16, 14, '#fef08a');
+    px(ctx, 24, 22, 6, 4, '#09060b');
+    px(ctx, 34, 22, 6, 4, '#09060b');
+    px(ctx, 26, 22, 4, 3, '#38bdf8');
+    px(ctx, 36, 22, 4, 3, '#38bdf8');
+    px(ctx, 18, 34, 28, 24, '#ca8a04');
+    px(ctx, 22, 36, 20, 20, '#facc15');
+    px(ctx, 8, 16, 8, 4, '#22d3ee');
+    px(ctx, 12, 20, 6, 8, '#e0f2fe');
+    px(ctx, 48, 28, 10, 4, '#22d3ee');
+    px(ctx, 44, 32, 8, 8, '#ffffff');
+    px(ctx, 50, 40, 8, 4, '#38bdf8');
   } else if (standId === 'gyro_ball') {
-    // Glowing Giant Steel Ball + Golden Ratio spin aura
-    px(ctx, 6, 6, 20, 20, '#064e3b');
-    px(ctx, 8, 8, 16, 16, '#15803d');
-    px(ctx, 10, 10, 12, 12, '#22c55e');
-    px(ctx, 12, 12, 8, 8, '#4ade80');
-    // Golden Ratio meridian rings & highlights
-    px(ctx, 11, 9, 10, 2, '#fef08a');
-    px(ctx, 11, 21, 10, 2, '#fbbf24');
-    px(ctx, 9, 12, 2, 8, '#fef08a');
-    px(ctx, 21, 12, 2, 8, '#fbbf24');
-    px(ctx, 14, 13, 4, 4, '#ffffff');
-    px(ctx, 4, 14, 4, 4, '#a855f7');
-    px(ctx, 24, 14, 4, 4, '#fde047');
+    px(ctx, 10, 10, 44, 44, '#09060b');
+    px(ctx, 12, 12, 40, 40, '#064e3b');
+    px(ctx, 16, 16, 32, 32, '#15803d');
+    px(ctx, 20, 20, 24, 24, '#22c55e');
+    px(ctx, 24, 24, 16, 16, '#4ade80');
+    px(ctx, 22, 18, 20, 4, '#fef08a');
+    px(ctx, 22, 42, 20, 4, '#fbbf24');
+    px(ctx, 18, 24, 4, 16, '#fef08a');
+    px(ctx, 42, 24, 4, 16, '#fbbf24');
+    px(ctx, 28, 26, 8, 8, '#ffffff');
+    px(ctx, 8, 28, 8, 8, '#a855f7');
+    px(ctx, 48, 28, 8, 8, '#fde047');
   } else if (standId === 'crazy_diamond') {
-    // Pink & Silver Heart-Armored Stand
-    px(ctx, 12, 3, 8, 5, '#f472b6'); // Heart crown
-    px(ctx, 10, 8, 12, 9, '#f9a8d4');
-    px(ctx, 14, 7, 4, 4, '#be185d');
-    px(ctx, 12, 12, 3, 2, '#38bdf8');
-    px(ctx, 17, 12, 3, 2, '#38bdf8');
-    px(ctx, 8, 17, 16, 12, '#e2e8f0');
-    px(ctx, 10, 18, 12, 10, '#ec4899');
-    px(ctx, 14, 21, 4, 4, '#fef08a');
-    px(ctx, 22, 16, 7, 6, '#f472b6');
+    px(ctx, 24, 6, 16, 10, '#f472b6');
+    px(ctx, 20, 16, 24, 18, '#f9a8d4');
+    px(ctx, 28, 14, 8, 8, '#be185d');
+    px(ctx, 24, 24, 6, 4, '#38bdf8');
+    px(ctx, 34, 24, 6, 4, '#38bdf8');
+    px(ctx, 16, 34, 32, 24, '#e2e8f0');
+    px(ctx, 20, 36, 24, 20, '#ec4899');
+    px(ctx, 28, 42, 8, 8, '#fef08a');
+    px(ctx, 44, 32, 14, 12, '#f472b6');
   } else if (standId === 'killer_queen') {
-    // Pale-pink feline Stand + black skull emblem
-    px(ctx, 8, 3, 4, 6, '#f9a8d4');
-    px(ctx, 20, 3, 4, 6, '#f9a8d4');
-    px(ctx, 9, 7, 14, 10, '#fbcfe8');
-    px(ctx, 11, 10, 3, 3, '#fbbf24');
-    px(ctx, 18, 10, 3, 3, '#fbbf24');
-    px(ctx, 9, 17, 14, 12, '#f472b6');
-    px(ctx, 13, 19, 6, 6, '#18181b'); // Skull crest
-    px(ctx, 14, 21, 1, 2, '#fde047');
-    px(ctx, 17, 21, 1, 2, '#fde047');
-    px(ctx, 24, 8, 5, 5, '#f97316'); // Bomb spark
+    px(ctx, 16, 6, 8, 12, '#f9a8d4');
+    px(ctx, 40, 6, 8, 12, '#f9a8d4');
+    px(ctx, 18, 14, 28, 20, '#fbcfe8');
+    px(ctx, 22, 20, 6, 6, '#fbbf24');
+    px(ctx, 36, 20, 6, 6, '#fbbf24');
+    px(ctx, 18, 34, 28, 24, '#f472b6');
+    px(ctx, 26, 38, 12, 12, '#18181b');
+    px(ctx, 28, 42, 2, 4, '#fde047');
+    px(ctx, 34, 42, 2, 4, '#fde047');
+    px(ctx, 48, 16, 10, 10, '#f97316');
   } else if (standId === 'golden_experience') {
-    // Radiant Gold Stand with emerald ladybug brooches
-    px(ctx, 9, 4, 14, 13, '#eab308');
-    px(ctx, 8, 6, 4, 5, '#fef08a');
-    px(ctx, 20, 6, 4, 5, '#fef08a');
-    px(ctx, 12, 11, 3, 2, '#22c55e');
-    px(ctx, 17, 11, 3, 2, '#22c55e');
-    px(ctx, 8, 17, 16, 12, '#ca8a04');
-    px(ctx, 10, 18, 12, 10, '#facc15');
-    px(ctx, 14, 20, 4, 4, '#10b981'); // Ladybug crest
-    px(ctx, 5, 21, 4, 4, '#a3e635');
-    px(ctx, 23, 21, 4, 4, '#a3e635');
+    px(ctx, 18, 8, 28, 26, '#eab308');
+    px(ctx, 16, 12, 8, 10, '#fef08a');
+    px(ctx, 40, 12, 8, 10, '#fef08a');
+    px(ctx, 24, 22, 6, 4, '#22c55e');
+    px(ctx, 34, 22, 6, 4, '#22c55e');
+    px(ctx, 16, 34, 32, 24, '#ca8a04');
+    px(ctx, 20, 36, 24, 20, '#facc15');
+    px(ctx, 28, 40, 8, 8, '#10b981');
+    px(ctx, 10, 42, 8, 8, '#a3e635');
+    px(ctx, 46, 42, 8, 8, '#a3e635');
   } else if (standId === 'king_crimson') {
-    // Crimson & Ivory Diamond Grid Stand + Epitaph brow face
-    px(ctx, 9, 5, 14, 12, '#dc2626');
-    px(ctx, 13, 6, 6, 4, '#fca5a5'); // Epitaph brow face
-    px(ctx, 11, 11, 4, 2, '#4ade80');
-    px(ctx, 17, 11, 4, 2, '#4ade80');
-    px(ctx, 8, 17, 16, 12, '#b91c1c');
-    px(ctx, 10, 18, 5, 5, '#f8fafc');
-    px(ctx, 17, 18, 5, 5, '#f8fafc');
-    px(ctx, 13, 23, 6, 5, '#f8fafc');
-    px(ctx, 4, 6, 24, 2, '#f43f5e'); // Time-erase slash
+    px(ctx, 18, 10, 28, 24, '#dc2626');
+    px(ctx, 26, 12, 12, 8, '#fca5a5');
+    px(ctx, 22, 22, 8, 4, '#4ade80');
+    px(ctx, 34, 22, 8, 4, '#4ade80');
+    px(ctx, 16, 34, 32, 24, '#b91c1c');
+    px(ctx, 20, 36, 10, 10, '#f8fafc');
+    px(ctx, 34, 36, 10, 10, '#f8fafc');
+    px(ctx, 26, 46, 12, 10, '#f8fafc');
+    px(ctx, 8, 12, 48, 4, '#f43f5e');
   } else {
-    // silver_chariot: Chrome Armored Knight + Rapier Blade
-    px(ctx, 12, 2, 8, 14, '#e2e8f0');
-    px(ctx, 14, 1, 4, 5, '#ffffff');
-    px(ctx, 10, 10, 12, 6, '#94a3b8');
-    px(ctx, 12, 12, 3, 2, '#38bdf8');
-    px(ctx, 17, 12, 3, 2, '#38bdf8');
-    px(ctx, 8, 17, 16, 12, '#64748b');
-    px(ctx, 10, 18, 12, 10, '#cbd5e1');
-    for (let i = 0; i < 12; i++) {
-      px(ctx, 19 + i * 0.7, 20 - i, 2, 2, '#f8fafc');
+    px(ctx, 24, 4, 16, 28, '#e2e8f0');
+    px(ctx, 28, 2, 8, 10, '#ffffff');
+    px(ctx, 20, 20, 24, 12, '#94a3b8');
+    px(ctx, 24, 24, 6, 4, '#38bdf8');
+    px(ctx, 34, 24, 6, 4, '#38bdf8');
+    px(ctx, 16, 34, 32, 24, '#64748b');
+    px(ctx, 20, 36, 24, 20, '#cbd5e1');
+    for (let i = 0; i < 24; i++) {
+      px(ctx, 38 + i * 0.7, 40 - i, 4, 4, '#f8fafc');
     }
   }
 
-  // Bottom color accent rim matching Stand identity
-  px(ctx, 2, 29, 28, 2, def.accentColor);
+  px(ctx, 4, 58, 56, 4, def.accentColor);
   ctx.restore();
 }
+
 
 
 

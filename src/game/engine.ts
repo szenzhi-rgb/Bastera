@@ -20,6 +20,7 @@ import {
   ISEKAI_IDLE_TRANSPORT_SECONDS,
   ISEKAI_ROOM_BOUNDS,
   MISSIONS_REQUIRED_PER_RANK,
+  SIDE_QUESTS,
   TOWN_RAID_INTERVAL_SECONDS,
   TOWN_RAID_REWARD_GOLD,
   applyHotSpringRest,
@@ -42,8 +43,11 @@ import {
   createDungeonSectorPlatforms,
   createGoblinDungeonWave,
   createGuildNpcs,
+  createInitialSideQuestProgress,
+  createOutskirtsAmbientEnemies,
   createPotionShopNpcs,
   createSeventeenDemonKingsInit,
+  createSideQuestBossEnemy,
   createThreeDemonKingsInit,
   createTownHouseStates,
   createTownNpcs,
@@ -51,6 +55,7 @@ import {
   createWardrobeNpcs,
   createWeaponsShopNpcs,
   getIsekaiDayNightState,
+  isQuestTargetEnemyKill,
   parseCaravanDestination,
   promoteGuildRankAfterMission,
   promoteGuildRankDirect,
@@ -86,6 +91,8 @@ import {
   drawIsekaiTownBackdrop,
   drawIsekaiWardrobeInterior,
   drawIsekaiWeaponsShopInterior,
+  drawOutskirtsCavesBackdrop,
+  drawOutskirtsForestBackdrop,
   drawPurpleFlameZones,
   drawRoyalCarriage,
   drawTownRaidBoss,
@@ -99,6 +106,7 @@ import {
 import {
   PIXEL_H,
   PIXEL_W,
+  RENDER_SCALE,
   drawBiomeBackdrop,
   drawCandles,
   drawChiliPepperEntity,
@@ -201,6 +209,8 @@ import type {
   Projectile,
   PurpleFlameZone,
   RealmMode,
+  SideQuestId,
+  SideQuestProgress,
   SkillId,
   StandId,
   StatKey,
@@ -388,6 +398,8 @@ export class BasteraGameEngine {
   private arenaDuel: ActiveArenaDuel | null = null;
   private arenaPlayerPreDuelMaxHp: number | null = null;
   private arenaCrowdHypeTimer = 0;
+  private arenaSlowTimer = 0;
+  private bossCritCount = 0;
   private townHouses: TownHouseDamage[] = createTownHouseStates();
   private townRaid: ActiveTownRaid | null = null;
   private townRaidTimer: number = TOWN_RAID_INTERVAL_SECONDS;
@@ -414,6 +426,9 @@ export class BasteraGameEngine {
   } | null = null;
   private onlineAdventurers: OnlineAdventurer[] = [];
   private pendingGuildInvites: GuildInvite[] = [];
+  private sideQuestProgress: Partial<Record<SideQuestId, SideQuestProgress>> = createInitialSideQuestProgress();
+  private trackedSideQuestId: SideQuestId | null = null;
+  private outskirtsRespawnTimer = 0;
   private lastSlashInputTime = -10;
   private lastDashInputTime = -10;
   private meleeHitIds = new Set<string>();
@@ -459,8 +474,8 @@ export class BasteraGameEngine {
     labelCanvas?: HTMLCanvasElement | null,
   ) {
     this.canvas = canvas;
-    this.canvas.width = PIXEL_W;
-    this.canvas.height = PIXEL_H;
+    this.canvas.width = PIXEL_W * RENDER_SCALE;
+    this.canvas.height = PIXEL_H * RENDER_SCALE;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D context unavailable');
     ctx.imageSmoothingEnabled = false;
@@ -525,8 +540,7 @@ export class BasteraGameEngine {
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
   }
-};
-this.rafId = requestAnimationFrame(tick);
+    };
     this.rafId = requestAnimationFrame(tick);
   }
 
@@ -639,6 +653,9 @@ this.rafId = requestAnimationFrame(tick);
     this.caravanRide = null;
     this.groundCracks = [];
     this.bossGrabLockTimer = 0;
+    this.sideQuestProgress = createInitialSideQuestProgress();
+    this.trackedSideQuestId = null;
+    this.outskirtsRespawnTimer = 0;
 
     this.chunksDirty = true;
     this.ensureChunksAround(0);
@@ -651,7 +668,7 @@ this.rafId = requestAnimationFrame(tick);
       'warrior',
       '#fbbf24',
       [
-        'Well, the royal dungeon locked the front door again. Time to climb toward Boss #100 & Gyro Zeppeli!',
+        `Well, the royal dungeon locked the front door again. Time to climb toward Boss #${TOTAL_BOSSES} & Gyro Zeppeli!`,
         'Inspect thrones [F], smash cracked bricks [J], press [Shift] to Dash, and unleash Star Platinum ORA ORA [3]!',
       ],
     );
@@ -684,6 +701,8 @@ this.rafId = requestAnimationFrame(tick);
       crownUnlocked: this.crownUnlocked,
       gyroDefeated: this.gyroDefeated,
       isekaiCompleted: this.isekaiCompleted,
+      sideQuestProgress: this.sideQuestProgress,
+      trackedSideQuestId: this.trackedSideQuestId,
     });
   }
 
@@ -705,7 +724,7 @@ this.rafId = requestAnimationFrame(tick);
     }
     if (!silent) {
       gameAudio.playSecretFound();
-      this.showAnnouncement(`Game saved (${payload.playerName} · Boss ${payload.player.bossesDefeated}/120)!`);
+      this.showAnnouncement(`Game saved (${payload.playerName} · Boss ${payload.player.bossesDefeated}/${TOTAL_BOSSES})!`);
     }
     this.emitHud(true);
     return { ok: true, savedAt: payload.savedAt };
@@ -745,6 +764,9 @@ this.rafId = requestAnimationFrame(tick);
     this.gyroDefeated = Boolean(clean.gyroDefeated);
     this.isekaiCompleted = Boolean(clean.isekaiCompleted);
     this.isekaiPortalOpen = this.gyroDefeated || this.realm !== 'citadel';
+    this.sideQuestProgress = clean.sideQuestProgress ? { ...clean.sideQuestProgress } : createInitialSideQuestProgress();
+    this.trackedSideQuestId = clean.trackedSideQuestId ?? null;
+    this.outskirtsRespawnTimer = 0;
     this.starPlatinumTimer = 0;
     this.starPlatinumTickTimer = 0;
     this.lastSavedAt = clean.savedAt;
@@ -770,12 +792,18 @@ this.rafId = requestAnimationFrame(tick);
         this.realm === 'isekai_potion_shop' ||
         this.realm === 'isekai_weapons_shop' ||
         this.realm === 'dungeon_exterior' ||
-        this.realm === 'dueling_arena'
+        this.realm === 'dueling_arena' ||
+        this.realm === 'outskirts_forest' ||
+        this.realm === 'outskirts_caves'
           ? this.realm
           : 'isekai_town';
       this.enterIsekaiRoom(
         targetHub,
-        targetHub === 'isekai_town' || targetHub === 'dungeon_exterior' || targetHub === 'dueling_arena'
+        targetHub === 'isekai_town' ||
+        targetHub === 'dungeon_exterior' ||
+        targetHub === 'dueling_arena' ||
+        targetHub === 'outskirts_forest' ||
+        targetHub === 'outskirts_caves'
           ? clean.player.x
           : 96,
       );
@@ -1171,6 +1199,7 @@ this.rafId = requestAnimationFrame(tick);
     this.player.maxHp = Math.round(this.arenaPlayerPreDuelMaxHp * 3);
     this.player.hp = this.player.maxHp;
     this.arenaCrowdHypeTimer = 2.0;
+    this.arenaSlowTimer = 0;
     this.projectiles = [];
     this.purpleFlameZones = [];
     this.meleeHitIds.clear();
@@ -1178,12 +1207,13 @@ this.rafId = requestAnimationFrame(tick);
     this.player.y = FLOOR_Y - this.player.h;
     this.player.vx = 0;
     this.player.vy = 0;
+    this.player.facing = 1;
     this.player.stamina = this.player.maxStamina;
     this.camX = Math.max(0, this.player.x - PIXEL_W * 0.34);
     gameAudio.playBattleEncounterStinger();
     this.showSecretCaption(
-      `COLOSSEUM DUEL: ${this.arenaDuel.def.name.toUpperCase()}`,
-      `Both Fighters 3x HP (${this.player.maxHp} HP) · Matched ATK ${this.arenaDuel.matchedAtk} · Domain Expansion Active!`,
+      `COLOSSEUM BEST OF 3: ${this.arenaDuel.def.name.toUpperCase()}`,
+      `Round 1 Countdown! 3x HP (${this.player.maxHp} HP) · Matched ATK ${this.arenaDuel.matchedAtk} · First to 2 Wins!`,
     );
     this.emitHud(true);
   }
@@ -1305,6 +1335,12 @@ this.rafId = requestAnimationFrame(tick);
                 ? createWeaponsShopNpcs()
                 : [];
 
+    if (room === 'outskirts_forest' || room === 'outskirts_caves') {
+      this.isekaiEnemies = createOutskirtsAmbientEnemies(room, this.player.level);
+      this.outskirtsRespawnTimer = 0;
+      this.spawnPendingSideQuestBossesInRealm();
+    }
+
     const bounds = ISEKAI_ROOM_BOUNDS[room];
     this.player.x = Math.max(bounds.minX + 12, Math.min(bounds.maxX - 32, spawnX));
     this.player.y = FLOOR_Y - this.player.h;
@@ -1315,6 +1351,44 @@ this.rafId = requestAnimationFrame(tick);
     this.camX = Math.max(0, Math.min(Math.max(0, bounds.maxX - PIXEL_W), this.player.x - PIXEL_W * 0.34));
     this.syncHostWorldMeta();
     this.emitHud(true);
+  }
+
+  public setTrackedSideQuest(questId: SideQuestId | null): void {
+    this.trackedSideQuestId = questId;
+    this.emitHud(true);
+  }
+
+  public acceptOrAdvanceSideQuest(questId: SideQuestId): void {
+    const quest = SIDE_QUESTS.find((q) => q.id === questId);
+    if (!quest) return;
+    const prog = this.sideQuestProgress[questId] ?? {
+      stage: 0,
+      kills: 0,
+      twistRevealed: false,
+      bossSpawned: false,
+    };
+    this.sideQuestProgress[questId] = prog;
+    if (prog.stage === 0) {
+      prog.stage = 1;
+      gameAudio.playSecretFound();
+      this.showAnnouncement(`Side Quest Accepted: ${quest.title}`);
+    }
+    this.trackedSideQuestId = questId;
+    this.spawnPendingSideQuestBossesInRealm();
+    this.emitHud(true);
+  }
+
+  private spawnPendingSideQuestBossesInRealm(): void {
+    if (this.realm !== 'outskirts_forest' && this.realm !== 'outskirts_caves') return;
+    for (const q of SIDE_QUESTS) {
+      if (q.targetRealm !== this.realm) continue;
+      const prog = this.sideQuestProgress[q.id];
+      if (!prog || prog.stage !== 1 || !prog.twistRevealed) continue;
+      if (!this.isekaiEnemies.some((e) => e.sideQuestId === q.id && e.state !== 'ko')) {
+        this.isekaiEnemies.push(createSideQuestBossEnemy(q, this.player.bossesDefeated));
+        prog.bossSpawned = true;
+      }
+    }
   }
 
   public startGuildMission(missionId: GuildMissionId, broadcastToParty = false): { ok: boolean; reason?: string } {
@@ -1672,6 +1746,10 @@ this.rafId = requestAnimationFrame(tick);
       }
 
       if (this.realm === 'dueling_arena' && this.arenaDuel) {
+        if (this.isArenaRoundLocked()) {
+          this.showAnnouncement('Wait for the Round Countdown to finish!');
+          return;
+        }
         const duel = this.arenaDuel;
         orbItem.count -= 1;
         if (orbId === 'orb_flame') {
@@ -1682,7 +1760,7 @@ this.rafId = requestAnimationFrame(tick);
           this.spawnBurst(duel.x + duel.w / 2, duel.y + 18, 20, '#f97316');
           gameAudio.playSkill('candlefire_wave');
           this.showAnnouncement(`Flame Orb scorched ${duel.def.name} for ${dmg} DMG!`);
-          if (duel.hp <= 0) this.onArenaChallengerDefeated();
+          if (duel.hp <= 0) this.handleArenaRoundEnd('player');
         } else if (orbId === 'orb_wind') {
           duel.windVulnerable = true;
           this.spawnBurst(duel.x + duel.w / 2, duel.y + 16, 12, '#2dd4bf');
@@ -2004,6 +2082,7 @@ this.rafId = requestAnimationFrame(tick);
     }
 
     this.speedLineTimer = Math.max(0, this.speedLineTimer - dt);
+    this.arenaSlowTimer = Math.max(0, this.arenaSlowTimer - dt);
     this.bossEncounterCooldown = Math.max(0, this.bossEncounterCooldown - dt);
     const prevBossCdCeil = Math.ceil(this.bossCooldownSeconds);
     this.bossCooldownSeconds = Math.max(0, this.bossCooldownSeconds - dt);
@@ -2113,8 +2192,8 @@ this.rafId = requestAnimationFrame(tick);
       return;
     }
 
-    // Chunk 41 Bridge Slip & Fall into Volcano Pit sequence (Citadel only)
-    const bridgeEntryX = 41 * CHUNK_WIDTH + 54;
+    // Chunk 6 Bridge Slip & Fall into Volcano Pit sequence (Citadel only)
+    const bridgeEntryX = 6 * CHUNK_WIDTH + 54;
     if (
       this.realm === 'citadel' &&
       !this.volcanoBridgeFallTriggered &&
@@ -2126,9 +2205,9 @@ this.rafId = requestAnimationFrame(tick);
       this.clearAllInputs(true);
       this.player.vx = 24;
       this.player.vy = 110;
-      const c41 = this.chunks.get(41);
-      if (c41) {
-        c41.platforms = c41.platforms.filter((p) => p.id !== 'bridge_41_slip');
+      const c6 = this.chunks.get(6);
+      if (c6) {
+        c6.platforms = c6.platforms.filter((p) => p.id !== 'bridge_6_slip');
         this.chunksDirty = true;
       }
       this.trauma = 0.65;
@@ -2147,7 +2226,7 @@ this.rafId = requestAnimationFrame(tick);
       this.camX += (this.player.x - PIXEL_W * 0.34 - this.camX) * Math.min(1, 9 * dt);
       this.updateParticles(dt);
       if (this.volcanoBridgeFallTimer === 0) {
-        this.player.x = 41 * CHUNK_WIDTH + 215;
+        this.player.x = 6 * CHUNK_WIDTH + 215;
         this.player.y = FLOOR_Y - this.player.h;
         this.clearAllInputs(true);
         this.player.hp = Math.max(1, this.player.hp - 10);
@@ -2155,7 +2234,7 @@ this.rafId = requestAnimationFrame(tick);
         gameAudio.playHit(true);
         this.showSecretCaption(
           'VOLCANO HELL CITADEL',
-          'You slipped off the bridge and plunged into the molten volcanic abyss! Survive 40 Volcanic Bosses!',
+          'You slipped off the bridge and plunged into the molten volcanic abyss! Survive 5 Volcanic Bosses!',
         );
         this.openDialogue(
           'Warrior',
@@ -2163,7 +2242,7 @@ this.rafId = requestAnimationFrame(tick);
           '#fb923c',
           [
             'Of course the castle bridge dropped me straight into a boiling volcano pit. My armor boots are smoking!',
-            'Brace yourself — 40 Volcanic Bosses rule these basalt halls!',
+            'Brace yourself — 5 Volcanic Bosses rule these basalt halls!',
           ],
         );
       }
@@ -2205,7 +2284,9 @@ this.rafId = requestAnimationFrame(tick);
         this.tryInteract();
       }
     }
-    if (this.justPressed.has('KeyJ') || this.justPressed.has('KeyZ')) {
+    const arenaRoundLocked = this.isArenaRoundLocked();
+
+    if (!arenaRoundLocked && (this.justPressed.has('KeyJ') || this.justPressed.has('KeyZ'))) {
       this.player.idleTimer = 0;
       if (this.simTime - this.lastDashInputTime <= 0.28) {
         this.executeSpinPokeDash();
@@ -2217,19 +2298,19 @@ this.rafId = requestAnimationFrame(tick);
         }
       }
     }
-    if (this.justPressed.has('Digit1') || this.justPressed.has('KeyQ')) {
+    if (!arenaRoundLocked && (this.justPressed.has('Digit1') || this.justPressed.has('KeyQ'))) {
       this.player.idleTimer = 0;
       this.executeSkill(0);
     }
-    if (this.justPressed.has('Digit2')) {
+    if (!arenaRoundLocked && this.justPressed.has('Digit2')) {
       this.player.idleTimer = 0;
       this.executeSkill(1);
     }
-    if (this.justPressed.has('Digit3') || this.justPressed.has('KeyR')) {
+    if (!arenaRoundLocked && (this.justPressed.has('Digit3') || this.justPressed.has('KeyR'))) {
       this.player.idleTimer = 0;
       this.executeSkill(2);
     }
-    if (this.justPressed.has('KeyH')) {
+    if (!arenaRoundLocked && this.justPressed.has('KeyH')) {
       this.player.idleTimer = 0;
       this.useItem('crimson_vial');
     }
@@ -2241,11 +2322,15 @@ this.rafId = requestAnimationFrame(tick);
     if (this.postBossInputLockTimer > 0) {
       this.postBossInputLockTimer = Math.max(0, this.postBossInputLockTimer - dt);
       this.clearAllInputs(true);
-    } else if (this.bossGrabLockTimer <= 0 && (this.justPressed.has('ShiftLeft') || this.justPressed.has('ShiftRight'))) {
+    } else if (
+      !arenaRoundLocked &&
+      this.bossGrabLockTimer <= 0 &&
+      (this.justPressed.has('ShiftLeft') || this.justPressed.has('ShiftRight'))
+    ) {
       this.performDash();
     }
 
-    const inputLocked = this.postBossInputLockTimer > 0 || this.bossGrabLockTimer > 0;
+    const inputLocked = this.postBossInputLockTimer > 0 || this.bossGrabLockTimer > 0 || arenaRoundLocked;
     const left =
       !inputLocked &&
       (this.heldKeys.has('ArrowLeft') || this.heldKeys.has('KeyA') || this.virtualInput.left);
@@ -2283,6 +2368,9 @@ this.rafId = requestAnimationFrame(tick);
       dt,
       roomBounds.minX,
     );
+    if (this.arenaSlowTimer > 0) {
+      this.player.vx *= 0.65;
+    }
     if (isIsekai && this.player.x > roomBounds.maxX - this.player.w) {
       this.player.x = roomBounds.maxX - this.player.w;
       this.player.vx = 0;
@@ -2875,9 +2963,18 @@ this.rafId = requestAnimationFrame(tick);
             }
           } else {
             if (!isSkill) this.meleeHitIds.add(bKey);
+            const isCrit =
+              isSkill ||
+              this.player.isSpinDashAttack ||
+              this.player.comboStep === 3 ||
+              (this.player.dinoFormTimer ?? 0) > 0 ||
+              skillMult > 1;
             const res = applyDamageToBoss(b, dmg, kb);
-            this.spawnFloatingText(b.x + b.w / 2, b.y - 6, `${dmg}`, '#fde047');
-            this.spawnBurst(b.x + b.w / 2, b.y + 16, 14, b.def.auraColor);
+            if (isCrit) {
+              this.bossCritCount += 1;
+            }
+            this.spawnFloatingText(b.x + b.w / 2, b.y - 6, isCrit ? `CRIT! ${dmg}` : `${dmg}`, isCrit ? '#facc15' : '#fde047');
+            this.spawnBurst(b.x + b.w / 2, b.y + 16, isCrit ? 18 : 14, b.def.auraColor);
             landedHit = true;
             if (weapon.specialEffect === 'lifesteal' && !isSkill) {
               const heal = Math.max(2, Math.round(dmg * 0.15));
@@ -2980,7 +3077,7 @@ this.rafId = requestAnimationFrame(tick);
           }
           landedHit = true;
           if (duel.hp <= 0) {
-            this.onArenaChallengerDefeated();
+            this.handleArenaRoundEnd('player');
           }
         }
       }
@@ -3184,6 +3281,7 @@ this.rafId = requestAnimationFrame(tick);
       const b = target.ref as ActiveBoss;
       if (stunSeconds > 0) b.stunTimer = Math.max(b.stunTimer ?? 0, stunSeconds);
       const res = applyDamageToBoss(b, dmg, kb * 0.4);
+      this.bossCritCount += 1;
       this.spawnFloatingText(b.x + b.w / 2, b.y - 12, label, color);
       if (res.defeatedNow) this.onBossDefeated(b);
     } else if (target.kind === 'duel') {
@@ -3194,7 +3292,7 @@ this.rafId = requestAnimationFrame(tick);
       duel.vx = kb * 0.4;
       this.arenaCrowdHypeTimer = 1.0;
       this.spawnFloatingText(duel.x + duel.w / 2, duel.y - 12, label, color);
-      if (duel.hp <= 0) this.onArenaChallengerDefeated();
+      if (duel.hp <= 0) this.handleArenaRoundEnd('player');
     } else if (target.kind === 'raid') {
       const raid = target.ref as ActiveTownRaid;
       if (stunSeconds > 0) raid.stunTimer = Math.max(raid.stunTimer ?? 0, stunSeconds);
@@ -3462,7 +3560,7 @@ this.rafId = requestAnimationFrame(tick);
           this.spawnBurst(duel.x + duel.w / 2, duel.y + 16, 8, '#fbbf24');
           landedHit = true;
           if (duel.hp <= 0) {
-            this.onArenaChallengerDefeated();
+            this.handleArenaRoundEnd('player');
           }
         }
       }
@@ -3626,6 +3724,72 @@ this.rafId = requestAnimationFrame(tick);
       this.player.stamina = this.player.maxStamina;
       this.openDialogue(prop.speaker, 'npc', '#d97706', prop.dialogue);
       this.emitHud();
+    } else if (prop.kind === 'town_gate_out') {
+      gameAudio.playSecretFound();
+      this.enterIsekaiRoom('outskirts_forest', 96);
+      this.showAnnouncement('Stepped beyond the Royal East Gate into Solaris Outskirts Forest!');
+    } else if (prop.kind === 'outskirts_return_town') {
+      gameAudio.playSecretFound();
+      this.enterIsekaiRoom('isekai_town', 3700);
+      this.showAnnouncement('Returned through the Royal East Gate into Solaris Town!');
+    } else if (prop.kind === 'outskirts_cave_entrance') {
+      gameAudio.playSecretFound();
+      this.enterIsekaiRoom('outskirts_caves', 100);
+      this.showAnnouncement('Descended into the Outskirts Crimson Caves!');
+    } else if (prop.kind === 'outskirts_cave_exit') {
+      gameAudio.playSecretFound();
+      this.enterIsekaiRoom('outskirts_forest', 2160);
+      this.showAnnouncement('Climbed back out into the Outskirts Forest!');
+    } else if (prop.kind === 'side_quest_npc') {
+      const quest = SIDE_QUESTS.find((q) => q.id === prop.sideQuestId);
+      if (!quest) {
+        this.openDialogue(prop.speaker, 'npc', '#fbbf24', prop.dialogue);
+        return;
+      }
+      const prog = this.sideQuestProgress[quest.id] ?? {
+        stage: 0,
+        kills: 0,
+        twistRevealed: false,
+        bossSpawned: false,
+      };
+      this.sideQuestProgress[quest.id] = prog;
+      if (prog.stage === 0) {
+        prog.stage = 1;
+        this.trackedSideQuestId = quest.id;
+        gameAudio.playSecretFound();
+        this.showSecretCaption(
+          `SIDE QUEST ACCEPTED: ${quest.title.toUpperCase()}`,
+          `${quest.hookSummary} Press [Q] anytime to inspect clues & rewards.`,
+        );
+        this.openDialogue(quest.giverName, 'npc', quest.coatColor, [
+          ...quest.giverOpeningDialogue,
+          `[QUEST #${quest.index} ACCEPTED] Open Side Quests [Q] to track targets & rewards.`,
+        ]);
+        this.spawnPendingSideQuestBossesInRealm();
+        this.emitHud(true);
+      } else if (prog.stage === 1 && !prog.twistRevealed) {
+        this.trackedSideQuestId = quest.id;
+        const zoneLabel = quest.targetRealm === 'outskirts_caves' ? 'Outskirts Caves' : 'Outskirts Forest';
+        this.openDialogue(quest.giverName, 'npc', quest.coatColor, [
+          `Have you hunted ${quest.twistTriggerKills} enemies in the ${zoneLabel} yet? (${prog.kills}/${quest.twistTriggerKills})`,
+          'Hurry before the trail turns cold—or someone uncovers the wrong ledger!',
+        ]);
+        this.emitHud(true);
+      } else if (prog.stage === 1 && prog.twistRevealed) {
+        this.trackedSideQuestId = quest.id;
+        const zoneLabel = quest.targetRealm === 'outskirts_caves' ? 'Outskirts Caves' : 'Outskirts Forest';
+        this.openDialogue(quest.giverName, 'npc', quest.coatColor, [
+          `What?! You found out?! Forget the story—${quest.bossName} is waiting for you in the ${zoneLabel}!`,
+          'Either you silence them, or they silence you first!',
+        ]);
+        this.spawnPendingSideQuestBossesInRealm();
+        this.emitHud(true);
+      } else {
+        this.openDialogue(quest.giverName, 'npc', quest.coatColor, [
+          `So ${quest.bossName} is dead and you read every bloodied truth: ${quest.twistTitle.replace('PLOT TWIST: ', '')}...`,
+          'Keep your mouth shut inside Solaris walls, Knight—our sins paid your gold in full.',
+        ]);
+      }
     } else {
       this.openDialogue(prop.label, 'npc', '#fbbf24', prop.dialogue);
     }
@@ -3817,6 +3981,58 @@ this.rafId = requestAnimationFrame(tick);
     this.isekaiKillsDone += 1;
     this.tryRollOrbDrop(enemy.x + enemy.w / 2, enemy.y);
     this.spawnFloatingText(enemy.x + enemy.w / 2, enemy.y - 12, `+${enemy.rewardGold}G`, '#fbbf24');
+
+    if (enemy.sideQuestId) {
+      const quest = SIDE_QUESTS.find((q) => q.id === enemy.sideQuestId);
+      if (quest) {
+        const prog = this.sideQuestProgress[quest.id] ?? {
+          stage: 1,
+          kills: quest.twistTriggerKills,
+          twistRevealed: true,
+          bossSpawned: true,
+        };
+        prog.stage = 3;
+        prog.twistRevealed = true;
+        prog.bossSpawned = true;
+        this.sideQuestProgress[quest.id] = prog;
+        this.player.statPoints += quest.rewardStatPoints;
+        this.player.starStones = (this.player.starStones ?? 0) + quest.rewardStarStones;
+        gameAudio.playSecretFound();
+        this.spawnBurst(enemy.x + enemy.w / 2, enemy.y + 14, 26, '#fbbf24');
+        this.showSecretCaption(
+          `SIDE QUEST COMPLETE: ${quest.title.toUpperCase()}`,
+          `+${quest.rewardGold}G · +${quest.rewardStatPoints} Stat Pts · +${quest.rewardStarStones} ★ Star Stones!`,
+        );
+        this.openDialogue(quest.bossName, 'boss', '#f43f5e', [
+          quest.bossDefeatLine,
+          `[QUEST #${quest.index} CLEARED] +${quest.rewardGold}G, +${quest.rewardStatPoints} Stat Pts & +${quest.rewardStarStones} ★ Star Stones earned!`,
+        ]);
+        if (this.trackedSideQuestId === quest.id) {
+          const nextActive = SIDE_QUESTS.find((q) => (this.sideQuestProgress[q.id]?.stage ?? 0) === 1);
+          this.trackedSideQuestId = nextActive ? nextActive.id : null;
+        }
+        void this.saveCurrentGame('autosave', true);
+      }
+      this.emitHud(true);
+      return;
+    }
+
+    for (const q of SIDE_QUESTS) {
+      const prog = this.sideQuestProgress[q.id];
+      if (!prog || prog.stage !== 1 || prog.twistRevealed) continue;
+      if (!isQuestTargetEnemyKill(q, this.realm, enemy)) continue;
+      prog.kills += 1;
+      if (prog.kills >= q.twistTriggerKills) {
+        prog.twistRevealed = true;
+        prog.bossSpawned = true;
+        this.isekaiEnemies.push(createSideQuestBossEnemy(q, this.player.bossesDefeated));
+        this.trauma = Math.max(this.trauma, 0.65);
+        gameAudio.playMegaGlitchCrash();
+        this.showSecretCaption(q.twistTitle, q.twistRevelation);
+        this.openDialogue(q.twistTitle, 'secret', '#f43f5e', q.twistDialogue);
+      }
+    }
+
     this.emitHud();
   }
 
@@ -3906,30 +4122,126 @@ this.rafId = requestAnimationFrame(tick);
     this.emitHud(true);
   }
 
-  private onArenaChallengerDefeated(): void {
+  private isArenaRoundLocked(): boolean {
+    return this.realm === 'dueling_arena' && this.arenaDuel !== null && this.arenaDuel.roundPhase !== 'fighting';
+  }
+
+  private resetArenaRoundPositions(): void {
     const duel = this.arenaDuel;
     if (!duel) return;
+    this.player.x = 190;
+    this.player.y = FLOOR_Y - this.player.h;
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.facing = 1;
+    this.player.hp = this.player.maxHp;
+    this.player.stamina = this.player.maxStamina;
+    this.player.invulnTimer = 0.25;
+    this.player.attackPhase = 'none';
+    this.player.attackTimer = 0;
+
+    duel.x = 820;
+    duel.y = FLOOR_Y - duel.h;
+    duel.vx = 0;
+    duel.vy = 0;
+    duel.facing = -1;
+    duel.hp = duel.maxHp;
+    duel.state = 'idle';
+    duel.stateTimer = 0.35;
+    duel.attackCooldown = 0.7;
+    duel.skillCooldown = 1.4;
+    duel.domainActive = false;
+    duel.domainTimer = 0;
+    duel.domainCooldown = 5.5;
+    duel.activeSkillBanner = null;
+    duel.activeSkillTimer = 0;
+    duel.aiActionTag = null;
+    duel.stunTimer = 0;
+    duel.invulnTimer = 0;
+    duel.guardTimer = 0;
+
+    this.projectiles = [];
+    this.purpleFlameZones = [];
+    this.arenaSlowTimer = 0;
+    this.meleeHitIds.clear();
+    this.camX = Math.max(0, this.player.x - PIXEL_W * 0.34);
+  }
+
+  private handleArenaRoundEnd(winner: 'player' | 'opponent'): void {
+    const duel = this.arenaDuel;
+    if (!duel || duel.roundPhase === 'round_over') return;
+
+    if (winner === 'player') {
+      duel.playerRoundWins += 1;
+    } else {
+      duel.opponentRoundWins += 1;
+      this.player.hp = Math.max(1, this.player.hp);
+    }
+    duel.roundHistory.push(winner);
+    duel.lastRoundWinner = winner;
+    duel.roundPhase = 'round_over';
+    duel.roundPhaseTimer = 1.75;
+    duel.fightBannerTimer = 0;
+    duel.domainActive = false;
+    duel.activeSkillBanner = null;
+    duel.vx = 0;
+    this.player.vx = 0;
+    this.projectiles = [];
+    this.purpleFlameZones = [];
+    this.arenaSlowTimer = 0;
+    this.arenaCrowdHypeTimer = 2.6;
+
+    if (winner === 'player') {
+      gameAudio.playSecretFound();
+      this.spawnBurst(duel.x + duel.w / 2, duel.y + 18, 24, duel.def.auraColor);
+      this.spawnFloatingText(duel.x + duel.w / 2, duel.y - 16, `ROUND ${duel.roundNumber} WON!`, '#fde047');
+    } else {
+      gameAudio.playHit(true);
+      this.spawnFloatingText(this.player.x + 8, this.player.y - 16, `ROUND ${duel.roundNumber} LOST!`, '#fb7185');
+    }
+    this.emitHud(true);
+  }
+
+  private finishArenaMatch(winner: 'player' | 'opponent'): void {
+    const duel = this.arenaDuel;
+    if (!duel) return;
+    const finalScore = `${duel.playerRoundWins}-${duel.opponentRoundWins}`;
     this.arenaDuel = null;
     this.restoreArenaPlayerHp();
-    this.arenaWins += 1;
-    this.arenaCrowdHypeTimer = 3.2;
-    this.player.gold += 180;
-    this.player.statPoints += 4;
-    const starStonesEarned = getStarStoneRewardForJjkEnemy(duel.challengerId);
-    this.player.starStones = (this.player.starStones ?? 0) + starStonesEarned;
     this.projectiles = [];
-    gameAudio.playSecretFound();
-    this.spawnBurst(duel.x + duel.w / 2, duel.y + 18, 28, duel.def.auraColor);
-    this.spawnFloatingText(
-      duel.x + duel.w / 2,
-      duel.y - 18,
-      `+${starStonesEarned} ★ STAR STONES`,
-      '#fde047',
-    );
-    this.showSecretCaption(
-      `COLOSSEUM VICTORY: ${duel.def.name.toUpperCase()}!`,
-      `Crowd erupts! Earned +${starStonesEarned} ★ Star Stones, +180G & +4 Stat Pts! Visit the Royal Stand Shrine in Solaris Town to awaken JJBA Stands!`,
-    );
+    this.purpleFlameZones = [];
+    this.arenaSlowTimer = 0;
+
+    if (winner === 'player') {
+      this.arenaWins += 1;
+      this.arenaCrowdHypeTimer = 3.2;
+      this.player.gold += 180;
+      this.player.statPoints += 4;
+      const starStonesEarned = getStarStoneRewardForJjkEnemy(duel.challengerId);
+      this.player.starStones = (this.player.starStones ?? 0) + starStonesEarned;
+      gameAudio.playSecretFound();
+      this.spawnBurst(duel.x + duel.w / 2, duel.y + 18, 28, duel.def.auraColor);
+      this.spawnFloatingText(
+        duel.x + duel.w / 2,
+        duel.y - 18,
+        `+${starStonesEarned} ★ STAR STONES`,
+        '#fde047',
+      );
+      this.showSecretCaption(
+        `COLOSSEUM CHAMPION (${finalScore}): ${duel.def.name.toUpperCase()}!`,
+        `Best-of-3 Victory! Earned +${starStonesEarned} ★ Star Stones, +180G & +4 Stat Pts! Visit the Royal Stand Shrine in Solaris Town!`,
+      );
+    } else {
+      this.player.hp = Math.max(25, Math.round(this.player.maxHp * 0.5));
+      this.player.stamina = this.player.maxStamina;
+      this.player.vx = 0;
+      this.player.vy = 0;
+      this.player.invulnTimer = 1.2;
+      this.showSecretCaption(
+        `COLOSSEUM DEFEAT (${finalScore})!`,
+        `${duel.def.name} won the Best-of-3 match! Revived inside the Colosseum — adjust tactics & challenge again!`,
+      );
+    }
     this.emitHud(true);
   }
 
@@ -4059,8 +4371,8 @@ this.rafId = requestAnimationFrame(tick);
     this.completeBossEncounterProgress();
     void this.saveCurrentGame('autosave', true);
 
-    // After the 100th boss, Final Boss GYRO ZEPPELI crashes in with a dramatic cutscene!
-    if (boss.def.index === 100 && !this.defeatedBosses.has(101) && canPlayerEngageBoss(this.worldRole)) {
+    // After the 15th boss, Final Boss GYRO ZEPPELI crashes in with a dramatic cutscene!
+    if (boss.def.index === TOTAL_BOSSES && !this.defeatedBosses.has(TOTAL_BOSSES + 1) && canPlayerEngageBoss(this.worldRole)) {
       const gyroDef = createGyroZeppeliBossDef(
         this.player.maxHp,
         calculateAttackDamage(this.player, 1, false),
@@ -4093,7 +4405,7 @@ this.rafId = requestAnimationFrame(tick);
       };
       this.trauma = 1.0;
       gameAudio.playMegaGlitchCrash();
-      this.showAnnouncement('!! 100TH BOSS CLEARED: FINAL BOSS GYRO ZEPPELI APPEARS !!');
+      this.showAnnouncement(`!! ${TOTAL_BOSSES}TH BOSS CLEARED: FINAL BOSS GYRO ZEPPELI APPEARS !!`);
       this.emitHud(true);
       return;
     }
@@ -4129,12 +4441,12 @@ this.rafId = requestAnimationFrame(tick);
       boss.def.defeatLine,
       `[SYSTEM] +${pts} Ability Stat Points granted! Press [K] to open Status Window.`,
     ];
-    if (boss.def.index === 40) {
-      lines.push('40 Castle Bosses felled! Cross the ruined bridge ahead into the Volcano Hell Citadel!');
-    } else if (boss.def.index === 80) {
-      lines.push('80 Bosses felled! Ahead lies the Dark Enchanted Forest of Ancient Ruins!');
+    if (boss.def.index === 5) {
+      lines.push('5 Castle Bosses felled! Cross the ruined bridge ahead into the Volcano Hell Citadel!');
+    } else if (boss.def.index === 10) {
+      lines.push('10 Bosses felled! Ahead lies the Dark Enchanted Forest of Ancient Ruins!');
     } else if (boss.def.index === TOTAL_BOSSES) {
-      lines.push('All 120 Citadel Bosses defeated! Step through the Escape Gate ahead!');
+      lines.push(`All ${TOTAL_BOSSES} Citadel Bosses defeated! Defeat Gyro Zeppeli or step through the Escape Gate!`);
     }
     this.openDialogue(boss.def.name, 'boss', boss.def.primaryColor, lines);
     gameAudio.startMusic(this.getCurrentBiome(), null);
@@ -4783,14 +5095,56 @@ this.rafId = requestAnimationFrame(tick);
       return;
     }
 
-    // 0b. Live Jujutsu Kaisen Colosseum Dueling AI (runs independently of Guild quests!)
+    // 0b. Live Jujutsu Kaisen Colosseum Dueling AI (3-round Best-of-3 + countdown lock!)
     if (this.realm === 'dueling_arena') {
+      if (this.arenaDuel) {
+        const duel = this.arenaDuel;
+        if (duel.roundPhase === 'countdown') {
+          const prevCeil = Math.ceil(duel.roundPhaseTimer);
+          duel.roundPhaseTimer = Math.max(0, duel.roundPhaseTimer - dt);
+          const nextCeil = Math.ceil(duel.roundPhaseTimer);
+          if (nextCeil !== prevCeil && nextCeil > 0) {
+            gameAudio.playDialogueBlip('system', 68 + nextCeil * 4);
+          }
+          if (duel.roundPhaseTimer <= 0) {
+            duel.roundPhase = 'fighting';
+            duel.fightBannerTimer = 0.95;
+            gameAudio.playBattleEncounterStinger();
+            this.arenaCrowdHypeTimer = Math.max(this.arenaCrowdHypeTimer, 1.5);
+          }
+        } else if (duel.roundPhase === 'fighting') {
+          if (duel.fightBannerTimer > 0) {
+            duel.fightBannerTimer = Math.max(0, duel.fightBannerTimer - dt);
+          }
+        } else if (duel.roundPhase === 'round_over') {
+          duel.roundPhaseTimer = Math.max(0, duel.roundPhaseTimer - dt);
+          if (duel.roundPhaseTimer <= 0) {
+            if (duel.playerRoundWins >= 2 || duel.opponentRoundWins >= 2 || duel.roundNumber >= 3) {
+              const winner = duel.playerRoundWins >= duel.opponentRoundWins ? 'player' : 'opponent';
+              this.finishArenaMatch(winner);
+              return;
+            }
+            duel.roundNumber += 1;
+            duel.roundPhase = 'countdown';
+            duel.roundPhaseTimer = 3.3;
+            duel.fightBannerTimer = 0;
+            duel.lastRoundWinner = null;
+            this.resetArenaRoundPositions();
+          }
+        }
+      }
+
       for (let i = this.purpleFlameZones.length - 1; i >= 0; i--) {
         const z = this.purpleFlameZones[i];
         if (!frozen) {
-          z.life -= dt;
+          if ((z.telegraphTime ?? 0) > 0) {
+            z.telegraphTime = Math.max(0, (z.telegraphTime ?? 0) - dt);
+          } else {
+            z.life -= dt;
+          }
         }
         if (
+          (z.telegraphTime ?? 0) <= 0 &&
           !z.hasHit &&
           rectsOverlap(z.x + 2, z.y + 10, z.w - 4, z.h - 10, this.player.x, this.player.y, this.player.w, this.player.h)
         ) {
@@ -4815,6 +5169,18 @@ this.rafId = requestAnimationFrame(tick);
         if (ai.hypeTrigger) {
           this.arenaCrowdHypeTimer = Math.max(this.arenaCrowdHypeTimer, 1.4);
         }
+        if (ai.teleportBehindPlayer) {
+          this.spawnBurst(this.arenaDuel.x + this.arenaDuel.w / 2, this.arenaDuel.y + 14, 14, '#a855f7');
+        }
+        if (ai.healAmount > 0) {
+          this.spawnFloatingText(
+            this.arenaDuel.x + this.arenaDuel.w / 2,
+            this.arenaDuel.y - 16,
+            `JACKPOT +${ai.healAmount} HP!`,
+            '#4ade80',
+          );
+          this.spawnBurst(this.arenaDuel.x + this.arenaDuel.w / 2, this.arenaDuel.y + 16, 16, '#4ade80');
+        }
         if (ai.spawnedProjectiles.length > 0) {
           this.projectiles.push(...ai.spawnedProjectiles);
         }
@@ -4836,7 +5202,8 @@ this.rafId = requestAnimationFrame(tick);
     const mission = this.activeMissionId
       ? GUILD_MISSIONS.find((m) => m.id === this.activeMissionId)
       : null;
-    if (!mission) return;
+    const isOutskirtsZone = this.realm === 'outskirts_forest' || this.realm === 'outskirts_caves';
+    if (!mission && !isOutskirtsZone) return;
 
     // 1. Update Carriage Escort progress, burning oil zones & coordinated bandit waves (B-Rank Escorts)
     if (this.realm === 'carriage_escort' && this.carriageEscort) {
@@ -4879,7 +5246,33 @@ this.rafId = requestAnimationFrame(tick);
       }
     }
 
-    // 2. Step Isekai Enemies (Goblins, Hobgoblins, 5-Class Coordinated Bandits, Succubi, Demon Tanks, Lightning Fighters)
+    if (isOutskirtsZone) {
+      for (let i = this.purpleFlameZones.length - 1; i >= 0; i--) {
+        const z = this.purpleFlameZones[i];
+        if (!frozen) z.life -= dt;
+        if (
+          !z.hasHit &&
+          rectsOverlap(z.x + 2, z.y + 8, z.w - 4, z.h - 8, this.player.x, this.player.y, this.player.w, this.player.h)
+        ) {
+          z.hasHit = true;
+          this.damagePlayer(z.damage, this.player.facing * -85);
+        }
+        if (z.life <= 0) this.purpleFlameZones.splice(i, 1);
+      }
+      const aliveAmbient = this.isekaiEnemies.filter((e) => !e.sideQuestId && e.state !== 'ko').length;
+      if (aliveAmbient === 0) {
+        this.outskirtsRespawnTimer += dt;
+        if (this.outskirtsRespawnTimer >= 4.0) {
+          this.outskirtsRespawnTimer = 0;
+          this.isekaiEnemies.push(...createOutskirtsAmbientEnemies(this.realm as 'outskirts_forest' | 'outskirts_caves', this.player.level));
+          this.showAnnouncement('Fresh marauders prowled out into the Outskirts!');
+        }
+      } else {
+        this.outskirtsRespawnTimer = 0;
+      }
+    }
+
+    // 2. Step Isekai Enemies (Goblins, Hobgoblins, 5-Class Coordinated Bandits, Succubi, Demon Tanks, Lightning Fighters, Cave Horrors)
     for (const en of this.isekaiEnemies) {
       en.hitFlash = Math.max(0, en.hitFlash - dt);
       if (en.state === 'ko') {
@@ -4910,9 +5303,14 @@ this.rafId = requestAnimationFrame(tick);
       en.stateTimer -= dt * speedMult;
       en.facing = dx >= 0 ? 1 : -1;
 
-      if (en.archetype === 'bandit_archer' || en.archetype === 'demon_succubus' || en.archetype === 'bandit_pyromancer') {
+      if (
+        en.archetype === 'bandit_archer' ||
+        en.archetype === 'demon_succubus' ||
+        en.archetype === 'bandit_pyromancer' ||
+        en.archetype === 'cultist_mage'
+      ) {
         const isSuccubus = en.archetype === 'demon_succubus';
-        const isPyro = en.archetype === 'bandit_pyromancer';
+        const isPyro = en.archetype === 'bandit_pyromancer' || en.archetype === 'cultist_mage';
         if (isSuccubus) {
           const hoverY = FLOOR_Y - 68 + Math.sin(this.simTime * 3 + en.patrolOriginX) * 10;
           en.y += (hoverY - en.y) * 4 * dt;
@@ -4937,9 +5335,9 @@ this.rafId = requestAnimationFrame(tick);
               radius: 6,
               damage: dmg,
               fromPlayer: false,
-              color: '#f97316',
+              color: en.archetype === 'cultist_mage' ? '#c084fc' : '#f97316',
               life: 1.9,
-              kind: 'fireball',
+              kind: en.archetype === 'cultist_mage' ? 'succubus_orb' : 'fireball',
             });
             this.purpleFlameZones.push({
               id: `bfz_${this.simTime}_${en.id}`,
@@ -4950,7 +5348,7 @@ this.rafId = requestAnimationFrame(tick);
               life: 1.25,
               maxLife: 1.25,
               damage: Math.max(8, Math.round(dmg * 0.8)),
-              kind: 'bandit_firebomb',
+              kind: en.archetype === 'cultist_mage' ? 'abyssal_nova' : 'bandit_firebomb',
               hasHit: false,
             });
           } else {
@@ -4975,13 +5373,17 @@ this.rafId = requestAnimationFrame(tick);
           en.state = 'patrol';
         }
       } else {
+        if (en.archetype === 'shadow_bat') {
+          const hoverY = FLOOR_Y - 56 + Math.sin(this.simTime * 5 + en.patrolOriginX) * 14;
+          en.y += (hoverY - en.y) * 5 * dt;
+        }
         const spd =
-          en.archetype === 'demon_lightning'
+          en.archetype === 'demon_lightning' || en.archetype === 'shadow_bat'
             ? 84
-            : en.archetype === 'bandit_assassin'
+            : en.archetype === 'bandit_assassin' || en.archetype === 'gargoyle_charger'
               ? 94
-              : en.archetype === 'demon_tank' || en.archetype === 'bandit_brute'
-                ? 42
+              : en.archetype === 'demon_tank' || en.archetype === 'bandit_brute' || en.archetype === 'cursed_armor'
+                ? 44
                 : en.archetype === 'hobgoblin'
                   ? 48
                   : 58;
@@ -4995,13 +5397,13 @@ this.rafId = requestAnimationFrame(tick);
         } else if (en.state === 'windup' && en.stateTimer <= 0) {
           en.state = 'attack';
           en.stateTimer = 0.24;
-          en.vx = en.facing * (en.archetype === 'demon_lightning' || en.archetype === 'bandit_assassin' ? 185 : 70);
+          en.vx = en.facing * (en.archetype === 'demon_lightning' || en.archetype === 'bandit_assassin' || en.archetype === 'gargoyle_charger' ? 185 : 70);
           if (targetIsCarriage && targetCar && dist < 40) {
             targetCar.hp = Math.max(0, targetCar.hp - dmg);
             targetCar.hitFlash = 0.2;
             this.spawnFloatingText(targetCar.x + 28, targetCar.y - 6, `-${dmg}`, '#f87171');
-          } else if (Math.abs(this.player.x - en.x) < 36 && Math.abs(this.player.y - en.y) < 32) {
-            this.damagePlayer(dmg, en.facing * (en.archetype === 'bandit_brute' ? 180 : 120));
+          } else if (Math.abs(this.player.x - en.x) < 36 && Math.abs(this.player.y - en.y) < 36) {
+            this.damagePlayer(dmg, en.facing * (en.archetype === 'bandit_brute' || en.archetype === 'demon_tank' ? 180 : 120));
           }
         } else if (en.state === 'attack' && en.stateTimer <= 0) {
           en.state = 'recover';
@@ -5020,6 +5422,7 @@ this.rafId = requestAnimationFrame(tick);
       }
     }
     this.isekaiEnemies = this.isekaiEnemies.filter((e) => !(e.state === 'ko' && e.koTimer <= 0));
+    if (!mission) return;
 
     // 3. Step 1-by-1 Demon Kings + Allied Vanguard Squad (Harold, Elise & Arch-Cleric Aria!)
     if (this.realm === 'demon_king_arena') {
@@ -5340,8 +5743,32 @@ this.rafId = requestAnimationFrame(tick);
         }
       }
 
+      if (!pr.fromPlayer && pr.homingStrength) {
+        const pCx = this.player.x + this.player.w / 2;
+        const pCy = this.player.y + this.player.h / 2;
+        const dx = pCx - pr.x;
+        const dy = pCy - pr.y;
+        const dist = Math.max(1, Math.hypot(dx, dy));
+        pr.vx += (dx / dist) * pr.homingStrength * dt;
+        pr.vy += (dy / dist) * pr.homingStrength * dt;
+      }
+      if (!pr.fromPlayer && pr.gravityScale) {
+        pr.vy += 760 * pr.gravityScale * dt;
+      }
+      if (!pr.fromPlayer && pr.pullPlayerStrength) {
+        const distP = Math.abs(pr.x - (this.player.x + this.player.w / 2));
+        if (distP > 12 && distP < 240) {
+          const pullDir = Math.sign(pr.x - (this.player.x + this.player.w / 2));
+          this.player.x += pullDir * pr.pullPlayerStrength * dt;
+        }
+      }
+
       pr.x += pr.vx * dt;
       pr.y += pr.vy * dt;
+      if (pr.bounceFloor && pr.y + pr.radius >= FLOOR_Y && pr.vy > 0) {
+        pr.y = FLOOR_Y - pr.radius;
+        pr.vy = -Math.abs(pr.vy) * 0.78;
+      }
       pr.life -= dt;
 
       if (pr.life <= 0) {
@@ -5374,6 +5801,9 @@ this.rafId = requestAnimationFrame(tick);
             if (!alreadyHit?.includes(bKey) && rectsOverlap(pr.x - pr.radius, pr.y - pr.radius, pr.radius * 2, pr.radius * 2, b.x, b.y, b.w, b.h)) {
               alreadyHit?.push(bKey);
               const res = applyDamageToBoss(b, pr.damage, (Math.sign(pr.vx) || this.player.facing) * (isBoomerang ? 140 : 50));
+              if (isBoomerang) {
+                this.bossCritCount += 1;
+              }
               this.spawnFloatingText(b.x + 12, b.y - 6, `${pr.damage}`, isBoomerang ? '#4ade80' : '#fb923c');
               this.spawnBurst(pr.x, pr.y, 10, pr.color);
               if (res.defeatedNow) this.onBossDefeated(b);
@@ -5439,7 +5869,7 @@ this.rafId = requestAnimationFrame(tick);
               this.spawnFloatingText(duel.x + duel.w / 2, duel.y - 6, `${aDmg}`, '#fde047');
               this.spawnBurst(pr.x, pr.y, 10, duel.def.auraColor);
               if (duel.hp <= 0) {
-                this.onArenaChallengerDefeated();
+                this.handleArenaRoundEnd('player');
               }
             }
             hit = true;
@@ -5498,6 +5928,13 @@ this.rafId = requestAnimationFrame(tick);
             gameAudio.playHit(true);
             this.spawnFloatingText(this.player.x + 8, this.player.y - 10, 'DEFLECT!', '#fbbf24');
           } else {
+            if (pr.drainStamina) {
+              this.player.stamina = Math.max(0, this.player.stamina - pr.drainStamina);
+            }
+            if (pr.slowSeconds) {
+              this.arenaSlowTimer = Math.max(this.arenaSlowTimer, pr.slowSeconds);
+              this.spawnFloatingText(this.player.x + 8, this.player.y - 20, "DON'T MOVE!", '#fde047');
+            }
             this.damagePlayer(pr.damage, Math.sign(pr.vx) * 100);
             this.projectiles.splice(i, 1);
           }
@@ -5532,21 +5969,7 @@ this.rafId = requestAnimationFrame(tick);
 
     if (this.player.hp <= 0) {
       if (this.realm === 'dueling_arena' && this.arenaDuel) {
-        const oppName = this.arenaDuel.def.name;
-        this.arenaDuel = null;
-        this.restoreArenaPlayerHp();
-        this.projectiles = [];
-        this.purpleFlameZones = [];
-        this.player.hp = Math.max(25, Math.round(this.player.maxHp * 0.5));
-        this.player.stamina = this.player.maxStamina;
-        this.player.vx = 0;
-        this.player.vy = 0;
-        this.player.invulnTimer = 1.2;
-        this.showSecretCaption(
-          'COLOSSEUM KNOCKOUT!',
-          `${oppName} bested you in combat! Revived inside the Colosseum — adjust tactics & challenge again!`,
-        );
-        this.emitHud(true);
+        this.handleArenaRoundEnd('opponent');
         return;
       }
       this.setStatus('gameover');
@@ -5645,7 +6068,9 @@ this.rafId = requestAnimationFrame(tick);
     const renderCamX = this.camX + shakeX;
 
     ctx.save();
-    ctx.translate(0, Math.round(shakeY));
+    ctx.imageSmoothingEnabled = false;
+    ctx.scale(RENDER_SCALE, RENDER_SCALE);
+    ctx.translate(0, Math.round(shakeY * RENDER_SCALE) / RENDER_SCALE);
 
     // Short animated Caravan Ride transition pause
     if (this.caravanRide && this.status === 'playing') {
@@ -5682,7 +6107,7 @@ this.rafId = requestAnimationFrame(tick);
     const biome = this.status === 'title' ? 'castle' : this.getCurrentBiome();
 
     if (this.bossBattle && this.status === 'playing') {
-      ctx.translate(Math.round(shakeX), 0);
+      ctx.translate(Math.round(shakeX * RENDER_SCALE) / RENDER_SCALE, 0);
       const b = this.bossBattle;
       const prog =
         b.phaseDuration > 0 ? Math.min(1, 1 - b.phaseTimer / b.phaseDuration) : 1;
@@ -5741,12 +6166,16 @@ this.rafId = requestAnimationFrame(tick);
         drawDemonKingArenaBackdrop(ctx, renderCamX, this.simTime, this.activeDemonKingStage);
       } else if (this.realm === 'dueling_arena') {
         drawDuelingArenaBackdrop(ctx, renderCamX, this.simTime, this.arenaCrowdHypeTimer, this.labelCtx, this.arenaDuel);
+      } else if (this.realm === 'outskirts_forest') {
+        drawOutskirtsForestBackdrop(ctx, renderCamX, this.simTime, dayNight.nightFactor, this.labelCtx);
+      } else if (this.realm === 'outskirts_caves') {
+        drawOutskirtsCavesBackdrop(ctx, renderCamX, this.simTime, this.labelCtx);
       }
 
       const platBiome: BiomeId =
-        this.realm === 'demon_realm' || this.realm === 'demon_king_arena'
+        this.realm === 'demon_realm' || this.realm === 'demon_king_arena' || this.realm === 'outskirts_caves'
           ? 'volcano'
-          : this.realm === 'carriage_escort' || this.realm === 'dungeon_exterior'
+          : this.realm === 'carriage_escort' || this.realm === 'dungeon_exterior' || this.realm === 'outskirts_forest'
             ? 'forest'
             : 'castle';
       drawIsekaiFloors(ctx, this.realm, renderCamX, this.simTime);
@@ -5787,7 +6216,7 @@ this.rafId = requestAnimationFrame(tick);
         }
         drawPurpleFlameZones(ctx, this.purpleFlameZones, renderCamX, this.simTime);
       }
-      if (this.realm === 'carriage_escort') {
+      if (this.realm === 'carriage_escort' || this.realm === 'outskirts_forest' || this.realm === 'outskirts_caves') {
         drawPurpleFlameZones(ctx, this.purpleFlameZones, renderCamX, this.simTime);
       }
       if (this.demonKings.length > 0) {
@@ -5815,7 +6244,7 @@ this.rafId = requestAnimationFrame(tick);
 
       for (const ch of chunks) {
         drawPlatforms(ctx, ch.platforms, ch.biome, renderCamX, this.simTime);
-        if (ch.index === 41) {
+        if (ch.index === 6) {
           drawVolcanoPitChasm(ctx, ch.startX, 190, renderCamX, this.simTime);
         }
         drawCandles(ctx, ch.candles, renderCamX, this.simTime);
@@ -6019,26 +6448,28 @@ this.rafId = requestAnimationFrame(tick);
     if (!isIsekai || this.realm === 'goblin_dungeon' || this.realm === 'demon_realm' || this.realm === 'demon_king_arena') {
       if (!this.vignetteCanvas) {
         const vc = document.createElement('canvas');
-        vc.width = PIXEL_W;
-        vc.height = PIXEL_H;
+        const vw = PIXEL_W * RENDER_SCALE;
+        const vh = PIXEL_H * RENDER_SCALE;
+        vc.width = vw;
+        vc.height = vh;
         const vctx = vc.getContext('2d');
         if (vctx) {
           const vig = vctx.createRadialGradient(
-            PIXEL_W * 0.5,
-            PIXEL_H * 0.5,
-            PIXEL_W * 0.28,
-            PIXEL_W * 0.5,
-            PIXEL_H * 0.5,
-            PIXEL_W * 0.68,
+            vw * 0.5,
+            vh * 0.5,
+            vw * 0.28,
+            vw * 0.5,
+            vh * 0.5,
+            vw * 0.68,
           );
           vig.addColorStop(0, 'rgba(0,0,0,0)');
           vig.addColorStop(1, 'rgba(6,4,6,0.52)');
           vctx.fillStyle = vig;
-          vctx.fillRect(0, 0, PIXEL_W, PIXEL_H);
+          vctx.fillRect(0, 0, vw, vh);
         }
         this.vignetteCanvas = vc;
       }
-      ctx.drawImage(this.vignetteCanvas, 0, 0);
+      ctx.drawImage(this.vignetteCanvas, 0, 0, PIXEL_W, PIXEL_H);
     }
 
     // Mega Boss / Gyro Zeppeli Glitch-Crash & Intro Cutscene Layer
@@ -6197,7 +6628,7 @@ this.rafId = requestAnimationFrame(tick);
     const corSig = this.coronationCutscene ? this.coronationCutscene.timer.toFixed(1) : 'none';
     const rideSig = this.caravanRide ? `${this.caravanRide.target}:${this.caravanRide.timer.toFixed(2)}` : 'none';
     const arenaSig = this.arenaDuel
-      ? `${this.arenaDuel.challengerId}:${Math.round(this.arenaDuel.hp)}:${this.arenaDuel.activeSkillBanner ?? ''}:${this.arenaDuel.aiActionTag ?? ''}:${this.arenaDuel.domainActive ? Math.ceil(this.arenaDuel.domainTimer) : 0}`
+      ? `${this.arenaDuel.challengerId}:${Math.round(this.arenaDuel.hp)}:${this.arenaDuel.roundNumber}:${this.arenaDuel.playerRoundWins}:${this.arenaDuel.opponentRoundWins}:${this.arenaDuel.roundPhase}:${Math.ceil(this.arenaDuel.roundPhaseTimer)}:${this.arenaDuel.fightBannerTimer > 0 ? 1 : 0}:${this.arenaDuel.activeSkillBanner ?? ''}:${this.arenaDuel.aiActionTag ?? ''}:${this.arenaDuel.domainActive ? Math.ceil(this.arenaDuel.domainTimer) : 0}`
       : 'none';
     const brokenHousesCount = this.townHouses.filter((h) => h.broken).length;
     const rebuildingHousesCount = this.townHouses.filter((h) => h.rebuilding).length;
@@ -6208,6 +6639,13 @@ this.rafId = requestAnimationFrame(tick);
     const missionSig = missionHud
       ? `${missionHud.missionId}:${missionHud.killsDone}:${missionHud.completed ? 1 : 0}:${missionHud.carriageProgress ?? 0}:${missionHud.carriageHp ?? 0}:${missionHud.activeCastBanner ?? ''}:${missionHud.activeKingMeta?.shieldHp ?? 0}:${missionHud.demonKings?.map((k) => `${k.hp}:${k.windVulnerable ? 1 : 0}:${k.stunned ? 1 : 0}`).join(',') ?? ''}:${missionHud.alliedNpcs?.map((a) => a.hp).join(',') ?? ''}`
       : 'none';
+    const sideQuestSig = [
+      this.trackedSideQuestId ?? 'none',
+      ...SIDE_QUESTS.map((q) => {
+        const p = this.sideQuestProgress[q.id];
+        return `${q.id}:${p?.stage ?? 0}:${p?.kills ?? 0}:${p?.twistRevealed ? 1 : 0}`;
+      }),
+    ].join(',');
     const orbSig = this.inventory
       .filter((it) => it.category === 'orb')
       .map((it) => `${it.id}:${it.count}`)
@@ -6241,6 +6679,7 @@ this.rafId = requestAnimationFrame(tick);
       this.isekaiPortalOpen ? '1' : '0',
       idleLeft,
       missionSig,
+      sideQuestSig,
       corSig,
       rideSig,
       this.arenaWins,
@@ -6279,7 +6718,7 @@ this.rafId = requestAnimationFrame(tick);
       this.bossesFoughtStreak,
       this.dialogue ? `${this.dialogue.lineIndex}:${this.dialogue.charIndex}` : 'none',
       nearbyBoss
-        ? `${nearbyBoss.def.index}:${Math.round(nearbyBoss.hp)}:${nearbyBoss.skillPhase ?? 'none'}:${nearbyBoss.activeSkillName ?? ''}:${nearbyBoss.burstHitStreak ?? 0}:${nearbyBoss.activeDialogue ?? ''}`
+        ? `${nearbyBoss.def.index}:${Math.round(nearbyBoss.hp)}:${nearbyBoss.skillPhase ?? 'none'}:${nearbyBoss.activeSkillName ?? ''}:${nearbyBoss.burstHitStreak ?? 0}:${nearbyBoss.activeDialogue ?? ''}:${this.bossCritCount}`
         : 'none',
       this.bossBattle
         ? `${this.bossBattle.phase}:${Math.round(this.bossBattle.boss.hp)}:${this.bossBattle.message}`
@@ -6351,6 +6790,8 @@ this.rafId = requestAnimationFrame(tick);
       demon_realm: `Endless Demon Caldera (Depth ${this.dungeonDepth})`,
       demon_king_arena: `Demon Kings Citadel (Stage ${this.activeDemonKingStage}/${totalDkStages})`,
       dueling_arena: 'Solaris Grand Colosseum',
+      outskirts_forest: 'Outskirts Blood-Trail Forest',
+      outskirts_caves: 'Outskirts Crimson Caves',
     };
 
     const snapshot: HudSnapshot = {
@@ -6455,6 +6896,14 @@ this.rafId = requestAnimationFrame(tick);
             activeSkillBanner: this.arenaDuel.activeSkillBanner,
             aiActionTag: this.arenaDuel.aiActionTag,
             winsCount: this.arenaWins,
+            roundNumber: this.arenaDuel.roundNumber,
+            playerRoundWins: this.arenaDuel.playerRoundWins,
+            opponentRoundWins: this.arenaDuel.opponentRoundWins,
+            roundHistory: [...this.arenaDuel.roundHistory],
+            roundPhase: this.arenaDuel.roundPhase,
+            countdownSeconds: Math.ceil(this.arenaDuel.roundPhaseTimer),
+            fightBannerActive: this.arenaDuel.fightBannerTimer > 0,
+            lastRoundWinner: this.arenaDuel.lastRoundWinner,
             activeDomain: this.arenaDuel.domainActive
               ? {
                   name: this.arenaDuel.domainName,
@@ -6466,6 +6915,18 @@ this.rafId = requestAnimationFrame(tick);
         : null,
       onlineAdventurers: [...this.onlineAdventurers],
       pendingGuildInvites: [...this.pendingGuildInvites],
+      sideQuests: SIDE_QUESTS.map((q) => ({
+        ...q,
+        progress: {
+          ...(this.sideQuestProgress[q.id] ?? {
+            stage: 0,
+            kills: 0,
+            twistRevealed: false,
+            bossSpawned: false,
+          }),
+        },
+      })),
+      trackedSideQuestId: this.trackedSideQuestId,
       inventory: this.inventory.map((i) => ({ ...i })),
       dialogue: this.dialogue ? { ...this.dialogue } : null,
       activeBoss: nearbyBoss
@@ -6486,6 +6947,7 @@ this.rafId = requestAnimationFrame(tick);
             skillPhase: nearbyBoss.skillPhase ?? 'none',
             skillDialogue: nearbyBoss.activeDialogue ?? null,
             burstStreak: nearbyBoss.burstHitStreak ?? 0,
+            critCount: this.bossCritCount,
             isMegaBoss: nearbyBoss.def.isMegaBoss,
             isGyroBoss: nearbyBoss.def.isGyroBoss,
             megaArchetype: nearbyBoss.def.megaArchetype,

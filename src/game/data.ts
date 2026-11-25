@@ -11,9 +11,9 @@ import type {
   WeaponId,
 } from './types';
 
-export const TOTAL_BOSSES = 120;
-export const BOSSES_PER_BIOME = 40;
-export const TOTAL_HIDDEN_PASSAGES = 108;
+export const TOTAL_BOSSES = 15;
+export const BOSSES_PER_BIOME = 5;
+export const TOTAL_HIDDEN_PASSAGES = 16;
 export const ORB_DROP_CHANCE = 0.08;
 export const ORB_IDS: OrbId[] = ['orb_flame', 'orb_wind', 'orb_electric'];
 
@@ -688,7 +688,7 @@ export function getBiomeForBossIndex(bossNumber: number): BiomeId {
 }
 
 export function getBossDifficultyMultiplier(bossNumber: number): number {
-  const tier = Math.floor((Math.max(1, bossNumber) - 1) / 10);
+  const tier = Math.floor((Math.max(1, bossNumber) - 1) / BOSSES_PER_BIOME);
   return Number((1 + tier * 0.4).toFixed(2));
 }
 
@@ -887,7 +887,7 @@ const VOICE_OPENERS = [
 
 const VOICE_BODIES = [
   'My {STAND} shall {VERB}!',
-  'Not even 108 hidden passages can save you from {STAND}’s {ATTACK}!',
+  'Not even 16 hidden passages can save you from {STAND}’s {ATTACK}!',
   'Under the {CLIMATE}, {STAND}’s power grows tenfold!',
   'Step one inch closer to Floor {IDX} and witness {ATTACK}!',
   'Your tiny sword style cannot out-pose {STAND}!',
@@ -1037,7 +1037,7 @@ export function getBossDef(bossIndex: number, bossesDefeated = 0): BossDef {
 
   const diffMult = getBossDifficultyMultiplier(safeIndex);
   const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
-  const baseMaxHp = Math.round((115 + zero * 14) * diffMult);
+  const baseMaxHp = Math.round((115 + zero * 14) * 2 * diffMult);
 
   return {
     index: safeIndex,
@@ -1092,23 +1092,23 @@ export function createGyroZeppeliBossDef(
   bossesDefeated = 0,
 ): BossDef {
   const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
-  const baseMaxHp = Math.max(300, Math.round(playerMaxHp * 3));
+  const baseMaxHp = Math.max(600, Math.round(playerMaxHp * 6));
   const targetHp = Math.round(baseMaxHp * defeatedScale);
   const exactAtk = Math.max(1, Math.round(playerAttack * defeatedScale));
   return {
-    index: 101,
+    index: TOTAL_BOSSES + 1,
     name: 'Gyro Zeppeli',
     title: 'FINAL BOSS · MASTER OF THE GOLDEN SPIN',
     standName: 'BALL BREAKER',
     biome: 'forest',
     climate: 'emerald_monsoon',
-    climateLabel: 'Golden Spin Tempest · Floor 101',
+    climateLabel: `Golden Spin Tempest · Floor ${TOTAL_BOSSES + 1}`,
     climateSkyTop: '#031912',
     climateSkyBottom: '#0b3d28',
     climateParticleColor: '#4ade80',
     maxHp: targetHp,
     baseMaxHp,
-    difficultyMultiplier: Number((getBossDifficultyMultiplier(101) * defeatedScale).toFixed(4)),
+    difficultyMultiplier: Number((getBossDifficultyMultiplier(TOTAL_BOSSES + 1) * defeatedScale).toFixed(4)),
     defeatedScale,
     primaryColor: '#4c1d95',
     secondaryColor: '#22c55e',
@@ -1149,7 +1149,7 @@ export function createGyroZeppeliBossDef(
     emblem: 'star',
     scaleFactor: 2.35,
     voiceLine:
-      'Nyo-ho~! You cleared 100 Citadel Bosses! Now face Gyro Zeppeli and the Golden Spin!',
+      `Nyo-ho~! You cleared all ${TOTAL_BOSSES} Citadel Bosses! Now face Gyro Zeppeli and the Golden Spin!`,
     battleShout: 'NYO-HO! GREEN-FLAMING STEEL BALL — SPIN ON!',
     defeatLine:
       'Arigato, knight... The portal to a bright new world awaits beyond the Spin!',
@@ -1183,7 +1183,7 @@ export const SARCASTIC_OBJECT_DIALOGUES = {
   broken_brick: [
     [
       'Cracked masonry! Either ancient siege damage or a boss punched it for dramatic effect.',
-      'Pro tip: hitting suspiciously cracked bricks might reveal one of 108 hidden passages.',
+      'Pro tip: hitting suspiciously cracked bricks might reveal one of 16 hidden passages.',
     ],
     [
       'Bricks held together by centuries of moss and pure architectural stubbornness.',

@@ -1,4 +1,5 @@
 import { SKILLS, STANDS, WEAPONS } from './data';
+import { SIDE_QUESTS, createInitialSideQuestProgress } from './isekai';
 import {
   DEFAULT_WARRIOR_CUSTOMIZATION,
   createInitialInventory,
@@ -12,6 +13,8 @@ import type {
   InventoryItem,
   PlayerState,
   RealmMode,
+  SideQuestId,
+  SideQuestProgress,
   SkillId,
   StandId,
   WeaponId,
@@ -49,6 +52,8 @@ export interface BasteraSaveData {
   gyroDefeated?: boolean;
   isekaiCompleted?: boolean;
   townRaidTimer?: number;
+  sideQuestProgress?: Partial<Record<SideQuestId, SideQuestProgress>>;
+  trackedSideQuestId?: SideQuestId | null;
 }
 
 export function canPlayerEngageBoss(role: WorldRole): boolean {
@@ -81,6 +86,8 @@ export function createSavePayload(params: {
   gyroDefeated?: boolean;
   isekaiCompleted?: boolean;
   townRaidTimer?: number;
+  sideQuestProgress?: Partial<Record<SideQuestId, SideQuestProgress>>;
+  trackedSideQuestId?: SideQuestId | null;
 }): BasteraSaveData {
   const cleanId = params.saveId.trim().replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'default_slot';
   return {
@@ -125,7 +132,9 @@ export function createSavePayload(params: {
     crownUnlocked: Boolean(params.crownUnlocked),
     gyroDefeated: Boolean(params.gyroDefeated),
     isekaiCompleted: Boolean(params.isekaiCompleted),
-    townRaidTimer: params.townRaidTimer ?? 1200,
+    townRaidTimer: params.townRaidTimer ?? 300,
+    sideQuestProgress: params.sideQuestProgress ? { ...params.sideQuestProgress } : createInitialSideQuestProgress(),
+    trackedSideQuestId: params.trackedSideQuestId ?? null,
   };
 }
 
@@ -252,6 +261,8 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
     'demon_realm',
     'demon_king_arena',
     'dueling_arena',
+    'outskirts_forest',
+    'outskirts_caves',
   ];
   const realm: RealmMode =
     typeof obj.realm === 'string' && validRealms.includes(obj.realm as RealmMode)
@@ -335,7 +346,30 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
     crownUnlocked: Boolean(obj.crownUnlocked),
     gyroDefeated: Boolean(obj.gyroDefeated),
     isekaiCompleted: Boolean(obj.isekaiCompleted),
-    townRaidTimer: Number.isFinite(obj.townRaidTimer) ? Math.max(10, Number(obj.townRaidTimer)) : 1200,
+    townRaidTimer: Number.isFinite(obj.townRaidTimer) ? Math.max(10, Number(obj.townRaidTimer)) : 300,
+    sideQuestProgress: (() => {
+      const base = createInitialSideQuestProgress();
+      const rawSq = obj.sideQuestProgress && typeof obj.sideQuestProgress === 'object'
+        ? (obj.sideQuestProgress as Record<string, Partial<SideQuestProgress>>)
+        : {};
+      for (const q of SIDE_QUESTS) {
+        const saved = rawSq[q.id];
+        if (saved && typeof saved === 'object') {
+          const st = saved.stage === 1 || saved.stage === 2 || saved.stage === 3 ? saved.stage : 0;
+          base[q.id] = {
+            stage: st,
+            kills: Number.isFinite(saved.kills) ? Math.max(0, Math.floor(Number(saved.kills))) : 0,
+            twistRevealed: Boolean(saved.twistRevealed),
+            bossSpawned: Boolean(saved.bossSpawned),
+          };
+        }
+      }
+      return base;
+    })(),
+    trackedSideQuestId:
+      typeof obj.trackedSideQuestId === 'string' && SIDE_QUESTS.some((q) => q.id === obj.trackedSideQuestId)
+        ? (obj.trackedSideQuestId as SideQuestId)
+        : null,
   };
 }
 

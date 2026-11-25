@@ -59,11 +59,11 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
   const interactables: InteractableProp[] = [];
   const enemies: EnemyState[] = [];
 
-  // Chunk 41 right after 40 bosses opens with a Chasm Pit beneath the Slippery Crossing Bridge!
-  if (chunkIndex === 41) {
+  // Chunk 6 right after 5 Castle bosses opens with a Chasm Pit beneath the Slippery Crossing Bridge!
+  if (chunkIndex === 6) {
     platforms.push(
       {
-        id: 'bridge_41_slip',
+        id: 'bridge_6_slip',
         x: startX - 6,
         y: FLOOR_Y - 2,
         w: 196,
@@ -153,7 +153,7 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
         label: 'Claim OP Fire Sword',
         dialogue: [
           'Infernal Fire Sword unlocked & equipped! (Strong Crimson-Orange Flames · 2x TOTAL DAMAGE!)',
-          'Enemies and 120 JoJo Bosses will regret leaving this behind Checkpoint 1.',
+          'Enemies and 15 JoJo Bosses will regret leaving this behind Checkpoint 1.',
         ],
         speaker: 'Infernal Altar',
         activated: false,
@@ -172,8 +172,8 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
       vy: 0,
       w: 22,
       h: 28,
-      hp: 58 * 3,
-      maxHp: 58 * 3,
+      hp: Math.round(58 * 1.5),
+      maxHp: Math.round(58 * 1.5),
       facing: 1,
       state: 'patrol',
       stateTimer: 0.9,
@@ -198,12 +198,12 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
     };
   }
 
-  // Varied architectural map patterns per chunk (with bespoke Hellforge tiers in Volcano chunks 41..80!)
-  if (chunkIndex === 41) {
+  // Varied architectural map patterns per chunk (with bespoke Hellforge tiers in Volcano chunks 6..10!)
+  if (chunkIndex === 6) {
     // Volcano Pit entry chamber ledges + braziers flanking the chasm landing
     platforms.push(
       {
-        id: 'ledge_41_pit_escape',
+        id: 'ledge_6_pit_escape',
         x: startX + 215,
         y: FLOOR_Y - 46,
         w: 98,
@@ -211,7 +211,7 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
         kind: 'brick',
       },
       {
-        id: 'ledge_41_forge_catwalk',
+        id: 'ledge_6_forge_catwalk',
         x: startX + 350,
         y: FLOOR_Y - 84,
         w: 112,
@@ -503,9 +503,9 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
     const rewardWeaponId =
       secretNum === 2
         ? unlockableWeapons[0]
-        : secretNum === 15
+        : secretNum === 7
           ? unlockableWeapons[1]
-          : secretNum === 42
+          : secretNum === 13
             ? unlockableWeapons[2]
             : undefined;
 
@@ -578,7 +578,7 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
               : arch === 'cursed_armor'
                 ? 64
                 : 38;
-    const hp = Math.round(baseHp * scaleFactor * 3);
+    const hp = Math.round(baseHp * scaleFactor * 1.5);
 
     const names: Partial<Record<EnemyArchetype, string>> = {
       skeleton_guard:
@@ -642,11 +642,11 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
     });
   }
 
-  // Boss in chunks 1..120+ (Boss #1 right at the end of Chunk 1! Final Boss Gyro Zeppeli in Chunk 101 after Boss #100!)
+  // Boss in chunks 1..15, plus Final Boss Gyro Zeppeli in Chunk 16 after Boss #15!
   let boss: ActiveBoss | null = null;
-  if (chunkIndex >= 1) {
+  if (chunkIndex >= 1 && chunkIndex <= TOTAL_BOSSES + 1) {
     const def =
-      chunkIndex === 101
+      chunkIndex === TOTAL_BOSSES + 1
         ? createGyroZeppeliBossDef(115, 28, bossesDefeated)
         : getBossDef(chunkIndex, bossesDefeated);
     const bossX = startX + 520;
@@ -673,8 +673,8 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
     };
   }
 
-  // Grand Escape Gate after Boss 120 (Chunk 120)
-  if (chunkIndex === TOTAL_BOSSES) {
+  // Grand Escape Gate after Final Boss Gyro Zeppeli (Chunk 16)
+  if (chunkIndex === TOTAL_BOSSES + 1) {
     interactables.push({
       id: 'escape_gate_final',
       x: startX + 595,
@@ -705,7 +705,7 @@ export function generateChunk(chunkIndex: number, bossesDefeated = 0): Generated
 
 export function getBiomeCheckpointList(highestReachedIndex: number) {
   const list: { index: number; x: number; biome: BiomeId; label: string; reached: boolean }[] = [];
-  for (let i = 0; i <= 24; i++) {
+  for (let i = 0; i <= 3; i++) {
     const chunkIdx = i * 5;
     const biome = getBiomeForChunk(chunkIdx);
     const bossMarker = chunkIdx === 0 ? 'Entry Hall' : `Boss ${chunkIdx}`;
