@@ -664,6 +664,125 @@ export function drawInteractables(
       sRect(ctx, sx + 7.8, p.y - 13 + bob, 2, 5, '#fef08a');
       sRect(ctx, sx + 6.5, p.y - 5.5 + bob, 5, 4, '#09060b');
       sRect(ctx, sx + 7, p.y - 5 + bob, 4, 3, '#fde047');
+    } else if (p.kind === 'elf_herald') {
+      // Royal Elf Herald Thalindor holding Moon-Crest Royal Scroll Banner
+      const bob = Math.sin(time * 4) * 1.2;
+      sRect(ctx, sx + 6, p.y + 8 + bob, 18, 28, '#064e3b');
+      sRect(ctx, sx + 8, p.y + 10 + bob, 14, 24, '#047857');
+      sRect(ctx, sx + 11, p.y + 12 + bob, 8, 20, '#fbbf24');
+      // Pointed Elven Ears + Silver Hair + Emerald Herald Crown
+      sRect(ctx, sx + 8, p.y + 1 + bob, 14, 9, '#fef3c7');
+      sRect(ctx, sx + 5, p.y + 3 + bob, 4, 3, '#fde68a');
+      sRect(ctx, sx + 21, p.y + 3 + bob, 4, 3, '#fde68a');
+      sRect(ctx, sx + 8, p.y - 2 + bob, 14, 4, '#e2e8f0');
+      sRect(ctx, sx + 9, p.y - 4 + bob, 12, 3, '#34d399');
+      // Wax-Sealed Royal Dinner Scroll in hand
+      sRect(ctx, sx + 23, p.y + 12 + bob, 6, 12, '#fef9c3');
+      sRect(ctx, sx + 24, p.y + 16 + bob, 4, 4, '#10b981');
+      sRect(ctx, sx + 22, p.y - 8 + bob, 8, 9, '#09060b');
+      sRect(ctx, sx + 23, p.y - 7 + bob, 6, 7, '#34d399');
+      sRect(ctx, sx + 25, p.y - 6 + bob, 2, 5, '#fef08a');
+    } else if (p.kind === 'elf_caravan_return') {
+      // Silver-Emerald Moon-Gate Caravan Coach
+      pRect(ctx, sx + 4, p.y + 6, 68, 30, '#065f46');
+      pRect(ctx, sx + 10, p.y, 56, 8, '#10b981');
+      pRect(ctx, sx + 4, p.y + 6, 68, 3, '#fde047');
+      pRect(ctx, sx + 2, p.y + 24, 72, 14, '#78350f');
+      for (const wx of [sx + 16, sx + 58]) {
+        pRect(ctx, wx - 6, p.y + 34, 12, 12, '#451a03');
+        pRect(ctx, wx - 3, p.y + 37, 6, 6, '#fbbf24');
+      }
+      pRect(ctx, sx + 74, p.y + 14, 14, 24, '#e2e8f0');
+      pRect(ctx, sx + 76, p.y + 16, 10, 6, '#34d399');
+    } else if (p.kind === 'elf_swordsman_npc') {
+      // Sword Saint Kaelen standing at attention before dinner
+      const bob = Math.sin(time * 3.5) * 1;
+      sRect(ctx, sx + 4, p.y + 10 + bob, 20, 26, '#09060b');
+      sRect(ctx, sx + 5, p.y + 11 + bob, 18, 24, '#065f46');
+      sRect(ctx, sx + 8, p.y + 12 + bob, 12, 18, '#f8fafc');
+      sRect(ctx, sx + 8, p.y + 1 + bob, 12, 10, '#fef3c7');
+      sRect(ctx, sx + 5, p.y + 3 + bob, 3, 2, '#fde68a');
+      sRect(ctx, sx + 20, p.y + 3 + bob, 3, 2, '#fde68a');
+      sRect(ctx, sx + 7, p.y - 2 + bob, 14, 5, '#e2e8f0');
+      sRect(ctx, sx + 22, p.y + 2 + bob, 3, 30, '#34d399');
+      sRect(ctx, sx + 23, p.y + 4 + bob, 1, 26, '#ffffff');
+    } else if (p.kind === 'elf_banquet_table') {
+      // Grand Elven Silver-Cloth Royal Banquet Table with Candle Candelabras, Goblets & Platter Feasts
+      sRect(ctx, sx, p.y + 18, p.w, p.h - 18, '#09060b');
+      pRect(ctx, sx + 2, p.y + 19, p.w - 4, p.h - 20, '#f8fafc');
+      pRect(ctx, sx + 2, p.y + 19, p.w - 4, 4, '#10b981');
+      pRect(ctx, sx + 2, p.y + 23, p.w - 4, 2, '#fbbf24');
+      for (let bx = 18; bx < p.w - 20; bx += 42) {
+        // Golden Candelabra + Roast Platter + Emerald Wine Decanter
+        pRect(ctx, sx + bx, p.y + 8, 3, 11, '#fbbf24');
+        pRect(ctx, sx + bx - 4, p.y + 10, 11, 2, '#fde047');
+        const fl = Math.round(Math.sin(time * 12 + bx) * 1.5);
+        pRect(ctx, sx + bx - 4, p.y + 5 + fl, 2, 4, '#fef08a');
+        pRect(ctx, sx + bx + 1, p.y + 4 + fl, 2, 5, '#fef08a');
+        pRect(ctx, sx + bx + 5, p.y + 5 + fl, 2, 4, '#fef08a');
+        pRect(ctx, sx + bx + 14, p.y + 14, 14, 5, '#cbd5e1');
+        pRect(ctx, sx + bx + 16, p.y + 11, 10, 4, '#b45309');
+        pRect(ctx, sx + bx + 31, p.y + 12, 5, 7, '#a855f7');
+      }
+    } else if (p.kind === 'elf_queen_dais') {
+      // Queen Sylvaria on Sovereign Emerald Throne
+      const bob = Math.sin(time * 3) * 1;
+      sRect(ctx, sx + 6, p.y - 6, 46, 48, '#09060b');
+      pRect(ctx, sx + 8, p.y - 4, 42, 44, '#064e3b');
+      pRect(ctx, sx + 12, p.y, 34, 38, '#10b981');
+      pRect(ctx, sx + 20, p.y + 12 + bob, 18, 28, '#ecfdf5');
+      pRect(ctx, sx + 22, p.y + 14 + bob, 14, 22, '#059669');
+      pRect(ctx, sx + 23, p.y + 2 + bob, 12, 10, '#fef3c7');
+      pRect(ctx, sx + 21, p.y - 2 + bob, 16, 5, '#fef08a');
+      pRect(ctx, sx + 23, p.y - 6 + bob, 12, 4, '#34d399');
+    } else if (p.kind === 'raider_guild_door') {
+      // Obsidian & Crimson Dungeon Raider Bastion Archway Door
+      pRect(ctx, sx - 4, p.y - 4, p.w + 8, p.h + 4, '#09060b');
+      pRect(ctx, sx, p.y, p.w, p.h, '#1e1b2e');
+      pRect(ctx, sx + 4, p.y + 4, p.w - 8, p.h - 4, '#3b0764');
+      pRect(ctx, sx + 8, p.y + 10, p.w - 16, p.h - 10, '#7f1d1d');
+      pRect(ctx, sx + 10, p.y + 6, p.w - 20, 4, '#fbbf24');
+      pRect(ctx, sx + p.w / 2 - 2, p.y + 14, 4, 24, '#e2e8f0');
+      pRect(ctx, sx + p.w / 2 - 6, p.y + 20, 12, 3, '#fbbf24');
+    } else if (p.kind === 'raider_guild_desk') {
+      // Guildmaster Valen's Raider Dispatch Counter & 108-Dungeon Registry Tome
+      pRect(ctx, sx - 2, p.y + 6, p.w + 4, p.h - 6, '#1c1917');
+      pRect(ctx, sx - 4, p.y + 3, p.w + 8, 5, '#b91c1c');
+      pRect(ctx, sx + 8, p.y - 4, 18, 7, '#fef3c7');
+      pRect(ctx, sx + 34, p.y - 6, 12, 9, '#a855f7');
+      pRect(ctx, sx + 54, p.y - 3, 12, 6, '#fbbf24');
+    } else if (p.kind === 'raider_floor_stairs') {
+      // Grand Ascending Dungeon Staircase (Locked Red vs Unlocked Emerald-Gold!)
+      const unlocked = p.activated;
+      pRect(ctx, sx - 2, p.y - 2, p.w + 4, p.h + 2, '#09060b');
+      pRect(ctx, sx, p.y, p.w, p.h, unlocked ? '#064e3b' : '#29151a');
+      for (let st = 0; st < 6; st++) {
+        const stepY = p.y + p.h - (st + 1) * 11;
+        const stepX = sx + st * 8;
+        pRect(ctx, stepX, stepY, p.w - st * 8 + 2, 11, unlocked ? (st % 2 === 0 ? '#059669' : '#10b981') : st % 2 === 0 ? '#450a0a' : '#7f1d1d');
+        pRect(ctx, stepX, stepY, 10, 2, unlocked ? '#fde047' : '#ef4444');
+      }
+      if (unlocked) {
+        const pulse = Math.sin(time * 8) * 2;
+        pRect(ctx, sx + p.w - 16, p.y - 16 + pulse, 10, 12, '#34d399');
+        pRect(ctx, sx + p.w - 14, p.y - 14 + pulse, 6, 8, '#fef08a');
+      } else {
+        // Iron Lock Seal Chains across stairs until monsters are defeated
+        pRect(ctx, sx + 6, p.y + 20, p.w - 12, 4, '#94a3b8');
+        pRect(ctx, sx + p.w / 2 - 5, p.y + 16, 10, 12, '#dc2626');
+      }
+    } else if (p.kind === 'raider_dungeon_exit') {
+      // Crimson-Violet Escape Gate back to Raider Guild Bastion
+      const pulse = Math.sin(time * 5) * 2;
+      ctx.save();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(sx + p.w / 2, p.y + p.h / 2, p.w / 2 + pulse, p.h / 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      pRect(ctx, sx + 6, p.y + 8, p.w - 12, p.h - 12, '#7f1d1d');
+      pRect(ctx, sx + p.w / 2 - 4, p.y + 14, 8, p.h - 24, '#fde047');
+      ctx.restore();
     }
   }
 
@@ -706,14 +825,37 @@ export function drawWarrior(
   labelCtx?: CanvasRenderingContext2D | null,
   dinoFormActive = false,
   equippedStand: StandId = 'star_platinum',
+  whiteAuraActive = false,
 ) {
   const sx = Math.round(x - camX);
   const sy = Math.round(y);
   if (sx < -52 || sx > PIXEL_W + 52) return;
 
+  // White Aura Overdrive Halo & Leaking Aura Flames behind Warrior
+  if (whiteAuraActive && !isPeer) {
+    ctx.save();
+    const pulse = Math.sin(simTime * 22) * 2.5;
+    const auraGrad = ctx.createRadialGradient(sx + 8, sy + 13, 3, sx + 8, sy + 13, 28 + pulse);
+    auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.92)');
+    auraGrad.addColorStop(0.45, 'rgba(241, 245, 249, 0.52)');
+    auraGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = auraGrad;
+    ctx.fillRect(sx - 24, sy - 20, 64, 66);
+
+    // Crisp upward leaking white aura wisps
+    for (let w = 0; w < 6; w++) {
+      const p = (simTime * 2.8 + w * 0.17) % 1;
+      const wx = sx + 1 + ((w * 5) % 14) + Math.round(Math.sin(simTime * 14 + w) * 2);
+      const wy = sy + 22 - Math.round(p * 34);
+      const wh = Math.max(2, Math.round(6 * (1 - p)));
+      sRect(ctx, wx, wy, 2, wh, p < 0.5 ? '#ffffff' : '#e0f2fe');
+    }
+    ctx.restore();
+  }
+
   // Ground contact shadow
   ctx.save();
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+  ctx.fillStyle = whiteAuraActive && !isPeer ? 'rgba(255, 255, 255, 0.55)' : 'rgba(0, 0, 0, 0.42)';
   ctx.fillRect(sx + (dinoFormActive ? -3 : 1), sy + 25, dinoFormActive ? 22 : 14, 3);
   ctx.restore();
 
@@ -790,17 +932,18 @@ export function drawWarrior(
   const quirkCycle = idleTimer > 2.5 ? (idleTimer - 2.5) % 6 : 0;
   const isAnimePose = quirkCycle > 3.6 && quirkCycle < 5.0 && attackPhase === 'none';
 
+  const whiteFlash = whiteAuraActive && !isPeer;
   const baseArmor = isPeer ? '#94a3b8' : customization.armorColor;
   const baseCape = isPeer ? peerColor : customization.cloakColor;
-  const armorHi = hitFlash > 0 ? '#ffffff' : shadeColor(baseArmor, 0.34);
-  const armorMain = hitFlash > 0 ? '#ffffff' : baseArmor;
-  const armorMid = hitFlash > 0 ? '#ffffff' : shadeColor(baseArmor, -0.32);
-  const armorDark = hitFlash > 0 ? '#ffffff' : shadeColor(baseArmor, -0.56);
-  const capeColor = hitFlash > 0 ? '#ffffff' : baseCape;
-  const capeShadow = hitFlash > 0 ? '#ffffff' : shadeColor(baseCape, -0.45);
-  const plumeColor = isPeer ? peerColor : customization.plumeColor;
-  const plumeShade = shadeColor(plumeColor, -0.32);
-  const visorGlow = isPeer ? '#38bdf8' : customization.visorColor;
+  const armorHi = hitFlash > 0 || whiteFlash ? '#ffffff' : shadeColor(baseArmor, 0.34);
+  const armorMain = hitFlash > 0 ? '#ffffff' : whiteFlash ? '#f8fafc' : baseArmor;
+  const armorMid = hitFlash > 0 ? '#ffffff' : whiteFlash ? '#e2e8f0' : shadeColor(baseArmor, -0.32);
+  const armorDark = hitFlash > 0 ? '#ffffff' : whiteFlash ? '#cbd5e1' : shadeColor(baseArmor, -0.56);
+  const capeColor = hitFlash > 0 ? '#ffffff' : whiteFlash ? '#f8fafc' : baseCape;
+  const capeShadow = hitFlash > 0 ? '#ffffff' : whiteFlash ? '#e2e8f0' : shadeColor(baseCape, -0.45);
+  const plumeColor = isPeer ? peerColor : whiteFlash ? '#ffffff' : customization.plumeColor;
+  const plumeShade = whiteFlash ? '#f1f5f9' : shadeColor(plumeColor, -0.32);
+  const visorGlow = isPeer ? '#38bdf8' : whiteFlash ? '#ffffff' : customization.visorColor;
 
   // Dynamic body lean & rotation during Spinning Poke Dash or Triple Slash!
   if (isSpinDashAttack) {
@@ -820,8 +963,13 @@ export function drawWarrior(
   sRect(ctx, -13 - cloakWave2, -13 + breath, 4, 5, capeColor);
   sRect(ctx, -14 - cloakWave2, -6 + breath, 5.33, 1, '#f59e0b');
 
-  // Crisp sub-pixel pixel silhouette outline
-  sRect(ctx, -6.67, -29 + breath, 13.33, 23.67, '#090609');
+  // Crisp sub-pixel pixel silhouette outline (bright luminous white rim during White Aura Overdrive)
+  sRect(ctx, -6.67, -29 + breath, 13.33, 23.67, whiteFlash ? '#ffffff' : '#090609');
+  if (whiteFlash) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.4;
+    ctx.strokeRect(-8.5, -31 + breath, 17, 29);
+  }
 
   // Hip leather scabbard behind back
   sRect(ctx, -9, -12 + breath, 3, 9, '#78350f');
@@ -905,11 +1053,20 @@ export function drawWarrior(
 
   if (customization.crownEquipped) {
     const cy = headgearStyle === 'helm' ? -36 : -34;
-    sRect(ctx, -5, cy + breath, 10, 4, '#f59e0b');
-    sRect(ctx, -5, cy - 3 + breath, 2, 3, '#fbbf24');
-    sRect(ctx, -1, cy - 4 + breath, 3, 4, '#fef08a');
-    sRect(ctx, 3, cy - 3 + breath, 2, 3, '#fbbf24');
-    sRect(ctx, 0, cy + 1 + breath, 2, 2, '#e11d48');
+    if (customization.crownStyle === 'elf_emerald') {
+      sRect(ctx, -6, cy + breath, 12, 4, '#cbd5e1');
+      sRect(ctx, -6, cy - 3 + breath, 2, 3, '#34d399');
+      sRect(ctx, -1.5, cy - 5 + breath, 3, 5, '#10b981');
+      sRect(ctx, -0.5, cy - 4 + breath, 1.2, 3, '#a7f3d0');
+      sRect(ctx, 4, cy - 3 + breath, 2, 3, '#34d399');
+      sRect(ctx, -0.5, cy + 1 + breath, 2, 2, '#fde047');
+    } else {
+      sRect(ctx, -5, cy + breath, 10, 4, '#f59e0b');
+      sRect(ctx, -5, cy - 3 + breath, 2, 3, '#fbbf24');
+      sRect(ctx, -1, cy - 4 + breath, 3, 4, '#fef08a');
+      sRect(ctx, 3, cy - 3 + breath, 2, 3, '#fbbf24');
+      sRect(ctx, 0, cy + 1 + breath, 2, 2, '#e11d48');
+    }
   }
 
   // Distinct High-Res Baked Weapon Rendering & Full Choreography
@@ -1441,6 +1598,147 @@ export function drawEnemy(
     const zap = Math.sin(time * 24) * 2;
     sRect(ctx, 5, -18 + idleBob + zap, 11, 2, '#fde047');
     sRect(ctx, 8, -16 + idleBob - zap, 7, 2, '#ffffff');
+  } else if (enemy.archetype === 'eldritch_ichor_hound') {
+    // Dark Pixel-Gore Quadruped: Flayed Sinew, Exposed Rib Spikes, Dripping Crimson Ichor & Jaw
+    const flesh = flash ? '#ffffff' : windupPulse ? '#f43f5e' : '#4c0519';
+    const drip = Math.round((time * 16 + enemy.patrolOriginX) % 6);
+    sRect(ctx, -12, -16 + idleBob, 22, 11, '#09060b');
+    sRect(ctx, -11, -15 + idleBob, 20, 9, flesh);
+    // Exposed bone ribcage & dorsal spine spurs
+    for (let r = 0; r < 4; r++) {
+      sRect(ctx, -8 + r * 4, -14 + idleBob, 2, 7, '#e2e8f0');
+      sRect(ctx, -8 + r * 4, -19 + idleBob, 2, 4, '#cbd5e1');
+    }
+    // Split multi-eyed skull maw
+    sRect(ctx, 7, -18 + idleBob, 9, 10, '#09060b');
+    sRect(ctx, 8, -17 + idleBob, 7, 8, '#9f1239');
+    sRect(ctx, 10, -16 + idleBob, 2, 2, '#fde047');
+    sRect(ctx, 12, -13 + idleBob, 2, 2, '#f43f5e');
+    sRect(ctx, 11, -11 + idleBob, 5, 2, '#f8fafc');
+    // Dripping dark gore & bone claws
+    sRect(ctx, -3, -6 + drip, 2, 4, '#991b1b');
+    sRect(ctx, 6, -6 + ((drip + 3) % 6), 2, 4, '#dc2626');
+    sRect(ctx, -9 + stride, -5, 3, 5, '#1e1b2e');
+    sRect(ctx, 4 - stride, -5, 3, 5, '#1e1b2e');
+  } else if (enemy.archetype === 'eldritch_tendril_fiend') {
+    // Floating Dark-Gore Cluster: Writhing Crimson Tendrils, Exposed Rib Halo & Cluster of 5 Eyes
+    const hover = Math.sin(time * 6 + enemy.patrolOriginX) * 3;
+    const body = flash ? '#ffffff' : windupPulse ? '#fb7185' : '#581c87';
+    const wiggle = Math.round(Math.sin(time * 14) * 3);
+    // Writhing blood tentacles below
+    for (let t = -2; t <= 2; t++) {
+      sRect(ctx, t * 4 - 1, -10 + hover + (t % 2 === 0 ? wiggle : -wiggle), 3, 10, '#7f1d1d');
+      sRect(ctx, t * 4, -4 + hover + (t % 2 === 0 ? wiggle : -wiggle), 1.5, 4, '#f43f5e');
+    }
+    sRect(ctx, -10, -28 + hover, 20, 20, '#09060b');
+    sRect(ctx, -9, -27 + hover, 18, 18, body);
+    sRect(ctx, -6, -24 + hover, 12, 12, '#881337');
+    // Jagged white bone ribs bursting out of torso sides
+    sRect(ctx, -13, -23 + hover, 4, 3, '#f1f5f9');
+    sRect(ctx, 9, -23 + hover, 4, 3, '#f1f5f9');
+    sRect(ctx, -12, -17 + hover, 4, 3, '#cbd5e1');
+    sRect(ctx, 8, -17 + hover, 4, 3, '#cbd5e1');
+    // Cluster of 5 glowing horror eyes
+    sRect(ctx, -4, -23 + hover, 3, 3, '#fde047');
+    sRect(ctx, 2, -23 + hover, 3, 3, '#fde047');
+    sRect(ctx, -1, -19 + hover, 3, 3, '#f43f5e');
+    sRect(ctx, -6, -18 + hover, 2, 2, '#fb7185');
+    sRect(ctx, 5, -18 + hover, 2, 2, '#fb7185');
+  } else if (enemy.archetype === 'eldritch_feast_boss') {
+    // MALAKOR, THE FEAST-DEVOURER: Towering Crimson Gore Abomination with Crown of Jagged Ribs & Bone Scythes
+    const body = flash ? '#ffffff' : windupPulse ? '#f43f5e' : '#4c0519';
+    const pulse = Math.round(Math.sin(time * 10) * 2);
+    // Writhing dorsal bone-tendril wings
+    for (let s = 0; s < 3; s++) {
+      sRect(ctx, -20 - s * 2, -40 + s * 8 + pulse, 10, 4, '#881337');
+      sRect(ctx, 10 + s * 2, -40 + s * 8 - pulse, 10, 4, '#881337');
+      sRect(ctx, -22 - s * 2, -41 + s * 8 + pulse, 4, 2, '#f8fafc');
+      sRect(ctx, 18 + s * 2, -41 + s * 8 - pulse, 4, 2, '#f8fafc');
+    }
+    sRect(ctx, -14, -44 + idleBob, 28, 36, '#09060b');
+    sRect(ctx, -13, -43 + idleBob, 26, 34, body);
+    // Exposed glistening ribcage chest cavity + beating crimson core
+    sRect(ctx, -9, -32 + idleBob, 18, 16, '#1c050d');
+    sRect(ctx, -4, -28 + idleBob, 8, 8, '#ef4444');
+    sRect(ctx, -2, -26 + idleBob, 4, 4, '#fde047');
+    for (let rib = 0; rib < 3; rib++) {
+      sRect(ctx, -10, -31 + rib * 5 + idleBob, 6, 2, '#e2e8f0');
+      sRect(ctx, 4, -31 + rib * 5 + idleBob, 6, 2, '#e2e8f0');
+    }
+    // Horned Nightmare Skull Head + Multi-eye Crown
+    sRect(ctx, -10, -56 + idleBob, 20, 14, '#09060b');
+    sRect(ctx, -9, -55 + idleBob, 18, 12, '#cbd5e1');
+    sRect(ctx, -13, -62 + idleBob, 4, 9, '#9f1239');
+    sRect(ctx, 9, -62 + idleBob, 4, 9, '#9f1239');
+    sRect(ctx, -5, -51 + idleBob, 3, 3, '#ef4444');
+    sRect(ctx, 2, -51 + idleBob, 3, 3, '#ef4444');
+    sRect(ctx, -1, -54 + idleBob, 2, 2, '#fde047');
+    // Massive Bone-Cleaver Forearms
+    sRect(ctx, 11, -36 + idleBob, 9, 26, '#e2e8f0');
+    sRect(ctx, 13, -24 + idleBob, 5, 14, '#dc2626');
+    sRect(ctx, -10 + stride, -9, 7, 9, '#1f060e');
+    sRect(ctx, 3 - stride, -9, 7, 9, '#1f060e');
+  } else if (enemy.archetype === 'raider_abyssal_imp') {
+    const hover = Math.sin(time * 9 + enemy.patrolOriginX) * 2.5;
+    const body = flash ? '#ffffff' : windupPulse ? '#fbbf24' : '#b91c1c';
+    sRect(ctx, -6, -24 + hover, 12, 16, '#09060b');
+    sRect(ctx, -5, -23 + hover, 10, 14, body);
+    sRect(ctx, -8, -28 + hover, 3, 6, '#fde047');
+    sRect(ctx, 5, -28 + hover, 3, 6, '#fde047');
+    sRect(ctx, -12, -21 + hover, 6, 9, '#450a0a');
+    sRect(ctx, 6, -21 + hover, 6, 9, '#450a0a');
+    sRect(ctx, 1, -20 + hover, 2.5, 2, '#fde047');
+    sRect(ctx, 6, -15 + hover, 5, 5, '#f97316');
+  } else if (enemy.archetype === 'raider_iron_golem') {
+    const arm = flash ? '#ffffff' : windupPulse ? '#fb923c' : '#475569';
+    sRect(ctx, -12, -36 + idleBob, 24, 28, '#09060b');
+    sRect(ctx, -11, -35 + idleBob, 22, 26, arm);
+    sRect(ctx, -7, -28 + idleBob, 14, 14, '#334155');
+    sRect(ctx, -3, -24 + idleBob, 6, 6, '#f97316');
+    sRect(ctx, -1, -22 + idleBob, 2, 2, '#fef08a');
+    sRect(ctx, -5, -35 + idleBob, 10, 4, '#ef4444');
+    sRect(ctx, -9 + stride, -9, 7, 9, '#1e293b');
+    sRect(ctx, 2 - stride, -9, 7, 9, '#1e293b');
+  } else if (enemy.archetype === 'raider_frost_wraith') {
+    const hover = Math.sin(time * 4.5 + enemy.patrolOriginX) * 3;
+    const body = flash ? '#ffffff' : windupPulse ? '#fef08a' : '#0284c7';
+    sRect(ctx, -8, -28 + hover, 16, 22, '#09060b');
+    sRect(ctx, -7, -27 + hover, 14, 20, body);
+    sRect(ctx, -5, -25 + hover, 10, 12, '#38bdf8');
+    sRect(ctx, -4, -32 + hover, 8, 6, '#e0f2fe');
+    sRect(ctx, 1, -24 + hover, 3, 2, '#ffffff');
+    sRect(ctx, 6, -24 + hover, 4, 14, '#bae6fd');
+  } else if (enemy.archetype === 'raider_spore_stalker') {
+    const body = flash ? '#ffffff' : windupPulse ? '#bef264' : '#365314';
+    sRect(ctx, -11, -30 + idleBob, 22, 8, '#65a30d');
+    sRect(ctx, -8, -34 + idleBob, 16, 5, '#84cc16');
+    sRect(ctx, -5, -32 + idleBob, 3, 3, '#fde047');
+    sRect(ctx, 3, -32 + idleBob, 3, 3, '#fde047');
+    sRect(ctx, -7, -22 + idleBob, 14, 15, '#09060b');
+    sRect(ctx, -6, -21 + idleBob, 12, 14, body);
+    sRect(ctx, 1, -18 + idleBob, 3, 2, '#a3e635');
+    sRect(ctx, -5 + stride, -7, 4, 7, '#1a2e05');
+    sRect(ctx, 1 - stride, -7, 4, 7, '#1a2e05');
+  } else if (enemy.archetype === 'raider_void_acolyte') {
+    const robe = flash ? '#ffffff' : windupPulse ? '#e879f9' : '#3b0764';
+    sRect(ctx, -8, -28 + idleBob, 16, 22, '#09060b');
+    sRect(ctx, -7, -27 + idleBob, 14, 21, robe);
+    sRect(ctx, -4, -27 + idleBob, 8, 8, '#09060b');
+    sRect(ctx, 0, -24 + idleBob, 3, 2, '#c084fc');
+    sRect(ctx, 6, -30 + idleBob, 3, 24, '#7e22ce');
+    sRect(ctx, 5, -34 + idleBob, 5, 5, '#e879f9');
+  } else if (enemy.archetype === 'raider_hell_executioner') {
+    const armor = flash ? '#ffffff' : windupPulse ? '#fbbf24' : '#7f1d1d';
+    sRect(ctx, -11, -34 + idleBob, 22, 26, '#09060b');
+    sRect(ctx, -10, -33 + idleBob, 20, 24, armor);
+    sRect(ctx, -6, -35 + idleBob, 12, 10, '#18181b');
+    sRect(ctx, -9, -39 + idleBob, 3, 6, '#e2e8f0');
+    sRect(ctx, 6, -39 + idleBob, 3, 6, '#e2e8f0');
+    sRect(ctx, 1, -30 + idleBob, 3, 2, '#fde047');
+    sRect(ctx, 7, -36 + idleBob, 6, 30, '#cbd5e1');
+    sRect(ctx, 9, -34 + idleBob, 4, 14, '#ef4444');
+    sRect(ctx, -8 + stride, -9, 6, 9, '#09060b');
+    sRect(ctx, 2 - stride, -9, 6, 9, '#09060b');
   } else {
     const col = flash ? '#ffffff' : windupPulse ? '#fb923c' : '#57534e';
     const wingLift = enemy.state === 'attack' || enemy.state === 'windup' ? -4 : 0;
@@ -3061,6 +3359,84 @@ export function drawJjbaStandSprite(
   ctx.fillText('ゴ', 20, -4 + Math.cos(time * 7) * 2);
   ctx.restore();
 }
+
+/**
+ * Defensive Stand Guard Barrier (Double-Tap Stand [3]/[R]):
+ * Manifests the equipped Stand in front of the player inside an octagonal energy shield
+ * that blocks/deflects incoming attacks and pulses counter-damage for 1.5 seconds.
+ */
+export function drawStandGuardBarrier(
+  ctx: CanvasRenderingContext2D,
+  standId: StandId,
+  playerX: number,
+  playerY: number,
+  facing: 1 | -1,
+  camX: number,
+  time: number,
+  remainingSec: number,
+) {
+  const def = STANDS[standId];
+  const centerX = Math.round(playerX - camX + 8);
+  const centerY = Math.round(playerY + 12);
+  const frame: 0 | 1 = Math.floor(time * 16) % 2 === 0 ? 0 : 1;
+  const sprite = getBakedStandWorldSprite(standId, frame);
+  const alpha = Math.max(0.25, Math.min(0.96, remainingSec * 2.4));
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  // Translucent defensive shield dome around the warrior
+  ctx.globalAlpha = alpha * 0.24;
+  ctx.fillStyle = def.primaryColor;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 34, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rotating octagonal Stand Guard Barrier perimeter
+  ctx.globalAlpha = alpha * 0.92;
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate(time * 2.6);
+  ctx.strokeStyle = '#f0abfc';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 8; i++) {
+    const ang = (i / 8) * Math.PI * 2;
+    const rx = Math.cos(ang) * 34;
+    const ry = Math.sin(ang) * 30;
+    if (i === 0) ctx.moveTo(rx, ry);
+    else ctx.lineTo(rx, ry);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 38 + Math.sin(time * 20) * 1.5, time * 2, time * 2 + Math.PI * 1.35);
+  ctx.stroke();
+  ctx.restore();
+
+  // Equipped Stand positioned in braced forward guard stance
+  const standX = centerX + facing * 16;
+  const standY = centerY - 12 + Math.sin(time * 14) * 1.5;
+  ctx.globalAlpha = alpha;
+  ctx.save();
+  ctx.translate(standX, standY);
+  ctx.scale(facing, 1);
+  ctx.drawImage(sprite, -22, -22, 44, 44);
+  ctx.restore();
+
+  // Front guard shockwave bars
+  for (let b = -1; b <= 1; b++) {
+    const bx = centerX + facing * (28 + Math.round(Math.sin(time * 24 + b) * 3));
+    const by = centerY - 4 + b * 9;
+    sRect(ctx, bx - 2, by - 1, 5, 3, '#fbbf24');
+    sRect(ctx, bx - 1, by, 3, 1.5, '#ffffff');
+  }
+
+  ctx.restore();
+}
+
 
 
 

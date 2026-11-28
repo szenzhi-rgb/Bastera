@@ -6,6 +6,7 @@ import {
   canAccessGuildFloor2,
 } from './isekai';
 import { getBakedWeaponWorldSprite } from './pixelArtAtlas';
+import { DUNGEON_DESIGNS, getRaiderRankDef } from './raiderGuild';
 import { DEFAULT_WARRIOR_CUSTOMIZATION } from './rules';
 import { PIXEL_H, PIXEL_W } from './pixelSprites';
 import type {
@@ -15,9 +16,13 @@ import type {
   CarriageEscortState,
   CoronationCutsceneHud,
   DemonKingEntity,
+  DungeonDesignId,
+  ElfKingdomStage,
   GuildRank,
   IsekaiNpc,
   PurpleFlameZone,
+  RaiderDemonicBossEntity,
+  RaiderRankId,
   RealmMode,
   TownHouseDamage,
   WarriorCustomization,
@@ -100,10 +105,12 @@ function sRect(
 }
 
 function drawAnimeCloud(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
+  sRect(ctx, x + 6, y - 5, Math.round(w * 0.42), 5, '#f8fafc');
+  pRect(ctx, x + 3, y + 1, Math.round(w * 0.74), 9, '#ffffff');
   pRect(ctx, x, y + 6, w, 10, '#ffffff');
-  pRect(ctx, x + 6, y, Math.round(w * 0.68), 10, '#ffffff');
-  pRect(ctx, x + 12, y - 4, Math.round(w * 0.36), 8, '#f0f9ff');
-  pRect(ctx, x + 2, y + 14, w - 4, 2, '#bae6fd');
+  sRect(ctx, x + 10, y - 2, Math.round(w * 0.34), 4, '#ffffff');
+  sRect(ctx, x + 2, y + 13, w - 4, 3, '#e0f2fe');
+  sRect(ctx, x + 4, y + 15, w - 8, 2, '#bae6fd');
 }
 
 function lerpChannel(a: number, b: number, t: number): number {
@@ -218,18 +225,31 @@ export function drawIsekaiTownBackdrop(
   const pxOff = Math.floor(camX * 0.25);
   for (let i = -1; i <= 2; i++) {
     const mx = i * 320 - ((pxOff % 320) + 320) % 320;
+    sRect(ctx, mx + 18, 117, 100, 81, '#0f172a');
     pRect(ctx, mx + 20, 118, 96, 80, lerpHex('#64748b', '#1e293b', nf));
+    sRect(ctx, mx + 20, 118, 46, 80, lerpHex('#475569', '#0f172a', nf));
     pRect(ctx, mx + 44, 96, 48, 30, lerpHex('#94a3b8', '#334155', nf));
     pRect(ctx, mx + 54, 92, 28, 12, lerpHex('#f8fafc', '#94a3b8', nf));
-    // Royal gothic alabaster & crimson keep with gilded spire crowns
+    sRect(ctx, mx + 50, 102, 16, 4, lerpHex('#e2e8f0', '#64748b', nf));
+    // Royal gothic alabaster & crimson keep with gilded spire crowns & arched windows
+    sRect(ctx, mx + 173, 81, 64, 86, '#09060b');
     pRect(ctx, mx + 174, 82, 62, 84, lerpHex('#e2e8f0', '#27273a', nf));
+    sRect(ctx, mx + 174, 82, 22, 84, lerpHex('#cbd5e1', '#1e1b2e', nf));
+    sRect(ctx, mx + 167, 61, 20, 48, '#09060b');
     pRect(ctx, mx + 168, 62, 18, 46, lerpHex('#cbd5e1', '#1e1b2e', nf));
     pRect(ctx, mx + 166, 48, 22, 14, '#9f1239');
+    sRect(ctx, mx + 166, 59, 22, 2, '#fbbf24');
     pRect(ctx, mx + 175, 38, 4, 10, '#fbbf24');
+    sRect(ctx, mx + 223, 61, 20, 48, '#09060b');
     pRect(ctx, mx + 224, 62, 18, 46, lerpHex('#cbd5e1', '#1e1b2e', nf));
     pRect(ctx, mx + 222, 48, 22, 14, '#9f1239');
+    sRect(ctx, mx + 222, 59, 22, 2, '#fbbf24');
     pRect(ctx, mx + 231, 38, 4, 10, '#fbbf24');
+    sRect(ctx, mx + 193, 45, 24, 64, '#09060b');
     pRect(ctx, mx + 194, 46, 22, 62, lerpHex('#f8fafc', '#3b3355', nf));
+    sRect(ctx, mx + 202, 56, 6, 14, nf > 0.2 ? '#fde047' : '#38bdf8');
+    sRect(ctx, mx + 174, 74, 5, 10, nf > 0.2 ? '#fde047' : '#38bdf8');
+    sRect(ctx, mx + 230, 74, 5, 10, nf > 0.2 ? '#fde047' : '#38bdf8');
     pRect(ctx, mx + 190, 28, 30, 18, '#881337');
     pRect(ctx, mx + 190, 44, 30, 3, '#fbbf24');
     pRect(ctx, mx + 204, 16, 2, 12, '#fbbf24');
@@ -240,21 +260,25 @@ export function drawIsekaiTownBackdrop(
   pRect(ctx, 0, 140, PIXEL_W, 86, lerpHex('#15803d', '#064e3b', nf));
   pRect(ctx, 0, 158, PIXEL_W, 68, lerpHex('#166534', '#052e16', nf));
 
-  // Deep Dense Dark-Green Jungle rising directly behind all town homes!
+  // Deep Dense Dark-Green Jungle rising directly behind all town homes with crisp layered boughs!
   const jungleFarOff = Math.floor(camX * 0.48);
   for (let i = -1; i <= 6; i++) {
     const jx = i * 108 - ((jungleFarOff % 108) + 108) % 108;
+    sRect(ctx, jx + 15, 101, 12, 125, '#02170a');
     pRect(ctx, jx + 16, 102, 10, 124, '#052e16');
+    sRect(ctx, jx + 67, 89, 14, 137, '#02170a');
     pRect(ctx, jx + 68, 90, 12, 136, '#052e16');
     pRect(ctx, jx + 18, 106, 3, 118, '#14532d');
     pRect(ctx, jx + 71, 94, 4, 130, '#14532d');
 
+    sRect(ctx, jx - 11, 87, 58, 30, '#02170a');
     pRect(ctx, jx - 10, 88, 56, 28, '#052e16');
     pRect(ctx, jx - 4, 74, 44, 22, '#064e3b');
     pRect(ctx, jx + 2, 62, 32, 18, '#14532d');
     pRect(ctx, jx + 8, 55, 20, 10, '#166534');
     pRect(ctx, jx + 12, 58, 10, 5, '#22c55e');
 
+    sRect(ctx, jx + 35, 75, 70, 38, '#02170a');
     pRect(ctx, jx + 36, 76, 68, 36, '#052e16');
     pRect(ctx, jx + 42, 60, 56, 26, '#064e3b');
     pRect(ctx, jx + 50, 48, 40, 20, '#14532d');
@@ -277,12 +301,15 @@ export function drawIsekaiTownBackdrop(
   const treeNearOff = Math.floor(camX * 0.78);
   for (let i = -1; i <= 7; i++) {
     const tx = i * 92 - ((treeNearOff % 92) + 92) % 92;
+    sRect(ctx, tx + 21, 121, 12, 105, '#02170a');
     pRect(ctx, tx + 22, 122, 10, 104, '#14532d');
     pRect(ctx, tx + 24, 126, 3, 100, '#166534');
+    sRect(ctx, tx - 5, 95, 56, 28, '#02170a');
     pRect(ctx, tx - 4, 96, 54, 26, '#052e16');
     pRect(ctx, tx + 2, 86, 42, 18, '#14532d');
     pRect(ctx, tx + 8, 78, 30, 12, '#15803d');
     pRect(ctx, tx + 14, 80, 14, 5, '#4ade80');
+    sRect(ctx, tx + 47, 185, 38, 41, '#02170a');
     pRect(ctx, tx + 48, 186, 36, 40, '#052e16');
     pRect(ctx, tx + 52, 178, 28, 16, '#14532d');
     pRect(ctx, tx + 58, 174, 16, 8, '#16a34a');
@@ -363,6 +390,9 @@ export function drawIsekaiTownBackdrop(
 
     sRect(ctx, sx - 0.8, topY - 0.8, spec.w + 1.6, spec.h + 0.8, '#0f172a');
     pRect(ctx, sx, topY, spec.w, spec.h, hitFlash ? '#fca5a5' : spec.wallColor);
+    // Stone plinth foundation along street level
+    pRect(ctx, sx, 217, spec.w, 8, '#475569');
+    sRect(ctx, sx, 217, spec.w, 1.5, '#64748b');
     pRect(ctx, sx, topY, 6, spec.h, spec.beamColor);
     pRect(ctx, sx + spec.w - 6, topY, 6, spec.h, spec.beamColor);
     pRect(ctx, sx, midY, spec.w, 5, spec.beamColor);
@@ -378,6 +408,7 @@ export function drawIsekaiTownBackdrop(
     pRect(ctx, sx + 16, topY - 40, Math.max(24, spec.w - 32), 12, spec.roofDark);
     sRect(ctx, sx + 6, topY - 28, spec.w - 12, 2, spec.roofDark);
     sRect(ctx, sx - 4, topY - 10, spec.w + 8, 1.5, spec.roofDark);
+    sRect(ctx, sx + 18, topY - 38, Math.max(20, spec.w - 36), 1.5, '#f8fafc');
     if (spec.hasChimney) {
       pRect(ctx, sx + spec.w - 22, topY - 46, 10, 18, '#64748b');
       sRect(ctx, sx + spec.w - 23, topY - 47, 12, 3, '#475569');
@@ -399,11 +430,12 @@ export function drawIsekaiTownBackdrop(
     pRect(ctx, sx + spec.w - 28, topY + 12, 16, 17, winGlowColor);
     pRect(ctx, sx + spec.w - 21, topY + 12, 2, 17, spec.beamColor);
     sRect(ctx, sx + spec.w - 28, topY + 20, 16, 1.5, spec.beamColor);
-    // Ground-floor arched door + flowerbox
+    // Ground-floor arched door + brass sconce + flowerbox
     sRect(ctx, sx + Math.floor(spec.w / 2) - 10, 193, 20, 31, '#1c1008');
     pRect(ctx, sx + Math.floor(spec.w / 2) - 9, 194, 18, 30, '#451a03');
     sRect(ctx, sx + Math.floor(spec.w / 2) - 7, 196, 14, 26, '#78350f');
     pRect(ctx, sx + Math.floor(spec.w / 2) + 4, 209, 3, 3, '#fbbf24');
+    sRect(ctx, sx + Math.floor(spec.w / 2) - 15, 200, 3, 4, '#fbbf24');
     pRect(ctx, sx + 10, topY + 29, 20, 4, '#78350f');
     pRect(ctx, sx + 12, topY + 26, 4, 3, '#f43f5e');
     pRect(ctx, sx + 20, topY + 26, 4, 3, '#fde047');
@@ -505,17 +537,32 @@ export function drawIsekaiTownBackdrop(
   // Hero Building 1: TWO-STORY ADVENTURE GUILD HALL (x=305..445, door x=342)
   const gx = Math.round(305 - bxOff);
   if (gx > -150 && gx < PIXEL_W + 20) {
+    sRect(ctx, gx - 1, 99, 142, 127, '#09060b');
     pRect(ctx, gx, 100, 140, 126, '#fde68a');
+    pRect(ctx, gx, 215, 140, 11, '#475569');
+    sRect(ctx, gx, 215, 140, 2, '#64748b');
     pRect(ctx, gx, 100, 140, 6, '#78350f');
     pRect(ctx, gx, 160, 140, 6, '#78350f');
     pRect(ctx, gx, 100, 8, 126, '#451a03');
     pRect(ctx, gx + 132, 100, 8, 126, '#451a03');
+    sRect(ctx, gx - 9, 75, 158, 28, '#09060b');
     pRect(ctx, gx - 8, 76, 156, 26, '#1e3a8a');
+    sRect(ctx, gx - 6, 98, 152, 3, '#fbbf24');
     pRect(ctx, gx + 6, 60, 128, 18, '#1d4ed8');
+    sRect(ctx, gx + 8, 74, 124, 2, '#1e40af');
     pRect(ctx, gx + 28, 46, 84, 16, '#2563eb');
+    sRect(ctx, gx + 30, 48, 80, 2, '#60a5fa');
     const flagSway = Math.round(Math.sin(time * 6) * 2);
     pRect(ctx, gx + 69, 28, 2, 18, '#fbbf24');
     pRect(ctx, gx + 71, 28 + flagSway, 16, 8, '#38bdf8');
+    sRect(ctx, gx + 75, 30 + flagSway, 6, 4, '#fef08a');
+    // Double Oak Guild Entrance Doors & Brass Torch Brackets
+    sRect(ctx, gx + 54, 176, 32, 48, '#09060b');
+    pRect(ctx, gx + 56, 178, 28, 46, '#451a03');
+    sRect(ctx, gx + 58, 180, 11, 42, '#78350f');
+    sRect(ctx, gx + 71, 180, 11, 42, '#78350f');
+    sRect(ctx, gx + 67, 198, 2, 4, '#fbbf24');
+    sRect(ctx, gx + 71, 198, 2, 4, '#fbbf24');
     pRect(ctx, gx + 43, 114, 54, 24, '#451a03');
     pRect(ctx, gx + 45, 116, 50, 20, '#92400e');
     if (labelCtx) {
@@ -533,27 +580,48 @@ export function drawIsekaiTownBackdrop(
       ctx.textAlign = 'center';
       ctx.fillText('GUILD', gx + 70, 129);
     }
-    pRect(ctx, gx + 16, 116, 18, 24, nf > 0.2 ? '#fde047' : '#60a5fa');
-    pRect(ctx, gx + 106, 116, 18, 24, nf > 0.2 ? '#fde047' : '#60a5fa');
-    pRect(ctx, gx + 14, 178, 20, 22, '#fbbf24');
-    pRect(ctx, gx + 106, 178, 20, 22, '#fbbf24');
+    // Framed upper & lower mullioned leaded windows
+    for (const [wxOff, wyOff, ww, wh] of [
+      [15, 115, 20, 26],
+      [105, 115, 20, 26],
+      [13, 177, 22, 24],
+      [105, 177, 22, 24],
+    ]) {
+      sRect(ctx, gx + wxOff, wyOff, ww, wh, '#1c1008');
+      pRect(ctx, gx + wxOff + 2, wyOff + 2, ww - 4, wh - 4, nf > 0.2 ? '#fde047' : '#60a5fa');
+      sRect(ctx, gx + wxOff + Math.floor(ww / 2) - 1, wyOff + 2, 2, wh - 4, '#451a03');
+      sRect(ctx, gx + wxOff + 2, wyOff + Math.floor(wh / 2), ww - 4, 2, '#451a03');
+    }
   }
 
   // Hero Building 2: GLOWING POTION APOTHECARY SHOP (x=585..710, door x=648)
   const px = Math.round(585 - bxOff);
   if (px > -150 && px < PIXEL_W + 20) {
+    sRect(ctx, px - 1, 117, 126, 109, '#09060b');
     pRect(ctx, px, 118, 124, 108, '#ecfdf5');
+    pRect(ctx, px, 216, 124, 10, '#334155');
     pRect(ctx, px, 118, 7, 108, '#065f46');
     pRect(ctx, px + 117, 118, 7, 108, '#065f46');
+    sRect(ctx, px - 7, 93, 138, 28, '#09060b');
     pRect(ctx, px - 6, 94, 136, 26, '#6d28d9');
     pRect(ctx, px + 8, 80, 108, 16, '#7c3aed');
+    sRect(ctx, px - 4, 117, 132, 2, '#34d399');
     for (let a = 0; a < 12; a++) {
       pRect(ctx, px + 4 + a * 10, 152, 10, 12, a % 2 === 0 ? '#10b981' : '#fef9c3');
     }
+    // Arched apothecary entry door on left side + illuminated flask showcase on right
+    sRect(ctx, px + 24, 174, 28, 50, '#09060b');
+    pRect(ctx, px + 26, 176, 24, 48, '#064e3b');
+    sRect(ctx, px + 29, 179, 18, 43, '#047857');
+    sRect(ctx, px + 43, 199, 3, 3, '#fbbf24');
+    sRect(ctx, px + 74, 170, 38, 38, '#1e293b');
     pRect(ctx, px + 76, 172, 34, 34, '#0f172a');
     pRect(ctx, px + 80, 186, 6, 16, '#ef4444');
+    sRect(ctx, px + 81, 188, 2, 10, '#fca5a5');
     pRect(ctx, px + 89, 182, 7, 20, '#06b6d4');
+    sRect(ctx, px + 90, 184, 2, 12, '#bae6fd');
     pRect(ctx, px + 99, 188, 7, 14, '#a855f7');
+    sRect(ctx, px + 100, 190, 2, 9, '#f0abfc');
     pRect(ctx, px + 34, 126, 56, 20, '#4c1d95');
     if (labelCtx) {
       drawCrispOverlayLabel(labelCtx, px + 62, 136, 'POTIONS', {
@@ -575,16 +643,27 @@ export function drawIsekaiTownBackdrop(
   // Hero Building 3: WARDROBE BOUTIQUE SHOP (x=845..970, door x=905)
   const wx = Math.round(845 - bxOff);
   if (wx > -150 && wx < PIXEL_W + 20) {
+    sRect(ctx, wx - 1, 117, 128, 109, '#09060b');
     pRect(ctx, wx, 118, 126, 108, '#fff1f2');
+    pRect(ctx, wx, 216, 126, 10, '#475569');
     pRect(ctx, wx, 118, 7, 108, '#831843');
     pRect(ctx, wx + 119, 118, 7, 108, '#831843');
+    sRect(ctx, wx - 7, 93, 140, 28, '#09060b');
     pRect(ctx, wx - 6, 94, 138, 26, '#be185d');
     pRect(ctx, wx + 8, 80, 110, 16, '#db2777');
+    sRect(ctx, wx - 4, 117, 134, 2, '#f9a8d4');
     for (let a = 0; a < 12; a++) {
       pRect(ctx, wx + 4 + a * 10, 152, 10, 12, a % 2 === 0 ? '#f43f5e' : '#ffffff');
     }
+    sRect(ctx, wx + 14, 170, 38, 38, '#831843');
     pRect(ctx, wx + 16, 172, 34, 34, nf > 0.2 ? '#fde047' : '#bae6fd');
     pRect(ctx, wx + 26, 180, 14, 24, '#a855f7');
+    sRect(ctx, wx + 29, 174, 8, 6, '#fbbf24');
+    // Boutique Entry Door on right side
+    sRect(ctx, wx + 72, 174, 28, 50, '#09060b');
+    pRect(ctx, wx + 74, 176, 24, 48, '#831843');
+    sRect(ctx, wx + 77, 179, 18, 43, '#be185d');
+    sRect(ctx, wx + 90, 199, 3, 3, '#fde047');
     pRect(ctx, wx + 36, 126, 56, 20, '#831843');
     if (labelCtx) {
       drawCrispOverlayLabel(labelCtx, wx + 64, 136, 'WARDROBE', {
@@ -622,14 +701,14 @@ export function drawIsekaiTownBackdrop(
     // Glazed Armory Showcase Windows displaying real baked weapons!
     sRect(ctx, ax + 17, 173, 50, 38, '#78350f');
     pRect(ctx, ax + 18, 174, 48, 36, '#0f172a');
-    ctx.drawImage(getBakedWeaponWorldSprite('frostbite'), ax + 20, 174, 13, 35);
-    ctx.drawImage(getBakedWeaponWorldSprite('greatsword'), ax + 35, 172, 14, 38);
-    ctx.drawImage(getBakedWeaponWorldSprite('fire_sword_op'), ax + 49, 175, 13, 35);
+    ctx.drawImage(getBakedWeaponWorldSprite('azure_glaive'), ax + 20, 174, 13, 35);
+    ctx.drawImage(getBakedWeaponWorldSprite('runeblade'), ax + 35, 172, 14, 38);
+    ctx.drawImage(getBakedWeaponWorldSprite('fire_sword'), ax + 49, 175, 13, 35);
     sRect(ctx, ax + 151, 173, 54, 38, '#78350f');
     pRect(ctx, ax + 152, 174, 52, 36, '#0f172a');
-    ctx.drawImage(getBakedWeaponWorldSprite('shadow_katana'), ax + 155, 173, 14, 37);
-    ctx.drawImage(getBakedWeaponWorldSprite('dragon_slayer'), ax + 170, 171, 15, 39);
-    ctx.drawImage(getBakedWeaponWorldSprite('emerald_saber'), ax + 186, 175, 13, 35);
+    ctx.drawImage(getBakedWeaponWorldSprite('katana'), ax + 155, 173, 14, 37);
+    ctx.drawImage(getBakedWeaponWorldSprite('thunder_odachi'), ax + 170, 171, 15, 39);
+    ctx.drawImage(getBakedWeaponWorldSprite('emerald_zephyr'), ax + 186, 175, 13, 35);
     pRect(ctx, ax + 78, 122, 68, 22, '#29150c');
     if (labelCtx) {
       drawCrispOverlayLabel(labelCtx, ax + 112, 133, 'WEAPONS ARMORY', {
@@ -645,6 +724,48 @@ export function drawIsekaiTownBackdrop(
       ctx.font = 'bold 7px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('WEAPONS ARMORY', ax + 112, 136);
+    }
+  }
+
+  // Hero Building 4A: OBSIDIAN DUNGEON RAIDER GUILD BASTION (x=1336..1456, door x=1365)
+  const rgx = Math.round(1336 - bxOff);
+  if (rgx > -140 && rgx < PIXEL_W + 30) {
+    sRect(ctx, rgx - 1, 93, 122, 133, '#09060b');
+    pRect(ctx, rgx, 94, 120, 132, '#1e1b2e');
+    pRect(ctx, rgx + 6, 100, 108, 124, '#271e38');
+    // Stepped Battlement Tower & Demon-Slayer Crossed Greatswords Crest
+    pRect(ctx, rgx - 6, 74, 132, 22, '#450a0a');
+    pRect(ctx, rgx + 12, 56, 96, 20, '#7f1d1d');
+    pRect(ctx, rgx + 28, 40, 64, 18, '#991b1b');
+    sRect(ctx, rgx - 4, 92, 128, 3, '#fbbf24');
+    // Glowing Demon-Skull Crest at apex
+    pRect(ctx, rgx + 50, 26, 20, 16, '#09060b');
+    pRect(ctx, rgx + 52, 28, 16, 12, '#e2e8f0');
+    pRect(ctx, rgx + 54, 32, 4, 3, '#ef4444');
+    pRect(ctx, rgx + 62, 32, 4, 3, '#ef4444');
+    // Twin Crimson Brazier Torches flanking doorway
+    const rfl = Math.round(Math.sin(time * 13) * 2);
+    for (const bx of [rgx + 14, rgx + 96]) {
+      pRect(ctx, bx, 174, 10, 50, '#334155');
+      pRect(ctx, bx + 1, 162 + rfl, 8, 12, '#ef4444');
+      pRect(ctx, bx + 3, 165 + rfl, 4, 7, '#fde047');
+    }
+    // Signboard
+    pRect(ctx, rgx + 14, 114, 92, 22, '#09060b');
+    if (labelCtx) {
+      drawCrispOverlayLabel(labelCtx, rgx + 60, 125, 'RAIDER GUILD [F]', {
+        color: '#fda4af',
+        bg: 'rgba(69, 10, 10, 0.95)',
+        border: '#ef4444',
+        fontSize: 19,
+        padX: 10,
+        padY: 4,
+      });
+    } else {
+      ctx.fillStyle = '#fda4af';
+      ctx.font = 'bold 6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('RAIDER GUILD', rgx + 60, 128);
     }
   }
 
@@ -1119,6 +1240,7 @@ export function drawIsekaiNightLighting(
     drawWarmLight(645 - bxOff, 184, 66, '45, 212, 191', 0.42);
     drawWarmLight(908 - bxOff, 184, 66, '244, 114, 182', 0.36);
     drawWarmLight(1212 - bxOff, 178, 84, '251, 146, 60', 0.42);
+    drawWarmLight(1396 - bxOff, 168, 86, '239, 68, 68', 0.48);
     drawWarmLight(1560 - bxOff, 172, 92, '192, 132, 252', 0.52);
     drawWarmLight(2705 - bxOff, 194, 96, '45, 212, 191', 0.46);
     drawWarmLight(2568 - bxOff, 158, 56, '251, 146, 60', 0.48);
@@ -1391,17 +1513,21 @@ export function drawIsekaiFloors(
   realm: RealmMode,
   camX: number,
   time: number,
+  raiderDesign?: DungeonDesignId,
 ) {
   const bxOff = Math.floor(camX);
   if (realm === 'isekai_town') {
-    pRect(ctx, 0, 224, PIXEL_W, 46, '#94a3b8');
-    pRect(ctx, 0, 224, PIXEL_W, 3, '#f1f5f9');
-    pRect(ctx, 0, 227, PIXEL_W, 2, '#64748b');
+    pRect(ctx, 0, 224, PIXEL_W, 46, '#64748b');
+    pRect(ctx, 0, 224, PIXEL_W, 2, '#f8fafc');
+    pRect(ctx, 0, 226, PIXEL_W, 2, '#475569');
     for (let row = 0; row < 4; row++) {
       const sy = 230 + row * 10;
       const off = ((bxOff + row * 14) % 28 + 28) % 28;
       for (let cx = -off; cx < PIXEL_W; cx += 28) {
-        pRect(ctx, cx, sy, 25, 8, (row + Math.floor(cx / 28)) % 2 === 0 ? '#cbd5e1' : '#94a3b8');
+        const even = (row + Math.floor((cx + off) / 28)) % 2 === 0;
+        pRect(ctx, cx, sy, 25, 8, even ? '#cbd5e1' : '#94a3b8');
+        sRect(ctx, cx + 1, sy, 23, 1.5, even ? '#f1f5f9' : '#cbd5e1');
+        sRect(ctx, cx, sy + 7, 25, 1, '#334155');
       }
     }
     // Bastera-inspired Royal Crimson & Gold Carpet Runner along the Grand Solaris Promenade!
@@ -1410,6 +1536,32 @@ export function drawIsekaiFloors(
     pRect(ctx, 0, 230, PIXEL_W, 1, '#f59e0b');
     for (let cx = -((bxOff % 48 + 48) % 48); cx < PIXEL_W; cx += 48) {
       pRect(ctx, cx + 10, 227, 6, 2, '#fde047');
+      sRect(ctx, cx + 32, 227, 3, 2, '#fda4af');
+    }
+  } else if (realm === 'elf_kingdom') {
+    // Silver-Moon Marble Floor + Royal Emerald & Gold Banquet Runner
+    pRect(ctx, 0, 224, PIXEL_W, 46, '#cbd5e1');
+    pRect(ctx, 0, 224, PIXEL_W, 2, '#ffffff');
+    pRect(ctx, 0, 226, PIXEL_W, 4, '#047857');
+    pRect(ctx, 0, 230, PIXEL_W, 1, '#fbbf24');
+    for (let cx = -((bxOff % 36 + 36) % 36); cx < PIXEL_W; cx += 36) {
+      pRect(ctx, cx, 233, 32, 12, '#e2e8f0');
+      pRect(ctx, cx + 14, 227, 8, 2, '#fde047');
+    }
+  } else if (realm === 'raider_guild') {
+    pRect(ctx, 0, 224, PIXEL_W, 46, '#1c1522');
+    pRect(ctx, 0, 224, PIXEL_W, 4, '#b91c1c');
+    for (let cx = -((bxOff % 32 + 32) % 32); cx < PIXEL_W; cx += 32) {
+      pRect(ctx, cx, 230, 28, 12, '#271e30');
+      pRect(ctx, cx + 12, 233, 6, 2, '#f59e0b');
+    }
+  } else if (realm === 'raider_dungeon') {
+    const theme = raiderDesign ? DUNGEON_DESIGNS[raiderDesign] : DUNGEON_DESIGNS.sunken_crypt;
+    pRect(ctx, 0, 224, PIXEL_W, 46, theme.floorBase);
+    pRect(ctx, 0, 224, PIXEL_W, 4, theme.floorTrim);
+    for (let cx = -((bxOff % 30 + 30) % 30); cx < PIXEL_W; cx += 30) {
+      pRect(ctx, cx, 231, 25, 10, theme.wallColor);
+      pRect(ctx, cx + 8, 244, 22, 10, theme.pillarColor);
     }
   } else if (realm === 'dungeon_exterior') {
     pRect(ctx, 0, 224, PIXEL_W, 46, '#3f6212');
@@ -2200,14 +2352,19 @@ export function drawIsekaiNpcs(
       sRect(ctx, 0.5 - stride, -8.5, 4, 8.5, '#09060b');
       sRect(ctx, -4 + stride, -8, 3, 8, '#1e293b');
       sRect(ctx, 1 - stride, -8, 3, 8, '#334155');
+      sRect(ctx, -4 + stride, -2, 4, 2, '#451a03');
+      sRect(ctx, 1 - stride, -2, 4, 2, '#451a03');
       sRect(ctx, -5.8, -19.8 + bob, 11.6, 13, '#09060b');
       sRect(ctx, -5, -19 + bob, 10, 12, npc.coatColor);
       sRect(ctx, -2, -18 + bob, 4, 10, npc.shirtColor);
+      sRect(ctx, -5, -10 + bob, 10, 1.5, '#78350f');
+      sRect(ctx, -1, -10 + bob, 2, 1.5, '#fbbf24');
       sRect(ctx, -4.8, -27.8 + bob, 9.6, 9, '#09060b');
       sRect(ctx, -4, -27 + bob, 8, 8, '#f3cba5');
       sRect(ctx, -5.5, -30.5 + bob, 11, 5.5, '#09060b');
       sRect(ctx, -5, -30 + bob, 10, 5, npc.hairColor);
       sRect(ctx, -5, -26 + bob, 3, 7, npc.hairColor);
+      sRect(ctx, -3, -29 + bob, 6, 1.5, '#ffffff');
       sRect(ctx, 1, -24 + bob, 2, 2.2, '#09060b');
       sRect(ctx, 1.6, -23.6 + bob, 0.8, 0.8, '#ffffff');
       if (npc.rebuildingHouseIndex != null) {
@@ -2290,7 +2447,34 @@ export function drawAlliedNpcs(
     sRect(ctx, 1, -24 + bob, 2, 2.2, '#09060b');
     sRect(ctx, 1.5, -23.6 + bob, 0.8, 0.8, '#ffffff');
 
-    if (ally.role === 'knight') {
+    if (ally.role === 'elf_swordsman') {
+      // OP Elf Sword Saint Kaelen: flowing silver hair, pointed ears, emerald-ivory longcoat, glowing gale katana!
+      sRect(ctx, -10.5, -22 + bob, 9, 18, '#09060b');
+      sRect(ctx, -9.5, -21 + bob, 8, 16, '#065f46');
+      sRect(ctx, -4.5 + stride, -8.5, 4, 8.5, '#09060b');
+      sRect(ctx, 0.5 - stride, -8.5, 4, 8.5, '#09060b');
+      sRect(ctx, -4 + stride, -8, 3, 8, '#064e3b');
+      sRect(ctx, 1 - stride, -8, 3, 8, '#0f172a');
+      sRect(ctx, -6, -20 + bob, 12, 13, '#09060b');
+      sRect(ctx, -5, -19 + bob, 10, 12, ally.hitFlash > 0 ? '#ffffff' : '#ecfdf5');
+      sRect(ctx, -2, -19 + bob, 4, 12, '#10b981');
+      sRect(ctx, -5, -28 + bob, 10, 9, '#09060b');
+      sRect(ctx, -4, -27 + bob, 8, 8, '#fef3c7');
+      sRect(ctx, -7, -25 + bob, 3, 2, '#fde68a'); // Pointed elf ear
+      sRect(ctx, -6, -31 + bob, 12, 5, '#e2e8f0'); // Flowing silver hair
+      sRect(ctx, -10, -29 + bob, 5, 6, '#cbd5e1');
+      sRect(ctx, 1, -24 + bob, 2.5, 2, '#10b981');
+      // Blazing Emerald Wind-Gale Katana (extends horizontally during slashBurstTimer!)
+      if ((ally.slashBurstTimer ?? 0) > 0) {
+        sRect(ctx, 5, -18 + bob, 28, 5, '#064e3b');
+        sRect(ctx, 6, -17 + bob, 26, 3, '#34d399');
+        sRect(ctx, 8, -16.5 + bob, 22, 1.5, '#ffffff');
+      } else {
+        sRect(ctx, 4, -32 + bob, 4, 24, '#09060b');
+        sRect(ctx, 5, -31 + bob, 2.5, 22, '#34d399');
+        sRect(ctx, 5.5, -30 + bob, 1, 19, '#ffffff');
+      }
+    } else if (ally.role === 'knight') {
       sRect(ctx, 3.5, -21.5 + bob, 7, 13, '#09060b');
       sRect(ctx, 4, -21 + bob, 6, 12, '#1d4ed8');
       sRect(ctx, 5, -20 + bob, 4, 10, '#fbbf24');
@@ -2310,8 +2494,8 @@ export function drawAlliedNpcs(
     }
     ctx.restore();
 
-    // Crisp Ally Emerald Name + HP Bar
-    const allyLabel = `ALLY · ${ally.name.split(' ').slice(-1)[0]}`;
+    // Crisp Ally Emerald Name + HP Bar + Live Callout
+    const allyLabel = ally.role === 'elf_swordsman' ? `★ ${ally.name}` : `ALLY · ${ally.name.split(' ').slice(-1)[0]}`;
     if (labelCtx) {
       drawCrispOverlayLabel(labelCtx, sx + 8, Math.round(ally.y - 12), allyLabel, {
         color: '#6ee7b7',
@@ -2321,6 +2505,16 @@ export function drawAlliedNpcs(
         padX: 10,
         padY: 4,
       });
+      if (ally.callout && (ally.calloutTimer ?? 0) > 0) {
+        drawCrispOverlayLabel(labelCtx, sx + 8, Math.round(ally.y - 30), ally.callout, {
+          color: '#fef08a',
+          bg: 'rgba(6, 78, 59, 0.94)',
+          border: '#a7f3d0',
+          fontSize: 18,
+          padX: 10,
+          padY: 4,
+        });
+      }
     } else {
       ctx.font = 'bold 6px monospace';
       ctx.textAlign = 'center';
@@ -2782,6 +2976,53 @@ export function drawPurpleFlameZones(
         ctx.stroke();
       }
       ctx.globalAlpha = Math.max(0.2, prog);
+    } else if (z.kind === 'eldritch_ichor_geyser' || z.kind === 'eldritch_bone_spire') {
+      // Dark Pixel-Gore Ichor Geysers & Jagged Marrow Bone Spires
+      const isBone = z.kind === 'eldritch_bone_spire';
+      if ((z.telegraphTime ?? 0) > 0) {
+        ctx.fillStyle = 'rgba(159, 18, 57, 0.35)';
+        ctx.fillRect(sx, baseY - 6, z.w, 6);
+        ctx.strokeStyle = '#fb7185';
+        ctx.strokeRect(sx, baseY - 12, z.w, 12);
+      } else if (isBone) {
+        for (let b = 0; b < 3; b++) {
+          const bx = sx + 6 + b * ((z.w - 12) / 2);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.beginPath();
+          ctx.moveTo(bx - 7, baseY);
+          ctx.lineTo(bx, z.y + 8);
+          ctx.lineTo(bx + 7, baseY);
+          ctx.closePath();
+          ctx.fill();
+          pRect(ctx, bx - 2, baseY - 16, 4, 16, '#9f1239');
+        }
+      } else {
+        pRect(ctx, sx + 4, z.y + flick, z.w - 8, z.h, '#4c0519');
+        pRect(ctx, sx + 10, z.y + 8 + flick, Math.max(6, z.w - 20), Math.max(10, z.h - 8), '#be123c');
+        pRect(ctx, cx - 3, z.y + 16 + flick, 6, Math.max(6, z.h - 16), '#fda4af');
+      }
+    } else if (
+      z.kind === 'raider_hellfire_meteor' ||
+      z.kind === 'raider_abyssal_wave' ||
+      z.kind === 'raider_cursed_sigil'
+    ) {
+      const colMain =
+        z.kind === 'raider_hellfire_meteor'
+          ? '#ef4444'
+          : z.kind === 'raider_abyssal_wave'
+            ? '#a855f7'
+            : '#f59e0b';
+      if ((z.telegraphTime ?? 0) > 0) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.25)';
+        ctx.fillRect(sx, baseY - 7, z.w, 7);
+        ctx.strokeStyle = '#fde047';
+        ctx.strokeRect(sx, z.y, z.w, z.h);
+      } else {
+        ctx.fillStyle = `${colMain}44`;
+        ctx.fillRect(sx, z.y, z.w, z.h);
+        pRect(ctx, sx + 6, z.y + flick, z.w - 12, z.h, colMain);
+        pRect(ctx, cx - 4, z.y + 10 + flick, 8, Math.max(8, z.h - 10), '#fef08a');
+      }
     } else {
       ctx.fillStyle = 'rgba(147, 51, 234, 0.35)';
       ctx.beginPath();
@@ -3791,5 +4032,409 @@ export function drawTownRaidBoss(
     raid.raiderId === 'rimuru_tempest' ? '#38bdf8' : '#ef4444',
   );
 }
+
+/**
+ * Elf Kingdom of Aethelgard Backdrop:
+ * Moon-Gate Archway -> Silver Fountain Promenade -> Grand Banquet Pavilion -> Sovereign Emerald Dais
+ */
+export function drawElfKingdomBackdrop(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  time: number,
+  stage: ElfKingdomStage,
+  labelCtx?: CanvasRenderingContext2D | null,
+) {
+  const isAmbush = stage === 'ambush_active';
+  const isCeleb = stage === 'celebration';
+  const grad = ctx.createLinearGradient(0, 0, 0, PIXEL_H);
+  grad.addColorStop(0, isAmbush ? '#1e040c' : isCeleb ? '#042f2e' : '#022c22');
+  grad.addColorStop(0.55, isAmbush ? '#450a1e' : isCeleb ? '#065f46' : '#064e3b');
+  grad.addColorStop(1, isAmbush ? '#1f0710' : '#0f3d2e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, PIXEL_W, PIXEL_H);
+
+  // Starlit Silver Moon & Parallax Ancient Silver-Leaf Canopy
+  if (!isAmbush) {
+    ctx.fillStyle = '#ecfdf5';
+    ctx.beginPath();
+    ctx.arc(386, 42, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(110, 231, 183, 0.22)';
+    ctx.beginPath();
+    ctx.arc(386, 42, 28, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const pxOff = Math.floor(camX * 0.35);
+  for (let i = -1; i <= 4; i++) {
+    const tx = i * 160 - ((pxOff % 160) + 160) % 160;
+    pRect(ctx, tx + 24, 96, 14, 130, '#e2e8f0');
+    pRect(ctx, tx + 6, 46, 52, 54, isAmbush ? '#3f1022' : '#059669');
+    pRect(ctx, tx + 16, 30, 34, 24, isAmbush ? '#7f1d1d' : '#34d399');
+  }
+
+  const bxOff = Math.floor(camX);
+  // 1. Moon-Gate Archway (x=40..170)
+  const mgx = Math.round(40 - bxOff);
+  if (mgx > -160 && mgx < PIXEL_W + 40) {
+    pRect(ctx, mgx, 70, 118, 154, '#e2e8f0');
+    pRect(ctx, mgx + 16, 88, 86, 136, '#022c22');
+    pRect(ctx, mgx + 12, 62, 94, 10, '#10b981');
+    if (labelCtx) {
+      drawCrispOverlayLabel(labelCtx, mgx + 59, 54, 'AETHELGARD MOON-GATE', {
+        color: '#a7f3d0',
+        bg: 'rgba(6, 78, 59, 0.92)',
+        border: '#34d399',
+        fontSize: 18,
+        padX: 10,
+        padY: 4,
+      });
+    }
+  }
+
+  // 2. Silver Fountain Promenade (x=760..920)
+  const sfx = Math.round(840 - bxOff);
+  if (sfx > -100 && sfx < PIXEL_W + 100) {
+    pRect(ctx, sfx - 34, 204, 68, 20, '#f8fafc');
+    pRect(ctx, sfx - 26, 200, 52, 6, isAmbush ? '#9f1239' : '#34d399');
+    pRect(ctx, sfx - 6, 170, 12, 32, '#e2e8f0');
+    const jet = 14 + Math.round(Math.sin(time * 8) * 2);
+    pRect(ctx, sfx - 2, 170 - jet, 4, jet, isAmbush ? '#f43f5e' : '#a7f3d0');
+  }
+
+  // 3. Grand Banquet Pavilion Canopy & Crystal Chandeliers (x=1440..2120)
+  const bpx = Math.round(1440 - bxOff);
+  if (bpx > -700 && bpx < PIXEL_W + 40) {
+    pRect(ctx, bpx, 34, 680, 16, isAmbush ? '#4c0519' : '#065f46');
+    pRect(ctx, bpx, 48, 680, 4, '#fbbf24');
+    for (let cx = 40; cx <= 640; cx += 120) {
+      pRect(ctx, bpx + cx, 52, 12, 172, '#f1f5f9');
+      pRect(ctx, bpx + cx - 10, 54, 32, 10, isAmbush ? '#be123c' : '#10b981');
+      // Hanging crystal chandeliers
+      if (cx < 600) {
+        const chx = bpx + cx + 60;
+        pRect(ctx, chx, 50, 2, 20, '#fbbf24');
+        pRect(ctx, chx - 16, 70, 34, 5, '#fbbf24');
+        pRect(ctx, chx - 14, 65, 6, 6, isAmbush ? '#ef4444' : '#fef08a');
+        pRect(ctx, chx - 2, 65, 6, 6, isAmbush ? '#ef4444' : '#fef08a');
+        pRect(ctx, chx + 10, 65, 6, 6, isAmbush ? '#ef4444' : '#fef08a');
+      }
+    }
+    if (isAmbush) {
+      // Dark Pixel-Gore Ichor Cracks & Pulsing Tendrils on Pavilion Marble!
+      for (let g = 0; g < 6; g++) {
+        pRect(ctx, bpx + 80 + g * 104, 188, 18, 36, '#4c0519');
+        pRect(ctx, bpx + 84 + g * 104, 196, 8, 28, '#9f1239');
+      }
+    }
+    if (labelCtx) {
+      drawCrispOverlayLabel(
+        labelCtx,
+        bpx + 340,
+        24,
+        isAmbush ? 'ELDRITCH BANQUET AMBUSH!' : isCeleb ? 'ROYAL VICTORY FEAST!' : 'SILVER-BOUGH BANQUET PAVILION',
+        {
+          color: isAmbush ? '#fda4af' : '#fef08a',
+          bg: isAmbush ? 'rgba(76, 5, 25, 0.94)' : 'rgba(6, 78, 59, 0.92)',
+          border: isAmbush ? '#f43f5e' : '#fbbf24',
+          fontSize: 20,
+          padX: 12,
+          padY: 4,
+        },
+      );
+    }
+  }
+
+  // 4. Sovereign Emerald Dais Backdrop (x=2360..2780)
+  const dx = Math.round(2360 - bxOff);
+  if (dx > -440 && dx < PIXEL_W + 40) {
+    pRect(ctx, dx + 40, 42, 340, 182, '#042f2e');
+    pRect(ctx, dx + 60, 58, 300, 166, '#065f46');
+    pRect(ctx, dx + 170, 70, 80, 120, '#10b981');
+    pRect(ctx, dx + 190, 86, 40, 88, '#fde047');
+  }
+
+  // Floating Celebration Star-Lanterns & Blossom Petals
+  if (isCeleb) {
+    for (let f = 0; f < 22; f++) {
+      const fx = ((f * 53 + Math.floor(time * 18)) % PIXEL_W + PIXEL_W) % PIXEL_W;
+      const fy = (f * 31 + Math.floor(time * 24)) % 205;
+      pRect(ctx, fx, fy, 4, 4, f % 2 === 0 ? '#34d399' : '#fde047');
+    }
+  }
+}
+
+/**
+ * Obsidian & Crimson Dungeon Raider Guild Bastion Interior (108-Dungeon Dispatch Hall)
+ */
+export function drawRaiderGuildInterior(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  time: number,
+  raiderRank: RaiderRankId,
+  labelCtx?: CanvasRenderingContext2D | null,
+) {
+  const rankDef = getRaiderRankDef(raiderRank);
+  pRect(ctx, 0, 0, PIXEL_W, PIXEL_H, '#120a18');
+  const pxOff = Math.floor(camX * 0.45);
+  for (let i = -1; i <= 5; i++) {
+    const px = i * 110 - ((pxOff % 110) + 110) % 110;
+    pRect(ctx, px + 18, 22, 22, 202, '#1f162a');
+    pRect(ctx, px + 22, 22, 4, 202, '#3b2d4d');
+    const fl = Math.round(Math.sin(time * 11 + i) * 2);
+    pRect(ctx, px + 54, 118, 12, 14, '#451a03');
+    pRect(ctx, px + 56, 108 + fl, 8, 10, '#ef4444');
+    pRect(ctx, px + 58, 110 + fl, 4, 6, '#fde047');
+  }
+
+  // Giant 108-Dungeon Abyssal Registry Board on Back Wall (x=360..660)
+  const bx = Math.round(360 - camX);
+  if (bx > -320 && bx < PIXEL_W + 40) {
+    pRect(ctx, bx, 64, 280, 126, '#09060b');
+    pRect(ctx, bx + 4, 68, 272, 118, '#291522');
+    pRect(ctx, bx + 12, 76, 256, 102, '#18101c');
+    for (let r = 0; r < 6; r++) {
+      for (let c = 0; c < 9; c++) {
+        pRect(ctx, bx + 20 + c * 26, 86 + r * 14, 18, 8, (r + c) % 3 === 0 ? '#ef4444' : '#fbbf24');
+      }
+    }
+    if (labelCtx) {
+      drawCrispOverlayLabel(
+        labelCtx,
+        bx + 140,
+        52,
+        `DUNGEON RAIDER BASTION · RANK: ${rankDef.id.toUpperCase()}`,
+        {
+          color: rankDef.borderColor,
+          bg: 'rgba(18, 10, 24, 0.94)',
+          border: rankDef.color,
+          fontSize: 20,
+          padX: 12,
+          padY: 4,
+        },
+      );
+    }
+  }
+}
+
+/**
+ * Multi-Design Underground Dungeon Floor Renderer (9 Distinct Architectural Themes + Stairs Banner)
+ */
+export function drawRaiderDungeonBackdrop(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  time: number,
+  designId: DungeonDesignId,
+  floor: number,
+  totalFloors: number,
+  stairsUnlocked: boolean,
+  labelCtx?: CanvasRenderingContext2D | null,
+) {
+  const theme = DUNGEON_DESIGNS[designId];
+  const grad = ctx.createLinearGradient(0, 0, 0, PIXEL_H);
+  grad.addColorStop(0, theme.skyTop);
+  grad.addColorStop(1, theme.skyBottom);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, PIXEL_W, PIXEL_H);
+
+  const pxOff = Math.floor(camX * 0.42);
+  for (let i = -1; i <= 5; i++) {
+    const px = i * 116 - ((pxOff % 116) + 116) % 116;
+    pRect(ctx, px + 14, 0, 26, 224, theme.pillarColor);
+    pRect(ctx, px + 18, 0, 6, 224, theme.wallColor);
+    // Design-specific architectural details
+    if (designId === 'glacial_spire') {
+      pRect(ctx, px + 56, 0, 8, 34 + (i % 3) * 10, '#bae6fd');
+      pRect(ctx, px + 84, 0, 6, 24, '#38bdf8');
+    } else if (designId === 'obsidian_forge' || designId === 'pandemonium_citadel') {
+      const drip = Math.round(Math.sin(time * 4 + i) * 3);
+      pRect(ctx, px + 62, 24, 6, 178 + drip, '#ef4444');
+      pRect(ctx, px + 64, 28, 2, 170 + drip, '#fde047');
+    } else if (designId === 'clockwork_babel') {
+      ctx.strokeStyle = theme.accentColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px + 74, 92, 18, time + i, time + i + Math.PI * 1.6);
+      ctx.stroke();
+    } else if (designId === 'void_observatory') {
+      pRect(ctx, px + 54, 42 + (i % 2) * 20, 4, 4, '#f0abfc');
+      pRect(ctx, px + 88, 76, 3, 3, '#38bdf8');
+    } else if (designId === 'flesh_labyrinth') {
+      pRect(ctx, px + 46, 0, 8, 56, '#881337');
+      pRect(ctx, px + 82, 0, 6, 44, '#e2e8f0');
+    } else {
+      pRect(ctx, px + 58, 72, 24, 38, theme.wallColor);
+      pRect(ctx, px + 62, 76, 16, 30, theme.accentColor);
+    }
+  }
+
+  // Floor Banner & Staircase Status Sign
+  if (floor < totalFloors) {
+    const stairX = Math.round(1560 - camX);
+    if (stairX > -80 && stairX < PIXEL_W + 80 && labelCtx) {
+      drawCrispOverlayLabel(
+        labelCtx,
+        stairX,
+        118,
+        stairsUnlocked ? `ASCEND STAIRS -> FLOOR ${floor + 1} [F]` : `DEFEAT ALL MONSTERS TO UNLOCK STAIRS`,
+        {
+          color: stairsUnlocked ? '#6ee7b7' : '#fda4af',
+          bg: 'rgba(10, 6, 16, 0.92)',
+          border: stairsUnlocked ? '#34d399' : '#ef4444',
+          fontSize: 18,
+          padX: 10,
+          padY: 4,
+        },
+      );
+    }
+  }
+}
+
+/**
+ * Large Crazy Demonic Boss Renderer (~56x74+ colossal sprite with custom horns, wings, mutations, berserk aura & giant demonic weapon!)
+ */
+export function drawRaiderDemonicBoss(
+  ctx: CanvasRenderingContext2D,
+  boss: RaiderDemonicBossEntity,
+  camX: number,
+  time: number,
+  frozen: boolean,
+  labelCtx?: CanvasRenderingContext2D | null,
+) {
+  const sx = Math.round(boss.x - camX);
+  const sy = Math.round(boss.y);
+  if (sx < -140 || sx > PIXEL_W + 140) return;
+
+  const flash = boss.hitFlash > 0;
+  const bob = Math.round(Math.sin(time * (boss.berserk ? 9 : 5)) * 2);
+  const stride = Math.round(Math.sin(boss.walkCycle) * (Math.abs(boss.vx) > 8 ? 4 : 0));
+  const atk = boss.state === 'attack' || boss.state === 'frenzy_charge' ? 10 : 0;
+
+  ctx.save();
+  // Colossal Demonic Back Aura
+  ctx.fillStyle = boss.berserk ? 'rgba(239, 68, 68, 0.34)' : `${boss.auraColor}38`;
+  ctx.beginPath();
+  ctx.arc(sx + boss.w / 2, sy + boss.h * 0.5, boss.berserk ? 48 : 40, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.translate(sx + boss.w / 2, sy + boss.h);
+  ctx.scale(boss.facing * (boss.berserk ? 1.12 : 1), boss.berserk ? 1.12 : 1);
+
+  // Giant Jagged Demon Wings
+  const wingFlap = Math.round(Math.sin(time * 8) * 5);
+  sRect(ctx, -38, -62 + bob + wingFlap, 20, 26, '#09060b');
+  sRect(ctx, -36, -60 + bob + wingFlap, 18, 22, flash ? '#ffffff' : boss.primaryColor);
+  sRect(ctx, 18, -62 + bob - wingFlap, 20, 26, '#09060b');
+  sRect(ctx, 18, -60 + bob - wingFlap, 18, 22, flash ? '#ffffff' : boss.primaryColor);
+
+  // Massive Legs & Cloven Hooves
+  sRect(ctx, -14 + stride, -18, 10, 18, '#09060b');
+  sRect(ctx, 4 - stride, -18, 10, 18, '#09060b');
+  sRect(ctx, -13 + stride, -17, 8, 17, boss.primaryColor);
+  sRect(ctx, 5 - stride, -17, 8, 17, boss.primaryColor);
+
+  // Hulking Armored Demon Torso + Exposed Hellfire Core
+  sRect(ctx, -18, -52 + bob, 36, 36, '#09060b');
+  sRect(ctx, -16, -50 + bob, 32, 32, flash ? '#ffffff' : boss.primaryColor);
+  sRect(ctx, -11, -46 + bob, 22, 22, flash ? '#ffffff' : boss.secondaryColor);
+  sRect(ctx, -5, -40 + bob, 10, 10, boss.berserk ? '#ef4444' : boss.auraColor);
+  sRect(ctx, -2, -37 + bob, 4, 4, '#fef08a');
+
+  // Spiked Giant Pauldrons
+  sRect(ctx, -25, -54 + bob, 12, 14, '#09060b');
+  sRect(ctx, -24, -53 + bob, 10, 12, boss.secondaryColor);
+  sRect(ctx, 13, -54 + bob, 12, 14, '#09060b');
+  sRect(ctx, 14, -53 + bob, 10, 12, boss.secondaryColor);
+
+  // Demonic Skull Head + Bespoke Horns
+  sRect(ctx, -12, -70 + bob, 24, 18, '#09060b');
+  sRect(ctx, -11, -69 + bob, 22, 16, flash ? '#ffffff' : '#1e1b2e');
+  if (boss.hornStyle === 'curved_oni') {
+    sRect(ctx, -16, -82 + bob, 5, 14, boss.secondaryColor);
+    sRect(ctx, 11, -82 + bob, 5, 14, boss.secondaryColor);
+  } else if (boss.hornStyle === 'crown_spikes') {
+    sRect(ctx, -12, -80 + bob, 4, 12, boss.auraColor);
+    sRect(ctx, -2, -84 + bob, 4, 16, '#fde047');
+    sRect(ctx, 8, -80 + bob, 4, 12, boss.auraColor);
+  } else if (boss.hornStyle === 'halo_bones') {
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(0, -78 + bob, 16, 5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    // twisted_ram
+    sRect(ctx, -18, -76 + bob, 8, 8, boss.secondaryColor);
+    sRect(ctx, 10, -76 + bob, 8, 8, boss.secondaryColor);
+  }
+  // Crazed Multi-Eyes + Fanged Jaw
+  sRect(ctx, -7, -64 + bob, 4, 3, '#fde047');
+  sRect(ctx, 3, -64 + bob, 4, 3, '#fde047');
+  sRect(ctx, -1, -67 + bob, 3, 2, '#ef4444');
+  sRect(ctx, -6, -57 + bob, 12, 3, '#f8fafc');
+
+  // Colossal Demonic Weapon
+  if (boss.weaponStyle === 'twin_scythes') {
+    sRect(ctx, 14 + atk, -72 + bob, 4, 60, '#cbd5e1');
+    sRect(ctx, 4 + atk, -74 + bob, 22, 7, boss.auraColor);
+    sRect(ctx, -22 - atk, -68 + bob, 4, 54, '#cbd5e1');
+  } else if (boss.weaponStyle === 'abyss_trident') {
+    sRect(ctx, 15 + atk, -78 + bob, 4, 68, '#fbbf24');
+    sRect(ctx, 10 + atk, -84 + bob, 14, 8, boss.auraColor);
+  } else if (boss.weaponStyle === 'chain_greatsword') {
+    sRect(ctx, 14 + atk, -78 + bob, 9, 64, '#09060b');
+    sRect(ctx, 16 + atk, -76 + bob, 5, 60, boss.auraColor);
+  } else {
+    // hell_cleaver
+    sRect(ctx, 14 + atk, -74 + bob, 11, 56, '#09060b');
+    sRect(ctx, 15 + atk, -72 + bob, 9, 52, boss.secondaryColor);
+    sRect(ctx, 18 + atk, -70 + bob, 4, 48, '#fef08a');
+  }
+
+  if ((boss.stunTimer ?? 0) > 0 || frozen) {
+    ctx.strokeStyle = frozen ? '#34d399' : '#facc15';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-26, -84, 52, 86);
+  }
+  ctx.restore();
+
+  if (labelCtx) {
+    drawCrispOverlayLabel(
+      labelCtx,
+      sx + boss.w / 2,
+      sy - 20,
+      `${boss.berserk ? 'BERSERK ' : ''}${boss.name.toUpperCase()}`,
+      {
+        color: '#fef08a',
+        bg: 'rgba(18, 6, 14, 0.94)',
+        border: boss.berserk ? '#ef4444' : boss.auraColor,
+        fontSize: 21,
+        padX: 12,
+        padY: 4,
+      },
+    );
+    if (boss.activeSkillBanner) {
+      drawCrispOverlayLabel(labelCtx, sx + boss.w / 2, sy - 42, `☠ ${boss.activeSkillBanner}`, {
+        color: '#ffffff',
+        bg: 'rgba(127, 29, 29, 0.95)',
+        border: '#fbbf24',
+        fontSize: 21,
+        padX: 12,
+        padY: 4,
+      });
+    }
+  }
+  const barW = 74;
+  const bx = Math.round(sx + boss.w / 2 - barW / 2);
+  pRect(ctx, bx, sy - 9, barW, 5, '#09060b');
+  pRect(
+    ctx,
+    bx + 1,
+    sy - 8,
+    Math.round(((barW - 2) * boss.hp) / Math.max(1, boss.maxHp)),
+    3,
+    boss.berserk ? '#ef4444' : boss.auraColor,
+  );
+}
+
 
 

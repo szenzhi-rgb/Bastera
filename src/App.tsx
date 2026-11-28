@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BossBattleOverlay } from './components/BossBattleOverlay';
 import { CaravanRiderModal } from './components/CaravanRiderModal';
+import { CastleIntroCutsceneModal } from './components/CastleIntroCutsceneModal';
 import { CheckpointMapModal } from './components/CheckpointMapModal';
 import { DuelingArenaModal } from './components/DuelingArenaModal';
+import { ElfCutsceneModal } from './components/ElfCutsceneModal';
 import { GameHud } from './components/GameHud';
 import { GuildInviteToast } from './components/GuildInviteToast';
 import { GuildModal } from './components/GuildModal';
 import { InventoryModal } from './components/InventoryModal';
 import { PotionShopModal } from './components/PotionShopModal';
+import { RaiderGuildModal } from './components/RaiderGuildModal';
 import { SanctuaryModal } from './components/SanctuaryModal';
 import { SaveLoadModal } from './components/SaveLoadModal';
 import { SideQuestModal } from './components/SideQuestModal';
@@ -15,6 +18,7 @@ import { SoloLevelingStatusModal } from './components/SoloLevelingStatusModal';
 import { StandShrineModal } from './components/StandShrineModal';
 import { StatusModals } from './components/StatusModals';
 import { TitleScreen } from './components/TitleScreen';
+import { TutorialModal } from './components/TutorialModal';
 import { WardrobeModal } from './components/WardrobeModal';
 import { WeaponShopModal } from './components/WeaponShopModal';
 import { WorldsModal } from './components/WorldsModal';
@@ -35,6 +39,7 @@ import {
 import type {
   BasteraSaveSummary,
   HudSnapshot,
+  SideQuestId,
   SkillId,
   StatKey,
   WarriorCustomization,
@@ -71,6 +76,10 @@ const INITIAL_HUD: HudSnapshot = {
   unlockedStands: ['star_platinum'],
   dinoFormSeconds: 0,
   chiliPepperSeconds: 0,
+  whiteAuraSeconds: 0,
+  whiteAuraCooldown: 0,
+  standGuardSeconds: 0,
+  standGuardCooldown: 0,
   bossCooldownSeconds: 0,
   bossFoughtStreak: 0,
   idleSecondsToIsekai: ISEKAI_IDLE_TRANSPORT_SECONDS,
@@ -93,6 +102,15 @@ const INITIAL_HUD: HudSnapshot = {
   secondsToNightToggle: 180,
   unlockedWardrobe: ['outfit_knight_plate', 'hat_helm'],
   crownUnlocked: false,
+  elfCrownUnlocked: false,
+  elfKingdomInvited: false,
+  elfKingdomStage: 'uninvited',
+  elfCutscene: null,
+  elfKingdomHud: null,
+  raiderRank: 'Bronze',
+  raiderPoints: 0,
+  clearedRaiderDungeons: [],
+  activeRaiderDungeon: null,
   gyroDefeated: false,
   isekaiPortalOpen: false,
   isekaiMission: null,
@@ -166,10 +184,24 @@ export default function App() {
   const [showArenaModal, setShowArenaModal] = useState(false);
   const [showStandShrineModal, setShowStandShrineModal] = useState(false);
   const [showSideQuestModal, setShowSideQuestModal] = useState(false);
+  const [showRaiderGuildModal, setShowRaiderGuildModal] = useState(false);
+  const [showCastleCutscene, setShowCastleCutscene] = useState(false);
+  const [pendingCastlePlayerName, setPendingCastlePlayerName] = useState<string | undefined>(undefined);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [activeSideQuestDialogueId, setActiveSideQuestDialogueId] = useState<SideQuestId | null>(null);
   const [saves, setSaves] = useState<BasteraSaveSummary[]>(() => listLocalSaves());
   const [savesLoading, setSavesLoading] = useState(false);
-  const [isMobilePortrait, setIsMobilePortrait] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [rotatedPerspective, setRotatedPerspective] = useState(false);
+
+  const tryLockMobileLandscape = useCallback(() => {
+    try {
+      const orientation = screen.orientation as { lock?: (mode: string) => Promise<void> } | undefined;
+      void orientation?.lock?.('landscape')?.catch(() => {});
+    } catch {
+      // Orientation lock optional depending on browser
+    }
+  }, []);
 
   const closeAllModals = useCallback(() => {
     setShowInventory(false);
@@ -186,6 +218,9 @@ export default function App() {
     setShowArenaModal(false);
     setShowStandShrineModal(false);
     setShowSideQuestModal(false);
+    setShowRaiderGuildModal(false);
+    setShowTutorial(false);
+    setActiveSideQuestDialogueId(null);
   }, []);
 
   const refreshSaves = useCallback(async () => {
@@ -210,18 +245,39 @@ export default function App() {
     void refreshSaves();
   }, [refreshSaves]);
 
-  // Detect mobile portrait screens for rotated landscape perspective
+  // Permanent PUBG / MLBB landscape lock on mobile:
+  // - Portrait phone (H > W) => CSS rotate(90deg) with exact visualViewport bounds
+  // - Phone OS rotated to landscape (W >= H) => CSS 0deg horizontal, never double-rotate!
   useEffect(() => {
     const checkViewport = () => {
-      const portraitMobile = window.innerWidth < 768 && window.innerHeight > window.innerWidth;
-      setIsMobilePortrait(portraitMobile);
-      if (portraitMobile) {
-        setRotatedPerspective(true);
+      const vw = window.visualViewport?.width ?? window.innerWidth;
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const root = document.documentElement;
+      root.style.setProperty('--app-vw', `${vw}px`);
+      root.style.setProperty('--app-vh', `${vh}px`);
+      root.style.setProperty('--app-rot-w', `${vh}px`);
+      root.style.setProperty('--app-rot-h', `${vw}px`);
+
+      const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+      const hasTouch = (navigator.maxTouchPoints ?? 0) > 0;
+      const smallViewport = Math.min(vw, vh) < 768;
+      const mobile = smallViewport && (coarse || hasTouch || vw < 768);
+      setIsMobileDevice(mobile);
+      if (mobile) {
+        setRotatedPerspective(vh > vw);
+      } else {
+        setRotatedPerspective(false);
       }
     };
     checkViewport();
     window.addEventListener('resize', checkViewport);
-    return () => window.removeEventListener('resize', checkViewport);
+    window.addEventListener('orientationchange', checkViewport);
+    window.visualViewport?.addEventListener('resize', checkViewport);
+    return () => {
+      window.removeEventListener('resize', checkViewport);
+      window.removeEventListener('orientationchange', checkViewport);
+      window.visualViewport?.removeEventListener('resize', checkViewport);
+    };
   }, []);
 
   // Initialize isolated 60fps canvas engine once
@@ -270,6 +326,15 @@ export default function App() {
         closeAllModals();
         setShowStandShrineModal(true);
       },
+      onOpenSideQuestDialogue: (questId) => {
+        closeAllModals();
+        setActiveSideQuestDialogueId(questId);
+        setShowSideQuestModal(true);
+      },
+      onOpenRaiderGuild: () => {
+        closeAllModals();
+        setShowRaiderGuildModal(true);
+      },
     });
     if (autostart) {
       engine.startNewGame();
@@ -282,26 +347,39 @@ export default function App() {
     };
   }, [closeAllModals]);
 
-  const handleStartGame = useCallback(
+  const handleLaunchCastleAfterCutscene = useCallback(
     (name?: string) => {
       const eng = engineRef.current;
       if (!eng) return;
       if (name) eng.setPlayerName(name);
       closeAllModals();
+      setShowCastleCutscene(false);
       eng.startNewGame();
     },
     [closeAllModals],
   );
 
+  const handleStartGame = useCallback(
+    (name?: string) => {
+      if (isMobileDevice) tryLockMobileLandscape();
+      closeAllModals();
+      setPendingCastlePlayerName(name);
+      setShowCastleCutscene(true);
+    },
+    [closeAllModals, isMobileDevice, tryLockMobileLandscape],
+  );
+
   const handleEnterIsekai = useCallback(
     (name?: string) => {
+      if (isMobileDevice) tryLockMobileLandscape();
       const eng = engineRef.current;
       if (!eng) return;
       if (name) eng.setPlayerName(name);
       closeAllModals();
+      setShowCastleCutscene(false);
       eng.startIsekaiGame(name);
     },
-    [closeAllModals],
+    [closeAllModals, isMobileDevice, tryLockMobileLandscape],
   );
 
   const handleSaveSlot = useCallback(
@@ -379,6 +457,7 @@ export default function App() {
         hud.status === 'title' &&
         !showSaveModal &&
         !showWorldsModal &&
+        !showTutorial &&
         (e.code === 'Enter' || e.code === 'Space')
       ) {
         e.preventDefault();
@@ -387,6 +466,10 @@ export default function App() {
       }
 
       if (e.code === 'Escape' || e.code === 'KeyP') {
+        if (showTutorial) {
+          setShowTutorial(false);
+          return;
+        }
         if (showSaveModal) {
           setShowSaveModal(false);
           return;
@@ -441,6 +524,11 @@ export default function App() {
         }
         if (showSideQuestModal) {
           setShowSideQuestModal(false);
+          setActiveSideQuestDialogueId(null);
+          return;
+        }
+        if (showRaiderGuildModal) {
+          setShowRaiderGuildModal(false);
           return;
         }
         if (hud.status === 'playing') {
@@ -449,27 +537,49 @@ export default function App() {
           engineRef.current?.setStatus('playing');
         }
       } else if (e.code === 'KeyC' && hud.status === 'playing') {
-        closeAllModals();
-        setShowSanctuary((v) => !v);
+        if (showSanctuary) {
+          setShowSanctuary(false);
+        } else {
+          closeAllModals();
+          setShowSanctuary(true);
+        }
       } else if (e.code === 'KeyI' && hud.status === 'playing') {
-        closeAllModals();
-        setShowInventory((v) => !v);
+        if (showInventory) {
+          setShowInventory(false);
+        } else {
+          closeAllModals();
+          setShowInventory(true);
+        }
       } else if (e.code === 'KeyM' && hud.status === 'playing') {
-        closeAllModals();
-        setShowMap((v) => !v);
+        if (showMap) {
+          setShowMap(false);
+        } else {
+          closeAllModals();
+          setShowMap(true);
+        }
       } else if (e.code === 'KeyK' && hud.status === 'playing') {
-        closeAllModals();
-        setShowStatus((v) => !v);
+        if (showStatus) {
+          setShowStatus(false);
+        } else {
+          closeAllModals();
+          setShowStatus(true);
+        }
       } else if (e.code === 'KeyQ' && hud.status === 'playing') {
-        setShowSideQuestModal((prev) => {
-          const next = !prev;
-          if (next) closeAllModals();
-          return next;
-        });
+        if (showSideQuestModal) {
+          setShowSideQuestModal(false);
+          setActiveSideQuestDialogueId(null);
+        } else {
+          closeAllModals();
+          setShowSideQuestModal(true);
+        }
       } else if (e.code === 'KeyU') {
         engineRef.current?.toggleMute();
       } else if (e.code === 'KeyV') {
-        setRotatedPerspective((v) => !v);
+        if (isMobileDevice) {
+          tryLockMobileLandscape();
+        } else {
+          setRotatedPerspective((v) => !v);
+        }
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -490,6 +600,11 @@ export default function App() {
     showArenaModal,
     showStandShrineModal,
     showSideQuestModal,
+    showRaiderGuildModal,
+    showCastleCutscene,
+    showTutorial,
+    isMobileDevice,
+    tryLockMobileLandscape,
     handleStartGame,
     closeAllModals,
   ]);
@@ -510,6 +625,10 @@ export default function App() {
         showArenaModal ||
         showStandShrineModal ||
         showSideQuestModal ||
+        showRaiderGuildModal ||
+        showCastleCutscene ||
+        showTutorial ||
+        Boolean(hud.elfCutscene) ||
         Boolean(hud.dungeonChoicePending),
     );
   }, [
@@ -527,6 +646,10 @@ export default function App() {
     showArenaModal,
     showStandShrineModal,
     showSideQuestModal,
+    showRaiderGuildModal,
+    showCastleCutscene,
+    showTutorial,
+    hud.elfCutscene,
     hud.dungeonChoicePending,
   ]);
 
@@ -540,9 +663,11 @@ export default function App() {
 
   const shellClass = rotatedPerspective
     ? 'rotated-mobile-shell bg-[#0b080a] overflow-hidden'
-    : 'relative w-full h-full bg-[#0b080a] overflow-hidden';
+    : isMobileDevice
+      ? 'mobile-landscape-shell bg-[#0b080a] overflow-hidden'
+      : 'relative w-full h-full bg-[#0b080a] overflow-hidden';
 
-  const showTouchControls = isMobilePortrait || rotatedPerspective;
+  const showTouchControls = isMobileDevice || rotatedPerspective;
 
   return (
     <main className={shellClass} data-testid="bastera-shell">
@@ -561,16 +686,35 @@ export default function App() {
       </div>
 
       {/* Title Screen */}
-      {hud.status === 'title' && (
+      {hud.status === 'title' && !showCastleCutscene && (
         <TitleScreen
           onlineCount={hud.onlineCount}
           savedCount={saves.length}
           onStart={(name) => handleStartGame(name)}
           onEnterIsekai={(name) => handleEnterIsekai(name)}
+          onOpenTutorial={() => {
+            closeAllModals();
+            setShowTutorial(true);
+          }}
           onOpenSaves={openSaveModal}
           onOpenWorlds={openWorldsModal}
-          onToggleRotate={() => setRotatedPerspective((v) => !v)}
+          onToggleRotate={() => {
+            if (isMobileDevice) {
+              tryLockMobileLandscape();
+            } else {
+              setRotatedPerspective((v) => !v);
+            }
+          }}
           rotatedMobile={rotatedPerspective}
+          isMobileLocked={isMobileDevice}
+        />
+      )}
+
+      {/* Enter Castle 3-Slide Story Cutscene */}
+      {showCastleCutscene && (
+        <CastleIntroCutsceneModal
+          playerName={pendingCastlePlayerName ?? 'BasteraKnight'}
+          onComplete={() => handleLaunchCastleAfterCutscene(pendingCastlePlayerName)}
         />
       )}
 
@@ -612,6 +756,7 @@ export default function App() {
         <GameHud
           hud={hud}
           isTouchLayout={showTouchControls}
+          isMobileLocked={isMobileDevice}
           onOpenInventory={() => {
             closeAllModals();
             setShowInventory(true);
@@ -663,12 +808,28 @@ export default function App() {
             closeAllModals();
             setShowSideQuestModal(true);
           }}
+          onOpenRaiderGuild={() => {
+            closeAllModals();
+            setShowRaiderGuildModal(true);
+          }}
+          onOpenTutorial={() => {
+            closeAllModals();
+            setShowTutorial(true);
+          }}
           onAllocateStat={(key: StatKey) => engineRef.current?.allocatePlayerStat(key, 1)}
           onTogglePause={() => engineRef.current?.setStatus('paused')}
           onToggleMute={() => engineRef.current?.toggleMute()}
-          onToggleRotate={() => setRotatedPerspective((v) => !v)}
+          onToggleRotate={() => {
+            if (isMobileDevice) {
+              tryLockMobileLandscape();
+            } else {
+              setRotatedPerspective((v) => !v);
+            }
+          }}
           onTriggerSkill={(slot) => engineRef.current?.triggerSkillButton(slot)}
           onUseOrb={(orbId) => engineRef.current?.battleUseOrb(orbId)}
+          onAscendRaiderStairs={() => engineRef.current?.ascendRaiderDungeonStairs()}
+          onStartElfBanquet={() => engineRef.current?.startElfDinnerPartyCutscene()}
           onDash={() => engineRef.current?.performDash()}
           onCycleWeapon={handleCycleWeapon}
           onAdvanceDialogue={() => engineRef.current?.advanceDialogue()}
@@ -845,46 +1006,78 @@ export default function App() {
         />
       )}
 
-      {/* Outskirts Blood-Oath Side Quests Modal (10 Violent Plot-Twist Quests) */}
+      {/* Outskirts Blood-Oath Side Quests & Interactive RPG Dialogue Modal */}
       {showSideQuestModal && hud.status === 'playing' && (
         <SideQuestModal
           hud={hud}
-          onClose={() => setShowSideQuestModal(false)}
+          initialDialogueQuestId={activeSideQuestDialogueId}
+          onClose={() => {
+            setShowSideQuestModal(false);
+            setActiveSideQuestDialogueId(null);
+          }}
           onAcceptOrTrackQuest={(questId) => engineRef.current?.acceptOrAdvanceSideQuest(questId)}
           onTrackQuest={(questId) => engineRef.current?.setTrackedSideQuest(questId)}
+          onSelectDialogueChoice={(questId, nodeId, choiceId) =>
+            engineRef.current?.selectSideQuestDialogueChoice(questId, nodeId, choiceId)
+          }
+        />
+      )}
+
+      {/* Dungeon Raider Guild Dispatch (108 Multi-Floor Dungeons & 8 Raider Ranks) */}
+      {showRaiderGuildModal && hud.status === 'playing' && (
+        <RaiderGuildModal
+          hud={hud}
+          onClose={() => setShowRaiderGuildModal(false)}
+          onEnterDungeon={(dungeonId) =>
+            engineRef.current?.enterRaiderDungeon(dungeonId) ?? {
+              ok: false,
+              message: 'Raider Guild unavailable.',
+            }
+          }
+        />
+      )}
+
+      {/* Elf Kingdom Silver-Bough Royal Dinner Party & Emerald Coronation Cutscene */}
+      {hud.status === 'playing' && hud.elfCutscene && (
+        <ElfCutsceneModal
+          cutscene={hud.elfCutscene}
+          equippedWeapon={hud.equippedWeapon}
+          customization={hud.customization}
+          onSelectChoice={(choiceId) => engineRef.current?.selectElfCutsceneChoice(choiceId)}
+          onAdvance={() => engineRef.current?.advanceElfCutscene()}
         />
       )}
 
       {/* Below-B Dungeon Completion Choice: Return to Guild vs Stay & Descend Deeper */}
       {hud.status === 'playing' && hud.dungeonChoicePending && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/82"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/82"
           role="dialog"
           aria-modal="true"
           aria-label="Dungeon Clear Choice"
           data-testid="dungeon-choice-modal"
         >
-          <div className="relative w-full max-w-md bg-[#160d12] border-2 border-amber-400 p-5 text-amber-50 shadow-[0_12px_36px_rgba(0,0,0,0.94)] space-y-4">
-            <span className="absolute top-0 left-0 w-2 h-2 bg-amber-300" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-amber-300" />
-            <span className="absolute bottom-0 left-0 w-2 h-2 bg-amber-300" />
-            <span className="absolute bottom-0 right-0 w-2 h-2 bg-amber-300" />
+          <div className="relative w-full max-w-[90%] sm:max-w-sm max-h-[86%] overflow-y-auto bg-[#160d12] border-2 border-amber-400 p-3 sm:p-4 text-amber-50 shadow-[0_12px_36px_rgba(0,0,0,0.94)] space-y-2.5">
+            <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+            <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+            <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+            <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
             <div>
-              <div className="font-pixel-mono text-[10px] tracking-widest text-emerald-300 uppercase">
+              <div className="font-pixel-mono text-[9px] tracking-widest text-emerald-300 uppercase">
                 DUNGEON DEPTH {Math.max(1, hud.dungeonChoicePending.nextDepth - 1)} CLEARED
               </div>
-              <h2 className="font-display text-lg font-bold text-amber-100 mt-1">
+              <h2 className="font-display text-sm sm:text-base font-bold text-amber-100 mt-0.5">
                 {hud.dungeonChoicePending.missionTitle}
               </h2>
-              <p className="font-pixel-mono text-xs text-amber-100/80 mt-1.5 leading-relaxed">
+              <p className="font-pixel-mono text-[10px] sm:text-xs text-amber-100/80 mt-1 leading-snug">
                 +{hud.dungeonChoicePending.rewardGold}G earned
                 {hud.dungeonChoicePending.promotedRank
                   ? ` · Promoted to ${hud.dungeonChoicePending.promotedRank}-Rank!`
                   : ''}
-                . Return safely to Solaris Adventure Guild, or descend deeper into darker caverns to challenge a stronger Dungeon Boss for bonus loot!
+                . Return safely to Solaris Adventure Guild, or descend deeper for a stronger Dungeon Boss!
               </p>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <button
                 type="button"
                 tabIndex={-1}
@@ -893,9 +1086,9 @@ export default function App() {
                   e.currentTarget.blur();
                   engineRef.current?.chooseStayDeeperInDungeon();
                 }}
-                className="w-full py-2.5 px-3 bg-[#581c87] hover:bg-[#6b21a8] border border-purple-300 font-pixel-mono text-xs font-bold text-purple-50 cursor-pointer"
+                className="w-full py-1.5 px-2.5 bg-[#581c87] hover:bg-[#6b21a8] border border-purple-300 font-pixel-mono text-[10px] sm:text-xs font-bold text-purple-50 cursor-pointer"
               >
-                Stay in Dungeon · Descend to Depth {hud.dungeonChoicePending.nextDepth} (Boss)
+                Stay in Dungeon · Depth {hud.dungeonChoicePending.nextDepth} (Boss)
               </button>
               <button
                 type="button"
@@ -905,13 +1098,23 @@ export default function App() {
                   e.currentTarget.blur();
                   engineRef.current?.chooseReturnToGuildFromDungeon();
                 }}
-                className="w-full py-2.5 px-3 bg-emerald-800 hover:bg-emerald-700 border border-emerald-300 font-pixel-mono text-xs font-bold text-white cursor-pointer"
+                className="w-full py-1.5 px-2.5 bg-emerald-800 hover:bg-emerald-700 border border-emerald-300 font-pixel-mono text-[10px] sm:text-xs font-bold text-white cursor-pointer"
               >
                 Return to Adventure Guild
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* How to Fight / Controls Tutorial Modal (Title & In-Game) */}
+      {showTutorial && (
+        <TutorialModal
+          equippedWeapon={hud.equippedWeapon}
+          equippedStand={hud.equippedStand}
+          skillSlots={hud.skillSlots}
+          onClose={() => setShowTutorial(false)}
+        />
       )}
 
       {/* Pause / Victory / Game Over Modals */}

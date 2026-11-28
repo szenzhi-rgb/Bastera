@@ -72,37 +72,37 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80"
       data-testid="save-load-modal"
     >
-      <div className="relative w-full max-w-2xl bg-[#120b10] border-2 border-amber-400/80 p-5 text-amber-50 shadow-[0_8px_32px_rgba(0,0,0,0.9)]">
-        <span className="absolute top-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 right-0 w-2 h-2 bg-amber-300" />
+      <div className="relative w-full max-w-[92%] sm:max-w-2xl max-h-[86%] flex flex-col bg-[#120b10] border-2 border-amber-400/80 p-3 sm:p-4 text-amber-50 shadow-[0_8px_32px_rgba(0,0,0,0.9)] overflow-hidden">
+        <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
 
-        <div className="flex items-start justify-between gap-3 border-b border-amber-500/30 pb-3 mb-4">
-          <div>
-            <h2 className="font-display text-xl font-bold text-amber-100">
+        <div className="flex items-start justify-between gap-2 border-b border-amber-500/30 pb-2 mb-2.5 shrink-0">
+          <div className="min-w-0">
+            <h2 className="font-display text-base sm:text-lg font-bold text-amber-100 truncate">
               Citadel Chronicle · Save &amp; Load
             </h2>
-            <p className="font-pixel-mono text-[11px] text-amber-300/80 mt-0.5">
-              Saves persist stats, arsenal, secrets, custom armor &amp; boss progression across sessions.
-              {lastSavedAt ? ` · Last saved ${formatSavedTime(lastSavedAt)}` : ''}
+            <p className="font-pixel-mono text-[9.5px] sm:text-[11px] text-amber-300/80 mt-0.5 truncate">
+              Stats, arsenal, secrets &amp; boss progression
+              {lastSavedAt ? ` · Saved ${formatSavedTime(lastSavedAt)}` : ''}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => void onRefresh()}
-              className="px-2.5 py-1 bg-[#1e1219] border border-amber-500/45 hover:border-amber-300 font-pixel-mono text-[11px] text-amber-200 cursor-pointer"
+              className="px-2 py-1 bg-[#1e1219] border border-amber-500/45 hover:border-amber-300 font-pixel-mono text-[10px] text-amber-200 cursor-pointer"
             >
               Refresh
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1 bg-[#291318] border border-amber-400/70 hover:bg-[#3b1b22] font-pixel-mono text-xs text-amber-100 cursor-pointer"
+              className="px-2.5 py-1 bg-[#291318] border border-amber-400/70 hover:bg-[#3b1b22] font-pixel-mono text-[10px] sm:text-xs text-amber-100 cursor-pointer"
             >
               Close
             </button>
@@ -111,17 +111,17 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
 
         {/* Create / Quick Save Bar */}
         {canSaveCurrent ? (
-          <div className="bg-[#1b1017] border border-amber-500/40 p-3 mb-4 flex flex-wrap items-center gap-2">
+          <div className="bg-[#1b1017] border border-amber-500/40 p-2 mb-2.5 flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
               data-testid="quick-save-btn"
               disabled={busyId !== null}
               onClick={() => void handleSave('autosave')}
-              className="px-3.5 py-2 bg-[#7f1d1d] hover:bg-[#991b1b] disabled:opacity-50 border border-amber-300 font-pixel-mono text-xs font-bold text-amber-50 cursor-pointer whitespace-nowrap"
+              className="px-2.5 py-1.5 bg-[#7f1d1d] hover:bg-[#991b1b] disabled:opacity-50 border border-amber-300 font-pixel-mono text-[10px] sm:text-xs font-bold text-amber-50 cursor-pointer whitespace-nowrap"
             >
-              {busyId === 'autosave' ? 'Saving...' : 'Quick Save (Autosave)'}
+              {busyId === 'autosave' ? 'Saving...' : 'Quick Save'}
             </button>
-            <div className="flex items-center gap-2 flex-1 min-w-[210px]">
+            <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
               <input
                 type="text"
                 value={slotName}
@@ -130,27 +130,27 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                 placeholder="Save slot name..."
                 aria-label="Save Slot Name"
                 data-testid="save-slot-input"
-                className="flex-1 px-2.5 py-2 bg-[#0d070b] border border-amber-500/40 text-xs font-pixel-mono text-amber-100 focus:outline-none focus:border-amber-300"
+                className="flex-1 px-2 py-1 bg-[#0d070b] border border-amber-500/40 text-[11px] font-pixel-mono text-amber-100 focus:outline-none focus:border-amber-300"
               />
               <button
                 type="button"
                 data-testid="save-slot-btn"
                 disabled={busyId !== null}
                 onClick={() => void handleSave(slotName)}
-                className="px-3.5 py-2 bg-[#14532d] hover:bg-[#166534] disabled:opacity-50 border border-emerald-400/80 font-pixel-mono text-xs font-bold text-emerald-50 cursor-pointer whitespace-nowrap"
+                className="px-2.5 py-1.5 bg-[#14532d] hover:bg-[#166534] disabled:opacity-50 border border-emerald-400/80 font-pixel-mono text-[10px] sm:text-xs font-bold text-emerald-50 cursor-pointer whitespace-nowrap"
               >
                 Save Slot
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-[#1b1017] border border-amber-500/30 p-3 mb-4 font-pixel-mono text-[11px] text-amber-200/80">
-            Select a chronicle below to resume your saved Knight, or enter the castle to create a new save.
+          <div className="bg-[#1b1017] border border-amber-500/30 p-2 mb-2.5 font-pixel-mono text-[10px] text-amber-200/80 shrink-0">
+            Select a chronicle below to resume your saved Knight.
           </div>
         )}
 
         {/* Saved Chronicles List */}
-        <div className="max-h-[320px] overflow-y-auto space-y-2 pr-1">
+        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
           {loading && saves.length === 0 ? (
             <div className="py-8 text-center font-pixel-mono text-xs text-amber-200/70">
               Loading saved chronicles...

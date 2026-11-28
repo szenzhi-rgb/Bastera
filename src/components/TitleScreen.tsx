@@ -5,10 +5,12 @@ interface TitleScreenProps {
   savedCount: number;
   onStart: (playerName: string) => void;
   onEnterIsekai: (playerName: string) => void;
+  onOpenTutorial: () => void;
   onOpenSaves: () => void;
   onOpenWorlds: () => void;
   onToggleRotate: () => void;
   rotatedMobile: boolean;
+  isMobileLocked?: boolean;
 }
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({
@@ -16,18 +18,20 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   savedCount,
   onStart,
   onEnterIsekai,
+  onOpenTutorial,
   onOpenSaves,
   onOpenWorlds,
   onToggleRotate,
   rotatedMobile,
+  isMobileLocked = false,
 }) => {
   const [name, setName] = useState('BasteraKnight');
 
   return (
-    <div className="fixed inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 pointer-events-none bg-gradient-to-r from-[#0b070a]/85 via-[#0b070a]/45 to-transparent">
-      {/* Top right quiet multiplayer & rotate toggle */}
-      <div className="flex items-center justify-end gap-4 pointer-events-auto">
-        <span className="font-pixel-mono text-xs text-amber-200/80 tracking-wide">
+    <div className="fixed inset-0 z-20 flex flex-col justify-between p-3 sm:p-8 pointer-events-none bg-gradient-to-r from-[#0b070a]/85 via-[#0b070a]/45 to-transparent">
+      {/* Top right quiet multiplayer & orientation lock badge */}
+      <div className="flex items-center justify-end gap-2 sm:gap-4 pointer-events-auto">
+        <span className="font-pixel-mono text-[10px] sm:text-xs text-amber-200/80 tracking-wide">
           {onlineCount} {onlineCount === 1 ? 'Warrior' : 'Warriors'} in Citadel
         </span>
         <button
@@ -36,19 +40,21 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             e.currentTarget.blur();
             onToggleRotate();
           }}
-          className="px-3 py-1.5 text-xs font-medium text-amber-100 bg-[#1a1116] border border-amber-500/35 hover:border-amber-400 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="px-2.5 py-1 text-[10px] sm:text-xs font-medium text-amber-100 bg-[#1a1116] border border-amber-500/35 hover:border-amber-400 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
         >
-          {rotatedMobile ? 'Standard View' : 'Rotate Perspective'}
+          {isMobileLocked
+            ? 'Landscape Locked'
+            : rotatedMobile
+              ? 'Standard View'
+              : 'Rotate Perspective'}
         </button>
       </div>
 
       {/* Left-third negative-space anchor with bespoke SVG title lockup */}
-      <div className="relative max-w-lg my-auto pointer-events-auto border-l-2 border-amber-400/60 pl-4 py-2">
-        <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-amber-400" />
-        <span className="absolute -bottom-0.5 -left-0.5 w-2 h-2 bg-amber-400" />
+      <div className="relative max-w-2xl my-auto pointer-events-auto py-1">
         <svg
           viewBox="0 0 380 112"
-          className="w-full max-w-[380px] h-auto mb-3 drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
+          className="w-full max-w-[230px] sm:max-w-[360px] h-auto mb-1.5 sm:mb-3 drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
           role="img"
           aria-label="Bastera Endless Citadel"
         >
@@ -87,7 +93,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </text>
         </svg>
 
-        <div className="flex flex-wrap items-center gap-3 mt-5">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 mt-2 sm:mt-4">
           <label className="sr-only" htmlFor="warrior-name-input">
             Warrior Name
           </label>
@@ -98,7 +104,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             maxLength={18}
             onChange={(e) => setName(e.target.value)}
             placeholder="Warrior Name"
-            className="w-44 px-3 py-2.5 text-sm font-pixel-mono bg-[#140d11] text-amber-100 border border-amber-500/40 focus:outline-none focus:border-amber-300"
+            className="w-32 sm:w-44 px-2.5 py-1.5 sm:py-2 text-xs sm:text-sm font-pixel-mono bg-[#140d11] text-amber-100 border border-amber-500/40 focus:outline-none focus:border-amber-300"
           />
           <button
             type="button"
@@ -107,7 +113,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               e.currentTarget.blur();
               onStart(name);
             }}
-            className="px-7 py-2.5 text-sm font-semibold tracking-wider text-amber-50 bg-[#991b1b] border-2 border-amber-400 hover:bg-[#b91c1c] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold tracking-wider text-amber-50 bg-[#991b1b] border-2 border-amber-400 hover:bg-[#b91c1c] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Enter Castle
           </button>
@@ -118,9 +124,20 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               e.currentTarget.blur();
               onEnterIsekai(name);
             }}
-            className="px-5 py-2.5 text-sm font-semibold tracking-wider text-sky-50 bg-[#0c4a6e] border-2 border-sky-300 hover:bg-[#075985] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold tracking-wider text-sky-50 bg-[#0c4a6e] border-2 border-sky-300 hover:bg-[#075985] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Enter Isekai
+          </button>
+          <button
+            type="button"
+            data-testid="title-tutorial-btn"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onOpenTutorial();
+            }}
+            className="px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-pixel-mono font-bold text-amber-100 bg-[#23141c] border border-amber-300/80 hover:border-amber-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            How to Fight
           </button>
           <button
             type="button"
@@ -129,7 +146,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               e.currentTarget.blur();
               onOpenSaves();
             }}
-            className="px-4 py-2.5 text-xs font-pixel-mono font-bold text-emerald-100 bg-[#142a21] border border-emerald-400/75 hover:border-emerald-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-pixel-mono font-bold text-emerald-100 bg-[#142a21] border border-emerald-400/75 hover:border-emerald-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Load Game{savedCount > 0 ? ` (${savedCount})` : ''}
           </button>
@@ -140,7 +157,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               e.currentTarget.blur();
               onOpenWorlds();
             }}
-            className="px-4 py-2.5 text-xs font-pixel-mono font-bold text-cyan-100 bg-[#112238] border border-cyan-400/75 hover:border-cyan-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-pixel-mono font-bold text-cyan-100 bg-[#112238] border border-cyan-400/75 hover:border-cyan-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             Online Worlds
           </button>
@@ -148,8 +165,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </div>
 
       {/* Single flat control hint line */}
-      <div className="font-pixel-mono text-xs text-amber-100/75 tracking-wide">
-        A/D Move · Space Jump · J Sword · 1/2/3 Skills · F Interact · I Bag · Esc Pause
+      <div className="font-pixel-mono text-[9px] sm:text-xs text-amber-100/75 tracking-wide truncate">
+        A/D Move · Space Jump · J Sword · 2x Shift White Aura · 2x [3] Stand Guard · F Interact · Esc Pause
       </div>
     </div>
   );

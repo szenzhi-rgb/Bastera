@@ -128,49 +128,49 @@ export const SanctuaryModal: React.FC<SanctuaryModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/82 p-3 sm:p-5"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/82 p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Main Sanctuary Interface"
       data-testid="sanctuary-modal"
     >
-      <div className="relative w-full max-w-3xl bg-[#0e0910] border-2 border-amber-400 text-amber-50 p-4 sm:p-5 max-h-[90vh] flex flex-col shadow-[0_0_32px_rgba(251,191,36,0.2)]">
+      <div className="relative w-full max-w-[92%] sm:max-w-3xl bg-[#0e0910] border-2 border-amber-400 text-amber-50 p-3 sm:p-4 max-h-[86%] flex flex-col shadow-[0_0_32px_rgba(251,191,36,0.2)]">
         {/* Corner Pixel Brackets */}
-        <span className="absolute top-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 right-0 w-2 h-2 bg-amber-300" />
+        <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 border-b border-amber-500/30 pb-3 mb-3">
-          <div>
-            <div className="font-pixel-mono text-[10px] tracking-[0.2em] text-amber-400 uppercase">
+        <div className="flex items-center justify-between gap-2 border-b border-amber-500/30 pb-2 mb-2 shrink-0">
+          <div className="min-w-0">
+            <div className="font-pixel-mono text-[8.5px] tracking-[0.18em] text-amber-400 uppercase">
               KNIGHT SANCTUARY HUB
             </div>
-            <h2 className="font-display text-lg sm:text-xl font-bold text-amber-50">
+            <h2 className="font-display text-sm sm:text-lg font-bold text-amber-50 truncate">
               Main Sanctuary Interface
             </h2>
-            <p className="font-pixel-mono text-[11px] text-amber-200/80">
-              LV.{hud.level} · Gold {hud.gold}G · Stat Pts: {hud.statPoints} · Secrets {hud.secretsFound}/{hud.totalSecrets}
+            <p className="font-pixel-mono text-[9.5px] sm:text-[11px] text-amber-200/80 tabular-nums">
+              LV.{hud.level} · Gold {hud.gold}G · Pts: {hud.statPoints} · Secrets {hud.secretsFound}/{hud.totalSecrets}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             data-testid="sanctuary-close-btn"
-            className="px-3 py-1.5 bg-[#26141b] border border-amber-400/70 hover:border-amber-200 font-pixel-mono text-xs text-amber-100 cursor-pointer shrink-0"
+            className="px-2.5 py-1 bg-[#26141b] border border-amber-400/70 hover:border-amber-200 font-pixel-mono text-[10px] sm:text-xs text-amber-100 cursor-pointer shrink-0 whitespace-nowrap"
           >
-            Return to Citadel [C]
+            Close [C]
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-1.5 mb-2 flex-wrap shrink-0">
           {(
             [
-              ['character', 'Customize & Stat Points'],
-              ['arsenal', 'Weapons & 3 Skill Slots'],
-              ['items', 'Stored Items & Relics'],
+              ['character', 'Customize & Stats'],
+              ['arsenal', 'Weapons & Skills'],
+              ['items', 'Stored Items'],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -178,7 +178,7 @@ export const SanctuaryModal: React.FC<SanctuaryModalProps> = ({
               type="button"
               data-testid={`sanctuary-tab-${id}`}
               onClick={() => setTab(id)}
-              className={`px-3.5 py-1.5 text-xs font-pixel-mono border transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 text-[10px] sm:text-xs font-pixel-mono border transition-colors cursor-pointer whitespace-nowrap ${
                 tab === id
                   ? 'bg-[#991b1b] border-amber-300 text-amber-50 font-bold'
                   : 'bg-[#191016] border-amber-500/30 text-amber-200/80 hover:text-amber-100'

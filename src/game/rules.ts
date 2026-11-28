@@ -103,6 +103,10 @@ export function createInitialPlayer(): PlayerState {
     equippedStand: 'star_platinum',
     unlockedStands: ['star_platinum'],
     dinoFormTimer: 0,
+    whiteAuraTimer: 0,
+    whiteAuraCooldown: 0,
+    standGuardTimer: 0,
+    standGuardCooldown: 0,
   };
 }
 
@@ -140,7 +144,8 @@ export function stepPlayerPhysics(
 
   // Smooth horizontal acceleration & momentum preservation for long dashes
   const hotSpringSpeedMult = (player.hotSpringTimer ?? 0) > 0 ? 1.18 : 1;
-  const moveSpeed = (MOVE_SPEED + player.stats.speed * 6) * hotSpringSpeedMult;
+  const whiteAuraSpeedMult = (player.whiteAuraTimer ?? 0) > 0 ? WHITE_AURA_SPEED_MULTIPLIER : 1;
+  const moveSpeed = (MOVE_SPEED + player.stats.speed * 6) * hotSpringSpeedMult * whiteAuraSpeedMult;
   const targetVx = moveDir * moveSpeed;
   const isDashing =
     Math.abs(player.vx) > moveSpeed + 20 &&
@@ -262,6 +267,18 @@ export function stepPlayerPhysics(
   if ((player.dinoFormTimer ?? 0) > 0) {
     player.dinoFormTimer = Math.max(0, (player.dinoFormTimer ?? 0) - dt);
   }
+  if ((player.whiteAuraTimer ?? 0) > 0) {
+    player.whiteAuraTimer = Math.max(0, (player.whiteAuraTimer ?? 0) - dt);
+  }
+  if ((player.whiteAuraCooldown ?? 0) > 0) {
+    player.whiteAuraCooldown = Math.max(0, (player.whiteAuraCooldown ?? 0) - dt);
+  }
+  if ((player.standGuardTimer ?? 0) > 0) {
+    player.standGuardTimer = Math.max(0, (player.standGuardTimer ?? 0) - dt);
+  }
+  if ((player.standGuardCooldown ?? 0) > 0) {
+    player.standGuardCooldown = Math.max(0, (player.standGuardCooldown ?? 0) - dt);
+  }
 
   for (let i = 0; i < 3; i++) {
     player.skillCooldowns[i] = Math.max(0, player.skillCooldowns[i] - dt);
@@ -275,6 +292,11 @@ export function stepPlayerPhysics(
 
 export const DASH_COOLDOWN_SECONDS = 1.0;
 export const DASH_STAMINA_COST = 10;
+export const WHITE_AURA_DURATION = 1.5;
+export const WHITE_AURA_SPEED_MULTIPLIER = 1.3;
+export const WHITE_AURA_COOLDOWN = 6.0;
+export const STAND_GUARD_DURATION = 1.5;
+export const STAND_GUARD_COOLDOWN = 7.0;
 
 export function triggerPlayerDash(player: PlayerState): boolean {
   if (player.dashCooldown > 0 || player.stamina < DASH_STAMINA_COST) return false;
@@ -285,6 +307,29 @@ export function triggerPlayerDash(player: PlayerState): boolean {
   player.vy = Math.min(player.vy, 0);
   player.squashX = 1.25;
   player.squashY = 0.8;
+  return true;
+}
+
+export function activateWhiteAuraDash(player: PlayerState): boolean {
+  if ((player.whiteAuraCooldown ?? 0) > 0 || (player.whiteAuraTimer ?? 0) > 0) {
+    return false;
+  }
+  player.whiteAuraTimer = WHITE_AURA_DURATION;
+  player.whiteAuraCooldown = WHITE_AURA_COOLDOWN;
+  player.invulnTimer = Math.max(player.invulnTimer, WHITE_AURA_DURATION);
+  player.vx = player.facing * Math.max(Math.abs(player.vx), 280);
+  player.squashX = 1.22;
+  player.squashY = 0.84;
+  return true;
+}
+
+export function activateStandGuard(player: PlayerState): boolean {
+  if ((player.standGuardCooldown ?? 0) > 0 || (player.standGuardTimer ?? 0) > 0) {
+    return false;
+  }
+  player.standGuardTimer = STAND_GUARD_DURATION;
+  player.standGuardCooldown = STAND_GUARD_COOLDOWN;
+  player.parryTimer = Math.max(player.parryTimer, 0.25);
   return true;
 }
 

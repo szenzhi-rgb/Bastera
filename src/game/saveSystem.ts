@@ -8,10 +8,12 @@ import {
 import type {
   BasteraSaveSummary,
   BiomeId,
+  ElfKingdomStage,
   EnemyArchetype,
   GuildRank,
   InventoryItem,
   PlayerState,
+  RaiderRankId,
   RealmMode,
   SideQuestId,
   SideQuestProgress,
@@ -49,6 +51,12 @@ export interface BasteraSaveData {
   unlockedWardrobe?: string[];
   foughtIsekaiEnemies?: EnemyArchetype[];
   crownUnlocked?: boolean;
+  elfCrownUnlocked?: boolean;
+  elfKingdomInvited?: boolean;
+  elfKingdomStage?: ElfKingdomStage;
+  raiderRank?: RaiderRankId;
+  raiderPoints?: number;
+  clearedRaiderDungeons?: number[];
   gyroDefeated?: boolean;
   isekaiCompleted?: boolean;
   townRaidTimer?: number;
@@ -83,6 +91,12 @@ export function createSavePayload(params: {
   unlockedWardrobe?: string[];
   foughtIsekaiEnemies?: EnemyArchetype[];
   crownUnlocked?: boolean;
+  elfCrownUnlocked?: boolean;
+  elfKingdomInvited?: boolean;
+  elfKingdomStage?: ElfKingdomStage;
+  raiderRank?: RaiderRankId;
+  raiderPoints?: number;
+  clearedRaiderDungeons?: number[];
   gyroDefeated?: boolean;
   isekaiCompleted?: boolean;
   townRaidTimer?: number;
@@ -111,6 +125,10 @@ export function createSavePayload(params: {
       starStones: params.player.starStones ?? 0,
       equippedStand: params.player.equippedStand ?? 'star_platinum',
       unlockedStands: [...(params.player.unlockedStands ?? ['star_platinum'])],
+      whiteAuraTimer: 0,
+      whiteAuraCooldown: 0,
+      standGuardTimer: 0,
+      standGuardCooldown: 0,
     },
     inventory: params.inventory.map((it) => ({ ...it })),
     defeatedBosses: Array.from(params.defeatedBosses).sort((a, b) => a - b),
@@ -130,6 +148,12 @@ export function createSavePayload(params: {
     unlockedWardrobe: params.unlockedWardrobe ? [...params.unlockedWardrobe] : ['outfit_knight_plate', 'hat_helm'],
     foughtIsekaiEnemies: params.foughtIsekaiEnemies ? [...params.foughtIsekaiEnemies] : [],
     crownUnlocked: Boolean(params.crownUnlocked),
+    elfCrownUnlocked: Boolean(params.elfCrownUnlocked),
+    elfKingdomInvited: Boolean(params.elfKingdomInvited),
+    elfKingdomStage: params.elfKingdomStage ?? 'uninvited',
+    raiderRank: params.raiderRank ?? 'Bronze',
+    raiderPoints: params.raiderPoints ?? 0,
+    clearedRaiderDungeons: params.clearedRaiderDungeons ? [...params.clearedRaiderDungeons] : [],
     gyroDefeated: Boolean(params.gyroDefeated),
     isekaiCompleted: Boolean(params.isekaiCompleted),
     townRaidTimer: params.townRaidTimer ?? 300,
@@ -216,6 +240,8 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
       outfitStyle: rp.customization?.outfitStyle || DEFAULT_WARRIOR_CUSTOMIZATION.outfitStyle,
       headgearStyle: rp.customization?.headgearStyle || DEFAULT_WARRIOR_CUSTOMIZATION.headgearStyle,
       crownEquipped: Boolean(rp.customization?.crownEquipped),
+      crownStyle:
+        rp.customization?.crownStyle === 'elf_emerald' ? 'elf_emerald' : 'solaris_gold',
     },
     highestCheckpointX: Number.isFinite(rp.highestCheckpointX)
       ? Number(rp.highestCheckpointX)
@@ -236,6 +262,10 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
       return list;
     })(),
     dinoFormTimer: 0,
+    whiteAuraTimer: 0,
+    whiteAuraCooldown: 0,
+    standGuardTimer: 0,
+    standGuardCooldown: 0,
   };
   mergedPlayer.hp = Math.min(mergedPlayer.hp, mergedPlayer.maxHp);
 
@@ -263,11 +293,15 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
     'dueling_arena',
     'outskirts_forest',
     'outskirts_caves',
+    'elf_kingdom',
+    'raider_guild',
+    'raider_dungeon',
   ];
-  const realm: RealmMode =
+  const rawRealm =
     typeof obj.realm === 'string' && validRealms.includes(obj.realm as RealmMode)
       ? (obj.realm as RealmMode)
       : 'citadel';
+  const realm: RealmMode = rawRealm === 'raider_dungeon' ? 'raider_guild' : rawRealm;
 
   const validRanks: GuildRank[] = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
   const guildRank: GuildRank =
@@ -344,6 +378,39 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
       ? (obj.foughtIsekaiEnemies.filter((s): s is EnemyArchetype => typeof s === 'string') as EnemyArchetype[])
       : [],
     crownUnlocked: Boolean(obj.crownUnlocked),
+    elfCrownUnlocked: Boolean(obj.elfCrownUnlocked),
+    elfKingdomInvited: Boolean(obj.elfKingdomInvited),
+    elfKingdomStage: (() => {
+      const st = obj.elfKingdomStage;
+      if (st === 'celebration' || st === 'invited' || st === 'banquet_ready') return st;
+      if (st === 'ambush_active') return 'banquet_ready';
+      return obj.elfKingdomInvited ? 'invited' : 'uninvited';
+    })(),
+    raiderRank: (() => {
+      const validRaiderRanks: RaiderRankId[] = [
+        'Bronze',
+        'Silver',
+        'Gold',
+        'Platinum',
+        'Mythril',
+        'Orichalcum',
+        'Adamantite',
+        'Monarch',
+      ];
+      return typeof obj.raiderRank === 'string' && validRaiderRanks.includes(obj.raiderRank as RaiderRankId)
+        ? (obj.raiderRank as RaiderRankId)
+        : 'Bronze';
+    })(),
+    raiderPoints: Number.isFinite(obj.raiderPoints) ? Math.max(0, Math.floor(Number(obj.raiderPoints))) : 0,
+    clearedRaiderDungeons: Array.isArray(obj.clearedRaiderDungeons)
+      ? Array.from(
+          new Set(
+            obj.clearedRaiderDungeons.filter(
+              (n): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= 200,
+            ),
+          ),
+        ).sort((a, b) => a - b)
+      : [],
     gyroDefeated: Boolean(obj.gyroDefeated),
     isekaiCompleted: Boolean(obj.isekaiCompleted),
     townRaidTimer: Number.isFinite(obj.townRaidTimer) ? Math.max(10, Number(obj.townRaidTimer)) : 300,
@@ -361,6 +428,11 @@ export function normalizeLoadedSave(raw: unknown): BasteraSaveData | null {
             kills: Number.isFinite(saved.kills) ? Math.max(0, Math.floor(Number(saved.kills))) : 0,
             twistRevealed: Boolean(saved.twistRevealed),
             bossSpawned: Boolean(saved.bossSpawned),
+            clueUncovered: Boolean(saved.clueUncovered),
+            chosenOptionIds: Array.isArray(saved.chosenOptionIds)
+              ? saved.chosenOptionIds.filter((s): s is string => typeof s === 'string').slice(0, 32)
+              : [],
+            confronted: Boolean(saved.confronted),
           };
         }
       }

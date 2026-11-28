@@ -13,18 +13,18 @@ export const GuildInviteToast: React.FC<GuildInviteToastProps> = ({ invites, onR
   return (
     <div
       data-testid="guild-invite-toast"
-      className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[340px] max-w-[92vw] bg-[#1a1009] border-2 border-cyan-300 p-3 text-amber-50 shadow-[0_8px_24px_rgba(0,0,0,0.9)]"
+      className="fixed top-12 left-1/2 -translate-x-1/2 z-40 w-[260px] max-w-[85%] bg-[#1a1009]/95 border-2 border-cyan-300 p-2 text-amber-50 shadow-[0_8px_24px_rgba(0,0,0,0.9)]"
     >
-      <div className="font-pixel-mono text-[10px] font-bold text-cyan-300 uppercase tracking-wider">
-        ✦ ADVENTURE GUILD CO-OP PARTY INVITE
+      <div className="font-pixel-mono text-[8.5px] font-bold text-cyan-300 uppercase tracking-wider">
+        ✦ GUILD CO-OP INVITE
       </div>
-      <div className="font-display text-sm font-bold text-amber-100 mt-0.5">
-        {inv.fromName} invites you to {inv.missionTitle}!
+      <div className="font-display text-xs font-bold text-amber-100 mt-0.5 truncate">
+        {inv.fromName} · {inv.missionTitle}
       </div>
-      <div className="font-pixel-mono text-[10px] text-amber-200/80 mt-0.5">
-        Invited by {inv.fromRank}-Rank Adventurer
+      <div className="font-pixel-mono text-[9px] text-amber-200/80">
+        {inv.fromRank}-Rank Adventurer
       </div>
-      <div className="mt-2.5 flex items-center justify-end gap-2">
+      <div className="mt-1.5 flex items-center justify-end gap-1.5">
         <button
           type="button"
           tabIndex={-1}

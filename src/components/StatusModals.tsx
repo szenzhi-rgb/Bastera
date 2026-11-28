@@ -28,16 +28,16 @@ export const StatusModals: React.FC<StatusModalsProps> = ({
   const isPause = hud.status === 'paused';
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/75">
-      <div className="w-full max-w-md bg-[#140c10] border-2 border-amber-400/75 p-6 text-amber-50">
-        <h2 className="font-display text-2xl font-bold text-amber-100 mb-1">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-2 sm:p-4 bg-black/75">
+      <div className="w-full max-w-[92%] sm:max-w-md max-h-[86%] overflow-y-auto bg-[#140c10] border-2 border-amber-400/75 p-3.5 sm:p-5 text-amber-50">
+        <h2 className="font-display text-lg sm:text-xl font-bold text-amber-100 mb-1">
           {isPause
             ? 'Citadel Paused'
             : isVictory
               ? 'Escaped the Endless Citadel!'
               : 'Fallen on the Royal Carpet'}
         </h2>
-        <p className="font-pixel-mono text-xs text-amber-300/80 mb-5">
+        <p className="font-pixel-mono text-[10px] sm:text-xs text-amber-300/80 mb-3">
           {isPause
             ? 'Even citadel guardians wait politely while you catch your breath.'
             : isVictory
@@ -45,33 +45,33 @@ export const StatusModals: React.FC<StatusModalsProps> = ({
               : 'Your bones decorate the royal carpet. Try again from the last brazier.'}
         </p>
 
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          <div className="bg-[#1e1218] border border-amber-500/30 p-2.5 text-center">
-            <div className="font-pixel-mono text-[10px] text-amber-300">BOSSES</div>
-            <div className="font-pixel-mono text-lg font-bold text-amber-50">
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="bg-[#1e1218] border border-amber-500/30 p-2 text-center">
+            <div className="font-pixel-mono text-[9px] text-amber-300">BOSSES</div>
+            <div className="font-pixel-mono text-sm sm:text-base font-bold text-amber-50 tabular-nums">
               {hud.bossesDefeated}/{hud.totalBosses}
             </div>
           </div>
-          <div className="bg-[#1e1218] border border-amber-500/30 p-2.5 text-center">
-            <div className="font-pixel-mono text-[10px] text-amber-300">SECRETS</div>
-            <div className="font-pixel-mono text-lg font-bold text-amber-50">
+          <div className="bg-[#1e1218] border border-amber-500/30 p-2 text-center">
+            <div className="font-pixel-mono text-[9px] text-amber-300">SECRETS</div>
+            <div className="font-pixel-mono text-sm sm:text-base font-bold text-amber-50 tabular-nums">
               {hud.secretsFound}/{hud.totalSecrets}
             </div>
           </div>
-          <div className="bg-[#1e1218] border border-amber-500/30 p-2.5 text-center">
-            <div className="font-pixel-mono text-[10px] text-amber-300">DISTANCE</div>
-            <div className="font-pixel-mono text-lg font-bold text-amber-50">
+          <div className="bg-[#1e1218] border border-amber-500/30 p-2 text-center">
+            <div className="font-pixel-mono text-[9px] text-amber-300">DISTANCE</div>
+            <div className="font-pixel-mono text-sm sm:text-base font-bold text-amber-50 tabular-nums">
               {hud.distanceMeters}m
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           {isPause ? (
             <button
               type="button"
               onClick={onResume}
-              className="w-full py-2.5 text-sm font-semibold bg-[#991b1b] border-2 border-amber-400 hover:bg-[#b91c1c] cursor-pointer"
+              className="w-full py-2 text-xs sm:text-sm font-semibold bg-[#991b1b] border-2 border-amber-400 hover:bg-[#b91c1c] cursor-pointer"
             >
               Resume Escape
             </button>
@@ -80,7 +80,7 @@ export const StatusModals: React.FC<StatusModalsProps> = ({
               type="button"
               data-start="true"
               onClick={isVictory ? onNewGame : onRestartCheckpoint}
-              className="w-full py-2.5 text-sm font-semibold bg-[#991b1b] border-2 border-amber-400 hover:bg-[#b91c1c] cursor-pointer"
+              className="w-full py-2 text-xs sm:text-sm font-semibold bg-[#991b1b] border-2 border-amber-400 hover:bg-[#b91c1c] cursor-pointer"
             >
               {isVictory ? 'Play Again' : 'Respawn at Checkpoint'}
             </button>

@@ -13,6 +13,8 @@ import type {
   DemonKingFaceStyle,
   DemonKingSpecialAbility,
   DemonKingWeaponStyle,
+  ElfCutsceneChoiceHud,
+  ElfKingdomStage,
   EnemyArchetype,
   EnemyState,
   GuildMissionId,
@@ -29,6 +31,7 @@ import type {
   PurpleFlameZone,
   RealmMode,
   SideQuestDef,
+  SideQuestDialogueChoice,
   SideQuestId,
   SideQuestProgress,
   TownHouseDamage,
@@ -286,15 +289,20 @@ export const ISEKAI_ROOM_BOUNDS: Record<RealmMode, { minX: number; maxX: number 
   dueling_arena: { minX: 24, maxX: 1240 },
   outskirts_forest: { minX: 20, maxX: 2400 },
   outskirts_caves: { minX: 20, maxX: 2200 },
+  elf_kingdom: { minX: 20, maxX: 2860 },
+  raider_guild: { minX: 20, maxX: 980 },
+  raider_dungeon: { minX: 20, maxX: 1680 },
 };
 
 export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_01_crimson_tithe',
     index: 1,
-    title: 'The Crimson Tithe of East Gate',
+    title: 'The Perfectly Normal Tax Wagon',
+    storyTheme: 'Dark Comedy · Bureaucratic Treason',
+    chapterTitle: 'Act I · The Solaris Ledger',
     giverName: 'Warden Kaelen',
-    giverRoleLabel: 'Disgraced Gate Captain',
+    giverRoleLabel: 'Sweating Gate Captain',
     giverRealm: 'isekai_town',
     giverX: 3630,
     coatColor: '#7f1d1d',
@@ -303,17 +311,148 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_forest',
     twistTriggerKills: 3,
     hookSummary:
-      'Kaelen begs you to cull feral highwaymen beyond the Royal Gate who supposedly butchered his tax caravan.',
+      'Kaelen insists "hyper-polite unionized bandits" ambushed his royal tax sled outside East Gate—just don’t look inside the chocolate-foil coin sacks.',
+    conspiracyClue:
+      'Solaris Gate Entry #014: Warden Kaelen pawned the Royal Mint bullion and paid Butcher Vane in pork-fat promissory notes to butcher the crown auditors.',
     giverOpeningDialogue: [
-      'Knight! Bandits ambushed my royal tax sled just outside the Solaris East Gate and slit every courier’s throat!',
-      'Slaughter 3 Cutthroats in the Outskirts Forest and flush out their scarred butcher, Vane, before nightfall.',
+      'Ahem! Halt, reincarnated hero! Thank the Goddess you wandered over—terrible, tragic ambush just past the gate! Absolutely nobody’s fault!',
+      'Cut down 3 Forest Cutthroats in the Outskirts Forest and silence their giant axe-man Vane before those nosy—uh, before MORE lives are lost!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Warden Kaelen',
+        speakerRole: 'Sweating Gate Captain',
+        moodLabel: 'Nervously Jangling Fake Coins',
+        lines: [
+          'Ah, a fresh-faced Otherworlder! Just the heroic sucker—I mean, noble paladin—Solaris needs right now!',
+          'Minutes ago, vicious highwaymen hijacked my Royal Tax Cart right past the East Gate! They took the tax ledgers, the bullion, my lunch sandwich, AND somehow knew the exact combination to our locked gatehouse!',
+        ],
+        choices: [
+          {
+            id: 'sq1_ask_combo',
+            label: '“Wait. How did forest bandits know your gatehouse combination?”',
+            tone: 'investigate',
+            npcReply: [
+              'T-telepathy! Probably a cursed Isekai Skill! Or maybe I wrote "1-2-3-4-KAELEN-RULES" on a sticky note outside the barrack!',
+              'Here—take 25G for coffee and STOP asking questions worthy of an internal affairs audit!',
+            ],
+            revealClue: true,
+            bonusGold: 25,
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq1_bite_coin',
+            label: '*Bite one of the "royal gold" coins spilling out of his pouch*',
+            tone: 'quirky',
+            npcReply: [
+              'HEY! Spit that out! That is 24-karat enchanted milk chocolate—for morale! Every heroic gate captain carries emergency emotional-support confectionery!',
+              'Look, just go cleave 3 Cutthroats in the Outskirts Forest and make sure Butcher Vane forgets how to talk!',
+            ],
+            revealClue: true,
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq1_just_pay',
+            label: '“Skip the sob story. Point me at the blood and tell me the payout.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Oh, bless your stone-cold mercenary soul! No tedious morals, just sharp steel!',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Warden Kaelen',
+        speakerRole: 'Sweating Gate Captain',
+        moodLabel: 'Desperate Handshake',
+        lines: [
+          'Go east through the Royal Gate into the Outskirts Forest. Butcher 3 Cutthroats until Butcher Vane crawls out of the ferns.',
+          'Remember: if you find any charred tax manifests with my wax seal... burn them. For public hygiene.',
+        ],
+        choices: [
+          {
+            id: 'sq1_accept',
+            label: 'Accept Contract — Track Down Butcher Vane',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Magnificent! Remember—dead bandits tell zero tales about missing treasury silver!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Warden Kaelen',
+        speakerRole: 'Sweating Gate Captain',
+        moodLabel: 'Chewing Nails',
+        lines: [
+          'Still alive! Lovely! Listen—did you happen to step on any glowing blue accounting scrolls out there in the bushes?',
+        ],
+        choices: [
+          {
+            id: 'sq1_mid_tease',
+            label: '“Only a half-eaten ledger mentioning your gambling debts.”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Hahahaha! What a hilarious typographical error by those illiterate bandits! Please finish slaying Vane immediately!',
+            ],
+          },
+          {
+            id: 'sq1_mid_focus',
+            label: '“Heading back out to finish the 3 kills.”',
+            tone: 'accept',
+            npcReply: ['Yes! Speed is of the essence, especially before the Royal Auditor notices the chocolate coins melting!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Warden Kaelen',
+        speakerRole: 'Exposed Embezzler',
+        moodLabel: 'Cornered & Perspiring Profusely',
+        lines: [
+          'Gah—you read page four of Vane’s bloodied manifest?! Look, in my defense, the Crown pays gate guards in expired Potion Coupons and vibes!',
+          'Nobody in Solaris is clean, Knight. Ask Widow Marlowe down the street where her stitching thread comes from if you think I’m the worst monster here!',
+        ],
+        choices: [
+          {
+            id: 'sq1_extort',
+            label: '“Empty your real pouch. Consider it an unofficial audit fee.” (+50G)',
+            tone: 'extort',
+            bonusGold: 50,
+            markConfronted: true,
+            npcReply: [
+              'Take the coin! Take my spare boots! Just don’t mention my name when the Royal Ledger hits page ten!',
+            ],
+          },
+          {
+            id: 'sq1_mock',
+            label: '“Enjoy living with chocolate coins while Vane’s blood dries on my boots.”',
+            tone: 'quirky',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'You’re terrifying! What kind of hero grins like that over murdered accountants?!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: STAGED SLAUGHTER',
     twistRevelation:
-      'A dying courier’s ledger proves Kaelen sold the patrol route to Vane and paid him to murder the witnesses so Kaelen could embezzle the crown’s bullion.',
+      'The dying courier’s manifest proves Kaelen pawned the Royal Treasury for chocolate foil and hired Butcher Vane to murder the crown auditors before sunrise.',
     twistDialogue: [
-      'A torn manifest falls from the corpse — Warden Kaelen’s wax seal authorized the ambush to silence the tax clerks!',
-      'Butcher Vane steps through the bloody ferns, grinning: "Kaelen paid double for fresh knight ribs!"',
+      'A blood-soaked ledger tumbles out of the mud — stamped with Warden Kaelen’s seal and a receipt reading "3 Dead Clerks, Extra Axes"!',
+      'Butcher Vane steps out from the ferns, wiping his cleaver: "Kaelen paid double for an Otherworlder’s kneecaps—nothing personal, kid!"',
     ],
     bossName: 'Butcher Vane the Tollkeeper',
     bossTitle: 'Hired Massacre Enforcer',
@@ -321,7 +460,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1480,
     bossHp: 340,
     bossDamage: 18,
-    bossDefeatLine: 'Tell Kaelen... the ledger still has his bastard’s name on page four...',
+    bossDefeatLine: 'Tell Kaelen... the Crown Ledger still has his bastard’s name on page four...',
     rewardGold: 260,
     rewardStatPoints: 3,
     rewardStarStones: 2,
@@ -329,9 +468,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_02_butcher_well',
     index: 2,
-    title: 'Bones in the Butcher’s Well',
+    title: 'Bespoke Hoodies of the Dry Well',
+    storyTheme: 'Creepy Isekai · Tailor Body-Horror',
+    chapterTitle: 'Act I · The Solaris Ledger',
     giverName: 'Widow Marlowe',
-    giverRoleLabel: 'Weeping Seamstress',
+    giverRoleLabel: 'Suspiciously Cheerful Seamstress',
     giverRealm: 'isekai_town',
     giverX: 1960,
     coatColor: '#312e81',
@@ -340,17 +481,147 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_forest',
     twistTriggerKills: 4,
     hookSummary:
-      'Her apprentice vanished gathering crimson berries near the cursed forest hollow — only a bloodstained thimble returned.',
+      'Marlowe sobs over her missing teen apprentices while selling suspiciously warm, softly breathing crimson cloaks.',
+    conspiracyClue:
+      'Solaris Boutique Invoice: Marlowe’s twin brother Orlov traps F-Rank rookies at the Dry Well to harvest "self-mending" leather for noble winter coats.',
     giverOpeningDialogue: [
-      'Every full moon, wolves drag apprentices from Solaris toward the eastern timberline and leave gnawed boots at my door.',
-      'Hunt 4 beasts in the Outskirts Forest and bring me the head of whatever lurks beside the Dry Well!',
+      'Oh, sweetie! Four of my lovely apprentices vanished near the Dry Well—all they left behind was a screaming thimble and thirty yards of arterial silk!',
+      'Put down 4 forest prowlers and drag my poor darling Orlov’s attacker out of the hollow before my autumn fashion line misses deadline!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Widow Marlowe',
+        speakerRole: 'Suspiciously Cheerful Seamstress',
+        moodLabel: 'Polishing Red-Stained Shears',
+        lines: [
+          'Oh, thank the heavens! A sturdy warrior with such remarkably smooth, unblemished shoulder blades!',
+          'My poor third apprentice went out past East Gate to pick dye-berries by the Dry Well and never came home. Just vanished! Again! That makes four this month!',
+        ],
+        choices: [
+          {
+            id: 'sq2_touch_cloak',
+            label: '*Poke the twitching crimson cloak hanging beside her*',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Oh, don’t mind the pulsing, dear—that’s just enchanted fleece breathing in the breeze! Totally vegan! Stop poking its ribs!',
+              'Wait—did you just hear it whisper "Mom"? Must be the wind!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq2_ask_size',
+            label: '“Why do all your missing apprentices have ‘size medium’ stamped on their boots?”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 20,
+            npcReply: [
+              'Because consistency is the soul of haute couture, darling! Here, 20G for tea—go kill things in the woods and don’t audit my mannequin closet.',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq2_accept_cold',
+            label: '“I’ll sweep the Dry Well. Keep those shears pointed away from me.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Smart boy. A knight who keeps his skin intact is always welcome in my fitting room!',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Widow Marlowe',
+        speakerRole: 'Suspiciously Cheerful Seamstress',
+        moodLabel: 'Wide Unblinking Smile',
+        lines: [
+          'Slay 4 beasts in the Outskirts Forest to lure out whoever lurks beside the Dry Well.',
+          'If you meet a handsome maniac named Orlov holding bone needles... tell him Mother says he’s late for dinner.',
+        ],
+        choices: [
+          {
+            id: 'sq2_accept',
+            label: 'Accept Contract — Investigate the Dry Well',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Wonderful! Watch your ankles around the well—the moss gets terribly slippery with... berry jam.',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Widow Marlowe',
+        speakerRole: 'Suspiciously Cheerful Seamstress',
+        moodLabel: 'Threading Heavy Twine',
+        lines: [
+          'Back so soon? And your lovely armor doesn’t have a single jagged tear in it! What a shame for my—I mean, what a relief!',
+        ],
+        choices: [
+          {
+            id: 'sq2_mid_press',
+            label: '“Found a thimble stamped M. Marlowe inside a wolf’s ribcage.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Oh, I hand those out like business cards! Now hurry back out before Orlov spoils the fresh hide!',
+            ],
+          },
+          {
+            id: 'sq2_mid_go',
+            label: '“I’ll finish clearing the forest.”',
+            tone: 'accept',
+            npcReply: ['Chop-chop, sweetie! Literally!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Widow Marlowe',
+        speakerRole: 'Unhinged Flesh-Couturier',
+        moodLabel: 'Drops the Grandma Voice Entirely',
+        lines: [
+          'So you slit little Orlov’s throat and read the shipping tags sewn inside his coat. Honestly? Good riddance—his French seams were crooked anyway.',
+          'Do you have any idea what Solaris nobility pays for jackets that heal their own bullet holes? Every "F-Rank hero" who flunks out gets turned into winter wear!',
+        ],
+        choices: [
+          {
+            id: 'sq2_extort',
+            label: '“Pay me 55G right now or I wear your shop sign around your neck.”',
+            tone: 'extort',
+            bonusGold: 55,
+            markConfronted: true,
+            npcReply: [
+              'Fine! Fifty-five shiny gold pieces! Pleasure doing completely unethical business with you, Hero!',
+            ],
+          },
+          {
+            id: 'sq2_shame',
+            label: '“You’re sick. Next time a rookie goes missing, I’m burning your cellar.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'Ooh, fiery! If you ever die in the dungeon, sweetie, I promise to make you into a limited-edition cape!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: THE SKIN-THREADER’S CONTRACT',
     twistRevelation:
-      'The missing youths were stitched into living armor by Marlowe’s own twin, Flesh-Weaver Orlov, using thread spun inside her cellar.',
+      'Marlowe’s missing apprentices weren’t eaten by monsters—her twin brother Orlov skinned them beside the Dry Well to supply Solaris’s "self-healing" luxury cloak craze.',
     twistDialogue: [
-      'A silver sewing needle stamped "M. Marlowe" skewers a forest corpse — she didn’t lose her apprentices, she supplied the hide!',
-      'Out of the hollow charges Flesh-Weaver Orlov, waving blood-soaked shears!',
+      'A silver needle stamped "MARLOWE BOUTIQUE" skewers a forest corpse—the wool lining is STILL blinking!',
+      'Flesh-Weaver Orlov bursts from the hollow waving bone shears: "Sister said a fresh size-large knight was walking right to my table!"',
     ],
     bossName: 'Flesh-Weaver Orlov',
     bossTitle: 'Hollow-Well Bone Skinner',
@@ -358,7 +629,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1680,
     bossHp: 380,
     bossDamage: 21,
-    bossDefeatLine: 'Sis swore no knight would check the teeth inside the lining...',
+    bossDefeatLine: 'Sis swore no knight would ever check the teeth sewn inside the collar...',
     rewardGold: 310,
     rewardStatPoints: 3,
     rewardStarStones: 2,
@@ -366,9 +637,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_03_glass_bride',
     index: 3,
-    title: 'Vows of the Glass Bride',
+    title: 'Do Not RSVP After Midnight',
+    storyTheme: 'Gothic Dark Rom-Com · Sacrificial Trap',
+    chapterTitle: 'Act II · Rot Beneath the Altar',
     giverName: 'Father Severin',
-    giverRoleLabel: 'Excommunicated Confessor',
+    giverRoleLabel: 'Excommunicated Wedding Priest',
     giverRealm: 'isekai_town',
     giverX: 2890,
     coatColor: '#18181b',
@@ -377,17 +650,146 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_caves',
     twistTriggerKills: 3,
     hookSummary:
-      'Severin claims cultists abducted a noble bride into the Outskirts Caves for a midnight wedding of blood.',
+      'Severin swears cultists kidnapped a sweet noble bride into the Outskirts Caves—strangely ignoring why the wedding invitation mentions "groom-tasting."',
+    conspiracyClue:
+      'Unholy Prenup: Lady Isolde slaughtered her own wedding guests to ascend as a Blood-Vow Succubus; Severin sends clueless knights down as her midnight snacks.',
     giverOpeningDialogue: [
-      'Heretics dragged Lady Isolde down into the Outskirts Caves, promising to crown her in molten glass and bone!',
-      'Cut down 3 horrors inside the caves and shatter their High Celebrant before the bell tolls.',
+      'May the light forgive me—heretics abducted gentle Lady Isolde into the Outskirts Caves for an unholy midnight wedding!',
+      'Cut down 3 cave horrors and save my poor bride—er, save the innocent bride—before the bells toll!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Father Severin',
+        speakerRole: 'Excommunicated Wedding Priest',
+        moodLabel: 'Clutching Crumpled Catering Bills',
+        lines: [
+          'Bless you, child! Lady Isolde—pure as snow, gentle as a lamb—was dragged into the Outskirts Caves by depraved cavern fiends!',
+          'Please, wear your cleanest armor and descend immediately. She specifically requested a tall, high-HP knight with "iron-rich vitality" to carry her across the threshold!',
+        ],
+        choices: [
+          {
+            id: 'sq3_check_invite',
+            label: '*Read the blood-splattered wedding invite tucked in his sleeve*',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Hey! Hands off the liturgy! "Bring one marinated hero—bone-in preferred" is clearly a mistranslation from Old Solaris!',
+              'Stop reading the fine print and go slay 3 cave fiends!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq3_joke_divorce',
+            label: '“Is this a rescue mission or am I being tricked into a demon marriage?”',
+            tone: 'quirky',
+            bonusGold: 30,
+            npcReply: [
+              'Haha! What a comical notion! Here is 30G for flowers—now march east through the forest and down into the Outskirts Caves before she eats the band!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq3_cold',
+            label: '“Point me to the caves. If she bites, I bite back.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Oh, trust me—Isolde adores partners who put up a little struggle.',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Father Severin',
+        speakerRole: 'Excommunicated Wedding Priest',
+        moodLabel: 'Making Strange Hand Signs',
+        lines: [
+          'Enter the Outskirts Caves beyond the eastern forest, purge 3 subterranean horrors, and crash the altar ceremony.',
+          'Just... ignore the organ music. And the severed fingers in the punch bowl.',
+        ],
+        choices: [
+          {
+            id: 'sq3_accept',
+            label: 'Accept Contract — Crash the Cave Wedding',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Hallelujah! May you survive long enough to return my deposit on the silver chalice!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Father Severin',
+        speakerRole: 'Excommunicated Wedding Priest',
+        moodLabel: 'Sweating Through His Collar',
+        lines: [
+          'Have you spoken "I do" yet? Wait—I mean, have you broken the cultists’ circle in the caves yet?!',
+        ],
+        choices: [
+          {
+            id: 'sq3_mid_call_out',
+            label: '“Nobody kidnapped her, Priest. Your altar boys are missing their ribs.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Fine! You caught on! Just go put that winged bridezilla down before she comes back to town demanding alimony!',
+            ],
+          },
+          {
+            id: 'sq3_mid_bye',
+            label: '“Heading back into the caves.”',
+            tone: 'accept',
+            npcReply: ['Give my regards to the screaming veil!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Father Severin',
+        speakerRole: 'Shameless Matchmaker of the Damned',
+        moodLabel: 'Hands Raised in Innocent Shrug',
+        lines: [
+          'Okay, look—yes, I sent you down as a blood-sacrifice groom! Have you SEEN how hard it is to keep a demon bride fed on priest stipends?!',
+          'At least you survived and annulled the marriage with a greatsword! Technically I deserve a finder’s fee for introducing you two!',
+        ],
+        choices: [
+          {
+            id: 'sq3_extort',
+            label: '“Hand over the wedding dowry box before I baptize you in sewer water.” (+60G)',
+            tone: 'extort',
+            bonusGold: 60,
+            markConfronted: true,
+            npcReply: [
+              'Take the 60G! Never invite me to your reception!',
+            ],
+          },
+          {
+            id: 'sq3_roast',
+            label: '“Tell the Church I’m filing for annulment via decapitation.”',
+            tone: 'quirky',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'Brutal! Truly, modern knights have zero respect for gothic romance!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: NO VICTIM LEFT ALIVE',
     twistRevelation:
-      'Lady Isolde slaughtered her own wedding party to ascend as a Demon Bride, and Severin sent you down solely as her final sacrificial groom.',
+      'Lady Isolde slaughtered her own wedding party to become a Blood-Vow Succubus—and Father Severin tricked you into walking down the aisle as dinner.',
     twistDialogue: [
-      'The severed fingers on the cavern altar belong to Severin’s own acolytes — Isolde herself signed the pact in arterial ink!',
-      'Bride of Shattered Glass Isolde descends on crimson wings: "Severin promised me a knight’s warm spine!"',
+      'A chewed bouquet and Severin’s signed receipt fall beside the cavern altar: "1 Oblivious Hero, Medium-Rare"!',
+      'Isolde, Bride of Shattered Glass drops from the stalactites laughing: "Father Severin finally sent a groom with decent stats!"',
     ],
     bossName: 'Isolde, Bride of Shattered Glass',
     bossTitle: 'Ascended Blood-Vow Fiend',
@@ -395,7 +797,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1320,
     bossHp: 420,
     bossDamage: 22,
-    bossDefeatLine: 'Till death... finally tears the veil...',
+    bossDefeatLine: 'Till death... finally shreds the veil... tell Severin no refunds...',
     rewardGold: 360,
     rewardStatPoints: 4,
     rewardStarStones: 3,
@@ -403,9 +805,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_04_plague_apothecary',
     index: 4,
-    title: 'Bitter Marrow Tonic',
+    title: 'Dr. Gideon’s Totally Legal Energy Tonic',
+    storyTheme: 'Isekai MLM Satire · Toxic Capitalism',
+    chapterTitle: 'Act II · Rot Beneath the Altar',
     giverName: 'Sawbones Gideon',
-    giverRoleLabel: 'Alleyway Chirurgeon',
+    giverRoleLabel: 'Back-Alley Influencer Alchemist',
     giverRealm: 'isekai_town',
     giverX: 745,
     coatColor: '#064e3b',
@@ -414,25 +818,154 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_forest',
     twistTriggerKills: 4,
     hookSummary:
-      'A blight boils out of the Outskirts Forest, turning travelers’ veins black — Gideon wants samples to brew an antidote.',
+      'Gideon blames forest monsters for poisoning town ale with "Black Cough Fizz"—suspiciously just in time for his 400G Miracle Cure launch.',
+    conspiracyClue:
+      'Q4 Guild Sales Quota: Gideon spiked Solaris’s cheap tavern barrels himself using cave spores carried by his unpaid intern Malrik.',
     giverOpeningDialogue: [
-      'Three refugees staggered in this morning coughing black tar and clawing their own throats open!',
-      'Cull 4 infected Stalkers in the Outskirts Forest so I can isolate the source before it poisons Solaris Town.',
+      'Hey hey, smash that heal button, Hero! A tragic, totally natural forest blight is making everyone cough black bile!',
+      'Hunt 4 infected prowlers in the Outskirts Forest and stomp out Plague-Bearer Malrik before folks stop buying—uh, before Solaris perishes!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Sawbones Gideon',
+        speakerRole: 'Back-Alley Influencer Alchemist',
+        moodLabel: 'Shaking Neon-Green Beakers',
+        lines: [
+          'What is UP, armored legend! Today’s quest is sponsored by Gideon’s Ultra-Vitality Antidote—only 400G per sip, subscribe and save!',
+          'Some hideous blight blew out of the Outskirts Forest this morning! Totally random! Completely unrelated to the glowing spore-barrels in my cellar!',
+        ],
+        choices: [
+          {
+            id: 'sq4_taste_vial',
+            label: '“Wait... isn’t your ‘Miracle Cure’ literally tavern beer mixed with swamp moss?”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Whoa, watch the defamation suit! It’s artisanal fermented botanical slurry! Here’s 25G—stop sniffing the test tubes!',
+            ],
+            bonusGold: 25,
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq4_ask_intern',
+            label: '“Who’s Malrik? Why does he wear your apothecary apron?”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'M-Malrik?! Just a disgruntled unpaid contractor who ran off into the woods with my proprietary spore censer! Pure coincidence!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq4_ignore_pitch',
+            label: '“Keep your sales pitch. Give me the target count.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Four forest stalkers! And one slightly over-caffeinated intern!',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Sawbones Gideon',
+        speakerRole: 'Back-Alley Influencer Alchemist',
+        moodLabel: 'Waving Punch-Cards',
+        lines: [
+          'Slay 4 beasts in the Outskirts Forest and silence Plague-Bearer Malrik before he blabs to the Health Inspector.',
+          'Also take this coupon: buy nine antidotes, get a free pine coffin!',
+        ],
+        choices: [
+          {
+            id: 'sq4_accept',
+            label: 'Accept Contract — Shut Down the Blight Vector',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Heroic! Remember to smash any bottles labeled "Property of Dr. G."—it’s bad for branding!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Sawbones Gideon',
+        speakerRole: 'Back-Alley Influencer Alchemist',
+        moodLabel: 'Counting Antidote Orders',
+        lines: [
+          'Sales are UP 300% today! Er—I mean, oh no, the terrible tragedy! Did you wipe out Malrik yet?',
+        ],
+        choices: [
+          {
+            id: 'sq4_mid_call',
+            label: '“The forest monsters are literally carrying your wholesale crates.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Supply-chain disruption! Clearly bandits hijacked my wellness delivery! Go kill Malrik already!',
+            ],
+          },
+          {
+            id: 'sq4_mid_leave',
+            label: '“Back to the hunt.”',
+            tone: 'accept',
+            npcReply: ['Stay hydrated! Preferably with my 400G tonic!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Sawbones Gideon',
+        speakerRole: 'Exposed Plague Profiteer',
+        moodLabel: 'Packing His Suitcase Fast',
+        lines: [
+          'Okay, fine! Yes, I poisoned the town well so I could hit Diamond-Tier Guild Pharmacist before Q4 closed!',
+          'Blame the Crown’s absurd potion taxes! At least Malrik finally got out of his unpaid internship—permanently!',
+        ],
+        choices: [
+          {
+            id: 'sq4_extort',
+            label: '“Cut me in for 65G or I feed you a whole crate of your own spore-ale.”',
+            tone: 'extort',
+            bonusGold: 65,
+            markConfronted: true,
+            npcReply: [
+              'Sixty-five gold! Wire transfer complete! Just don’t leave a one-star review at the Guild Hall!',
+            ],
+          },
+          {
+            id: 'sq4_punch',
+            label: '“Here’s a free medical tip: fix your own jaw after I leave.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'Yikes! So aggressive! Definitely putting soothing balm on sale next week!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: PATIENT ZERO BY DESIGN',
     twistRevelation:
-      'Gideon spiked Solaris Town’s cheap ale with cave-spore rot so he could sell the antidote at extortionate prices — the "source" is his hired plague carrier.',
+      'Gideon brewed the Black Cough outbreak himself to sell overpriced cures—and sent you to silence Malrik, his unpaid intern carrying the spore-censer.',
     twistDialogue: [
-      'Every flask strapped to the fallen forest stalkers bears Gideon’s crimson apothecary stamp!',
-      'Plague-Bearer Malrik erupts from the brush, swinging an infected censer: "Nobody stops Sawbones’ harvest!"',
+      'Every poison flask strapped to the fallen beasts carries Gideon’s smiling wax sticker: "Drink Twice Daily For Best Panic!"',
+      'Plague-Bearer Malrik staggers out swinging a smoking censer: "He promised me college credit for this! NOBODY STOPS MY INTERNSHIP!"',
     ],
     bossName: 'Plague-Bearer Malrik',
-    bossTitle: 'Walking Blight Vector',
+    bossTitle: 'Unpaid Blight Intern',
     bossArchetype: 'bandit_pyromancer',
     bossSpawnX: 1840,
     bossHp: 450,
     bossDamage: 24,
-    bossDefeatLine: 'Drink... the well water... Gideon already poured it...',
+    bossDefeatLine: 'Tell Gideon... I expect... overtime pay in hell...',
     rewardGold: 410,
     rewardStatPoints: 4,
     rewardStarStones: 3,
@@ -440,9 +973,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_05_hollow_bell',
     index: 5,
-    title: 'Tolling of the Hollow Bell',
+    title: 'Friendly Fire & Feather-Brained Scouts',
+    storyTheme: 'Eminence in Shadow Vibes · Traitor Captain',
+    chapterTitle: 'Act II · Rot Beneath the Altar',
     giverName: 'Ranger Lyra',
-    giverRoleLabel: 'Bloodied Forest Tracker',
+    giverRoleLabel: 'Suspiciously Unscratched Scout Captain',
     giverRealm: 'outskirts_forest',
     giverX: 290,
     coatColor: '#14532d',
@@ -451,17 +986,146 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_forest',
     twistTriggerKills: 5,
     hookSummary:
-      'Lyra’s squad was ambushed near the moss cliffs by goblin raiders wearing stolen royal tabards.',
+      'Lyra clutches tomato-stained bandages claiming her entire scout squad fell into goblin snares—while wearing brand-new Demon-Steel boots.',
+    conspiracyClue:
+      'Smuggler Manifest: Lyra sold her squad’s patrol routes and Solaris Gate master keys to Hobgoblin War-Ringer Grakthar in exchange for rare raid loot.',
     giverOpeningDialogue: [
-      'My scout company walked into ironwire snares while mapping the eastern trail — only I crawled out with half a quiver!',
-      'Clear 5 raiders out of the Outskirts Forest and track down the Hobgoblin War-Ringer mocking us with our captain’s bell.',
+      'Oh, the carnage! Hobgoblins blew our own ambush whistle and butchered twelve brave scouts while I heroically tripped backwards out of harm’s way!',
+      'Slay 5 forest raiders and silence War-Ringer Grakthar before he rings my poor captain’s skull like a dinner bell!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Ranger Lyra',
+        speakerRole: 'Suspiciously Unscratched Scout Captain',
+        moodLabel: 'Admiring Shiny New Boots',
+        lines: [
+          'Alas, woe, and unspeakable trauma! My whole platoon was wiped out by ironwire traps just east of here!',
+          'I barely crawled back! Look at my bandages—so red! Ignore the faint aroma of marinara sauce, please, that’s forest sap.',
+        ],
+        choices: [
+          {
+            id: 'sq5_inspect_boots',
+            label: '“Those are Demon-Forged Sabatons. Where does an F-Rank ranger afford those?”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 30,
+            npcReply: [
+              'F-found them in a bush! Totally legal loot drop! Look, take 30G and don’t ask why they have Hobgoblin size tags!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq5_sniff_bandage',
+            label: '“...Is that oregano on your ‘mortal shoulder wound’?”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'IT’S MEDICINAL HERBS! Stop leaning in like a bloodhound! Go kill 5 raiders in these woods right now!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq5_nod',
+            label: '“Tell me where Grakthar camps. Nothing else matters.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Deep east in the timberline! Just smash him hard enough that he stops screaming things about "the green-cloak trade deal."',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Ranger Lyra',
+        speakerRole: 'Suspiciously Unscratched Scout Captain',
+        moodLabel: 'Adjusting Gold Whistle',
+        lines: [
+          'Eliminate 5 forest enemies to draw out War-Ringer Grakthar near the eastern cavern trail.',
+          'Do not listen to anything a hobgoblin yells in broken Common. They’re notorious gossips.',
+        ],
+        choices: [
+          {
+            id: 'sq5_accept',
+            label: 'Accept Contract — Hunt War-Ringer Grakthar',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'May fortune smile upon you! I’ll stand bravely right here by the exit gate!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Ranger Lyra',
+        speakerRole: 'Suspiciously Unscratched Scout Captain',
+        moodLabel: 'Hiding Gold Whistle Behind Back',
+        lines: [
+          'Still hacking through the brush? Any luck silencing—I mean avenging—my beloved squadmates?',
+        ],
+        choices: [
+          {
+            id: 'sq5_mid_whistle',
+            label: '“Found a half-chewed Hobgoblin receipt signed ‘Little Green Bird.’”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Could be ANY green-cloaked ranger with immaculate hair and a gold whistle! Kill Grakthar before he ruins my promotion!',
+            ],
+          },
+          {
+            id: 'sq5_mid_go',
+            label: '“Almost done.”',
+            tone: 'accept',
+            npcReply: ['Hurry! Before the birds start singing my—their—dirge!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Ranger Lyra',
+        speakerRole: 'Boot-Obsessed Squad Traitor',
+        moodLabel: 'Dropping the Fake Limp',
+        lines: [
+          'Alright, yes! I tipped Grakthar off so my meddling squad couldn’t tattle on my smuggling! Have you seen the stats on these boots? +18% movement speed!',
+          'Besides, those scouts kept humming marching songs out of tune. Honestly I did the forest’s acoustics a favor.',
+        ],
+        choices: [
+          {
+            id: 'sq5_extort',
+            label: '“Pay the betrayal tax—70G, or your shinbones won’t fit those boots.”',
+            tone: 'extort',
+            bonusGold: 70,
+            markConfronted: true,
+            npcReply: [
+              'Gah! Fine, take the gold! Not the ankles—the leather barely broke in!',
+            ],
+          },
+          {
+            id: 'sq5_roast',
+            label: '“Sold twelve comrades for footwear. Even goblins think you’re trash.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'At least I’m fast trash! Don’t look at me like that, you spooky psycho!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: THE TRAITOR’S WHISTLE',
     twistRevelation:
-      'Lyra cut her own forearm and blew the snare whistle to purge her whistleblowing squadmates before they reported her smuggling Demon Realm iron.',
+      'Lyra faked her wounds and blew the snare whistle herself—purging her whistleblowing platoon so Grakthar would pay her in Demon-Steel raid gear.',
     twistDialogue: [
-      'A goblin corpse clutches a gold-inlaid scout whistle — identical to the one hanging inside Lyra’s cloak!',
-      'War-Ringer Grakthar slams his spiked maul: "Green-cloak girl sold soft knights cheap!"',
+      'A goblin corpse clutches a gilded Solaris whistle engraved "CAPTAIN LYRA · NO REFUNDS ON DEAD SCOUTS"!',
+      'War-Ringer Grakthar slams his spiked maul down: "Green-cloak girl sold soft knights for shiny boots! You next!"',
     ],
     bossName: 'War-Ringer Grakthar',
     bossTitle: 'Iron-Snare Hobgoblin Tyrant',
@@ -469,7 +1133,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1980,
     bossHp: 490,
     bossDamage: 25,
-    bossDefeatLine: 'Little ranger... lied to... both of us...',
+    bossDefeatLine: 'Little ranger... cheated BOTH tribes... watch your back...',
     rewardGold: 460,
     rewardStatPoints: 4,
     rewardStarStones: 3,
@@ -477,9 +1141,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_06_twin_fang_oath',
     index: 6,
-    title: 'The Twin-Fang Blood Oath',
+    title: 'Brother of the Year Award',
+    storyTheme: 'Dark Tragedy × Petty Fraud',
+    chapterTitle: 'Act III · Graves in the Basalt',
     giverName: 'Sellsword Thorne',
-    giverRoleLabel: 'One-Armed Deserter',
+    giverRoleLabel: 'Dramatically Limping Deserter',
     giverRealm: 'outskirts_forest',
     giverX: 1080,
     coatColor: '#3f3f46',
@@ -488,17 +1154,146 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_caves',
     twistTriggerKills: 4,
     hookSummary:
-      'Thorne asks you to kill his estranged brother inside the Outskirts Caves for abandoning their garrison.',
+      'Thorne begs you to execute his "cowardly twin" Garret inside the Outskirts Caves—suspiciously keeping one arm tucked tightly inside a huge coat.',
+    conspiracyClue:
+      'Military Fraud Dossier: Garret held the cavern choke point alone for 72 hours while Thorne bolted, faked a missing arm by tucking it in his shirt, and stole Garret’s medal.',
     giverOpeningDialogue: [
-      'My brother took our twin heirloom blades and fled into the Outskirts Caves when the demons struck.',
-      'Carve through 4 cave fiends and execute the coward Garret before he sells his soul deeper underground!',
+      'Ugh... my phantom limb aches whenever I think of my treacherous twin Garret stealing our swords and fleeing into the Outskirts Caves!',
+      'Slice through 4 cave fiends and end that dishonorable rat Garret so my tragic backstory stays clean!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Sellsword Thorne',
+        speakerRole: 'Dramatically Limping Deserter',
+        moodLabel: 'Tucking Left Arm Inside Jacket',
+        lines: [
+          'Spare a thought for a broken hero, Knight! When monsters flooded the caves, my twin brother Garret abandoned me to lose my arm and fled like a dog!',
+          'Every month I barely scrape by on Solaris’s royal disability pension, haunted by his betrayal...',
+        ],
+        choices: [
+          {
+            id: 'sq6_poke_coat',
+            label: '*Notice his "empty" left sleeve twitching and holding a meat pie inside his coat*',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Gah! That’s—that’s a phantom muscle spasm! Stop staring at my chest pastry! Nobody ever checks under a war hero’s cape!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq6_ask_garrison',
+            label: '“If Garret ran away into the deeper caves, how did you reach the exit before him?”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 35,
+            npcReply: [
+              'Pure heroic agility! Look, take 35G, enter the Outskirts Caves, and make sure Garret doesn’t talk to any Guild clerks!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq6_cold',
+            label: '“I’ll hunt Garret down. Family drama pays well enough.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Spoken like a true professional! Just aim straight for his vocal cords first!',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Sellsword Thorne',
+        speakerRole: 'Dramatically Limping Deserter',
+        moodLabel: 'Swallowing Crust Nervously',
+        lines: [
+          'Cut down 4 cave abominations in the Outskirts Caves to flush Garret out of the crypt gallery.',
+          'Bring peace to my—cough—tragic, one-armed existence.',
+        ],
+        choices: [
+          {
+            id: 'sq6_accept',
+            label: 'Accept Contract — Enter the Caves for Garret',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Bless you! Tell him his brother sends... a really tight hug of steel!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Sellsword Thorne',
+        speakerRole: 'Dramatically Limping Deserter',
+        moodLabel: 'Quickly Hiding Both Hands',
+        lines: [
+          'You’re back! Did Garret put up much of a fight, or did he crumble like the coward I told the tavern he was?',
+        ],
+        choices: [
+          {
+            id: 'sq6_mid_expose',
+            label: '“You used BOTH hands to clap when I walked up, Thorne.”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'SHHH!! Keep your voice down, the Guild pension officer walks by at noon! Go finish him in the caves!',
+            ],
+          },
+          {
+            id: 'sq6_mid_go',
+            label: '“Going back underground now.”',
+            tone: 'accept',
+            npcReply: ['Yes, deep underground! Far away from witnesses!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Sellsword Thorne',
+        speakerRole: 'Two-Armed Pension Fraud',
+        moodLabel: 'Drops Coat Revealing Both Arms',
+        lines: [
+          'Okay, fine! Both my arms work great! Can you blame me? Garret wanted to "die honorably" holding the cave mouth while I realized living with free tavern meals is way better!',
+          'He came back as an undead cursed specter anyway—honestly, freeing him from eternity in those damp caves was doing him a solid!',
+        ],
+        choices: [
+          {
+            id: 'sq6_extort',
+            label: '“75G hush money—or I tell the tavern how Garret actually died.”',
+            tone: 'extort',
+            bonusGold: 75,
+            markConfronted: true,
+            npcReply: [
+              'Take the pension check! May Garret’s ghost haunt someone with a smaller sword!',
+            ],
+          },
+          {
+            id: 'sq6_honor',
+            label: '“Garret died a hero. You’re just a worm wearing his ribbon.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'A worm with two working thumbs and no funeral bill, pal! Stay out of my woods!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: THE SEVERED ARM’S DEBT',
     twistRevelation:
-      'Garret stayed behind holding the cave mouth for three days so Thorne could escape — Thorne took the credit, blamed Garret as a deserter, and wants him silenced forever.',
+      'Garret held the cave mouth alone for three days so Thorne could live—Thorne framed him as a traitor, faked a missing arm for pension gold, and sent you to erase the ghost.',
     twistDialogue: [
-      'Torn garrison banners line the cavern floor — Garret held this choke point alone while Thorne ran!',
-      'Phantom Duelist Garret raises a jagged phantom blade: "Did my brother tell you whose blood bought his pension?!"',
+      'A ring of shattered crypt shields marks Garret’s last stand—carved in stone: "HOLD THE LINE UNTIL THORNE REACHES SUNLIGHT."',
+      'Garret the Betrayed materializes in spectral mail, blade trembling: "Did my brother show you his tucked-in sleeve before sending you to murder me?!"',
     ],
     bossName: 'Garret the Betrayed',
     bossTitle: 'Vengeful Garrison Specter',
@@ -506,7 +1301,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1460,
     bossHp: 540,
     bossDamage: 27,
-    bossDefeatLine: 'Tell Thorne... my watch... is finally over...',
+    bossDefeatLine: 'Tell Thorne... my watch... is finally over... coward...',
     rewardGold: 520,
     rewardStatPoints: 5,
     rewardStarStones: 4,
@@ -514,9 +1309,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_07_ash_archivist',
     index: 7,
-    title: 'Codex of Flayed Ink',
+    title: 'Terms & Conditions Apply (In Blood)',
+    storyTheme: 'Overlord Horror · Fine-Print Soul Trap',
+    chapterTitle: 'Act III · Graves in the Basalt',
     giverName: 'Archivist Vesper',
-    giverRoleLabel: 'Burned Royal Scribe',
+    giverRoleLabel: 'Charred Royal Librarian',
     giverRealm: 'outskirts_forest',
     giverX: 1790,
     coatColor: '#4c1d95',
@@ -525,25 +1322,154 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_caves',
     twistTriggerKills: 5,
     hookSummary:
-      'Heretics stole a royal grimoire from Vesper’s wagon and retreated into the dark basalt shafts.',
+      'Vesper claims lunatic pyromaniacs stole Solaris’s beloved "Town Recipe Book"—which happens to groan softly when opened.',
+    conspiracyClue:
+      'The Solaris Waiver Secret: Every "F-Rank Adventurer Registration" signed in town secretly binds the signer’s skin & soul into Vesper’s Summoning Codex.',
     giverOpeningDialogue: [
-      'My face was blistered when cinder-cultists torched my archive coach and carried the Solar Codex into the caves!',
-      'Destroy 5 cavern fiends and slay High Censor Morvath before he transcribes the forbidden seal.',
+      'Tragedy! Vandal-cultists torched my bookmobile and carried Solaris’s precious Municipal Recipe Book into the Outskirts Caves!',
+      'Purge 5 cave fiends and execute High Censor Morvath before he burns—uh, ruins—all our favorite grandma soup recipes!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Archivist Vesper',
+        speakerRole: 'Charred Royal Librarian',
+        moodLabel: 'Polishing Soot-Blackened Monocle',
+        lines: [
+          'Ah, a literate—or at least sharp-sworded—adventurer! You signed the Solaris Guild F-Rank Waiver when you arrived, didn’t you?',
+          'Wonderful! Well, tiny crisis: a violent madman named High Censor Morvath stole our harmless town registry and plans to burn every single page in the caves!',
+        ],
+        choices: [
+          {
+            id: 'sq7_ask_waiver',
+            label: '“Wait... why was Section 12 of the F-Rank Waiver about ‘Post-Mortem Parchment Binding’?”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 40,
+            npcReply: [
+              'Oh, legal boilerplate! Nobody reads Terms & Conditions in an Isekai! Here is 40G—stop remembering fine print and go kill Morvath!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq7_ask_book_noise',
+            label: '“Why did your spare notebook just whisper ‘Please moisturize me’?”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Humidity! Old sheepskin creaks horribly in forest air! Definitely sheepskin! Not taxpayers!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq7_accept_fast',
+            label: '“Just tell me what Morvath looks like.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Tall robes, fire spells, screaming about "saving the rookies from the census." Clearly unhinged.',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Archivist Vesper',
+        speakerRole: 'Charred Royal Librarian',
+        moodLabel: 'Tapping Flesh-Bound Cover',
+        lines: [
+          'Destroy 5 monsters in the Outskirts Caves and retrieve the Solar Codex from High Censor Morvath.',
+          'Do try not to spill any more blood on Page 42—that’s where your own name is inked.',
+        ],
+        choices: [
+          {
+            id: 'sq7_accept',
+            label: 'Accept Contract — Recover the Stolen Codex',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Splendid! Remember, overdue library books carry a penalty of eternal torment!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Archivist Vesper',
+        speakerRole: 'Charred Royal Librarian',
+        moodLabel: 'Flipping Screaming Pages',
+        lines: [
+          'Have you rescued my priceless literary masterpiece from that arsonist lunatic yet?',
+        ],
+        choices: [
+          {
+            id: 'sq7_mid_burn',
+            label: '“Morvath’s cultists say the book is made out of dead town clerks.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Slander! Mostly out-of-state bandits and three rude tax auditors! Finish the job before he turns the whole census to ash!',
+            ],
+          },
+          {
+            id: 'sq7_mid_go',
+            label: '“Heading back down.”',
+            tone: 'accept',
+            npcReply: ['Mind the soot!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Archivist Vesper',
+        speakerRole: 'Occult Bureaucracy Mastermind',
+        moodLabel: 'Unblinking Cold Smirk',
+        lines: [
+          'Congratulations—you killed the one hero crazy enough to burn my summoning ledger! Honestly, Morvath was terrible for town property values anyway.',
+          'Don’t worry about your own signature on Page 42. As long as you survive every Demon King, nobody comes knocking to peel your warranty!',
+        ],
+        choices: [
+          {
+            id: 'sq7_extort',
+            label: '“Scratch my name off Page 42 and hand over 85G right now.”',
+            tone: 'extort',
+            bonusGold: 85,
+            markConfronted: true,
+            npcReply: [
+              'Erased and paid in full! Pleasure striking you from the necrotic census, Hero!',
+            ],
+          },
+          {
+            id: 'sq7_threat',
+            label: '“Next library fire in Solaris is going to start on your beard.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'Noted under "Violent Customer Feedback." Good day, Knight.',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: THE CODEX WRITTEN ON SKIN',
     twistRevelation:
-      'The "Solar Codex" isn’t a history book — it is a sacrificial summoning ledger authored by Vesper himself to feed Solaris citizens to a Demon Tank.',
+      'The stolen grimoire is Vesper’s soul-harvesting Adventurer Waiver bound in human hide—and "heretic" Morvath stole it specifically to burn Solaris’s curse to ash!',
     twistDialogue: [
-      'Pages torn from the stolen codex show Solaris Town’s census bound inside tanned human parchment in Vesper’s handwriting!',
-      'High Censor Morvath ignites the cavern: "At least I burned that monster’s script — now die with the secret!"',
+      'A half-burned page blows across the cavern stone—bound in human skin bearing your own F-Rank Adventurer signature!',
+      'High Censor Morvath ignites his flames: "You fool! I was trying to BURN that monster’s census—now I have to cut through YOU first!"',
     ],
     bossName: 'High Censor Morvath',
-    bossTitle: 'Heretic Flame Judge',
+    bossTitle: 'Renegade Ledger-Burner',
     bossArchetype: 'cultist_mage',
     bossSpawnX: 1620,
     bossHp: 580,
     bossDamage: 29,
-    bossDefeatLine: 'Burn Vesper’s library... before the last page turns...',
+    bossDefeatLine: 'Burn Vesper’s archive... before Page 42... calls your soul...',
     rewardGold: 590,
     rewardStatPoints: 5,
     rewardStarStones: 4,
@@ -551,9 +1477,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_08_chained_hound',
     index: 8,
-    title: 'Blood for the Chained Hound',
+    title: 'Hazard Pay & OSHA Violations',
+    storyTheme: 'Made in Abyss Dread · Union Busting Horror',
+    chapterTitle: 'Act III · Graves in the Basalt',
     giverName: 'Miner Balthus',
-    giverRoleLabel: 'Half-Blinded Pit Foreman',
+    giverRoleLabel: 'Soot-Faced Pit Foreman',
     giverRealm: 'outskirts_caves',
     giverX: 250,
     coatColor: '#78350f',
@@ -562,17 +1490,146 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_caves',
     twistTriggerKills: 5,
     hookSummary:
-      'A cave-in trapped Balthus’s crew behind feral cavern gargoyles — he pleads for someone strong to break through.',
+      'Balthus claims a tragic "natural rockfall" trapped twelve miners—while hurriedly stuffing blasting fuses and life-insurance claims into his hardhat.',
+    conspiracyClue:
+      'Basalt Shaft Ledger: Twelve miners discovered cursed weeping quartz beneath Solaris and tried to unionize; Balthus collapsed the shaft from outside and fed them to Obsidian Maw.',
     giverOpeningDialogue: [
-      'Twelve miners are coughing in the dark behind that basalt collapse while winged stone beasts tear at the timber props!',
-      'Smash 5 beasts inside the Outskirts Caves and butcher the Obsidian Maw guarding the lower shaft.',
+      'Oh, sweet merciful stone! Twelve hard-working lads got sealed behind that collapse by an entirely unpredictable, non-negligent ceiling slip!',
+      'Crush 5 cave beasts and slay the Obsidian Maw Ravager blocking the rescue shaft—and definitely ignore the sulfur smell on my boots!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Miner Balthus',
+        speakerRole: 'Soot-Faced Pit Foreman',
+        moodLabel: 'Hiding Blasting Plunger Behind Barrel',
+        lines: [
+          'Thank the mountain, a rescue knight! Twelve brave miners are trapped past this cavern bend—no food, no light, and giant rock gargoyles snapping at their toes!',
+          'It was a 100% Act of God! Completely covered under Solaris Mining Act Clause 9—meaning zero liability for management!',
+        ],
+        choices: [
+          {
+            id: 'sq8_ask_soot',
+            label: '“Why are blast caps and fresh detonator wire piled on THIS side of the rubble?”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 45,
+            npcReply: [
+              'S-standard emergency tunnel-clearing gear! Just pointed backwards by accident! Look, take 45G—stop inspecting OSHA violations in a dungeon!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq8_hear_voices',
+            label: '“Wait... is that red crystal humming in a sad old man’s voice?”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Heh, yeah, the cursed quartz mimics dead relatives. Great resale value with noble collectors! Just don’t ask how it gets "charged."',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq8_ready',
+            label: '“I’ll clear the beasts and smash the Obsidian Maw.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Now that’s the can-do hustle spirit Solaris appreciates!',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Miner Balthus',
+        speakerRole: 'Soot-Faced Pit Foreman',
+        moodLabel: 'Nervous Thumbs-Up',
+        lines: [
+          'Smash 5 monsters inside the Outskirts Caves and put down the Obsidian Maw Ravager in the lower gallery.',
+          'If you find twelve union picket signs in the rubble... kick them into a lava crack.',
+        ],
+        choices: [
+          {
+            id: 'sq8_accept',
+            label: 'Accept Contract — Clear the Collapsed Shaft',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Heroic! Remember—any survivors who demand back-pay count as hostile mimics!',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Miner Balthus',
+        speakerRole: 'Soot-Faced Pit Foreman',
+        moodLabel: 'Sweating Under Helmet',
+        lines: [
+          'Did the gargoyle finish—er, did you reach the trapped boys behind the obsidian vault yet?',
+        ],
+        choices: [
+          {
+            id: 'sq8_mid_call',
+            label: '“There aren’t twelve survivors, Balthus. Those red crystals are bleeding.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Gah! Just smash the Obsidian Maw before those crystals scream loud enough to reach town!',
+            ],
+          },
+          {
+            id: 'sq8_mid_go',
+            label: '“Going back in.”',
+            tone: 'accept',
+            npcReply: ['Watch your head! Ceilings around here get... surprisingly explosive!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Miner Balthus',
+        speakerRole: 'Exposed Cave-In Killer',
+        moodLabel: 'Clutching Insurance Papers',
+        lines: [
+          'They wanted weekends off AND hazard dental! Do you know what weekends cost when the Crown demands three tons of screaming blood-quartz a week?!',
+          'At least you shattered the Maw so nobody can dig up the skeletons. Want a job as Assistant Pit Foreman? Great dental—just don’t strike!',
+        ],
+        choices: [
+          {
+            id: 'sq8_extort',
+            label: '“90G severance pay for the dead crew—into MY pocket, right now.”',
+            tone: 'extort',
+            bonusGold: 90,
+            markConfronted: true,
+            npcReply: [
+              'Take the ninety gold! Keep your pickaxe out of my teeth!',
+            ],
+          },
+          {
+            id: 'sq8_curse',
+            label: '“Listen closely next time the red stone whispers, Foreman. They remember you.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'Shut up! Rocks don’t remember faces! Stop saying creepy things in the dark!',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: SEALED BY THE FOREMAN',
     twistRevelation:
-      'There were no survivors to rescue — Balthus intentionally detonated the supports to bury twelve union miners who discovered his cursed blood-stone vein.',
+      'There were never survivors to save—Balthus dynamited the exit from outside to bury twelve unionizing miners and harvest their sorrow inside cursed blood-quartz.',
     twistDialogue: [
-      'Blasting caps and iron wedges sit on the outside of the rubble — someone sealed those twelve men in from here!',
-      'Obsidian Maw Ravager drops from the vault ceiling, jaws dripping with red quartz!',
+      'Twelve charred union helmets sit behind OUTSIDE-facing blast caps—someone buried those miners alive for the red quartz!',
+      'Obsidian Maw Ravager plunges from the vault screaming in twelve overlapping human voices!',
     ],
     bossName: 'Obsidian Maw Ravager',
     bossTitle: 'Cursed Vein Gargoyle Alpha',
@@ -580,7 +1637,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1760,
     bossHp: 640,
     bossDamage: 31,
-    bossDefeatLine: '*Shatters into twelve weeping crimson shards*',
+    bossDefeatLine: '*Shatters into twelve weeping crimson shards whispering Balthus’s name*',
     rewardGold: 660,
     rewardStatPoints: 5,
     rewardStarStones: 4,
@@ -588,9 +1645,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_09_velvet_gallows',
     index: 9,
-    title: 'Sermon of the Velvet Gallows',
+    title: 'Internal Affairs (Axe Edition)',
+    storyTheme: 'Dark Souls × Sinister Corporate HR',
+    chapterTitle: 'Act IV · The Crown’s Dirty Hands',
     giverName: 'Inquisitor Mireille',
-    giverRoleLabel: 'Crimson Judiciary Envoy',
+    giverRoleLabel: 'Velvet Judiciary Envoy',
     giverRealm: 'outskirts_caves',
     giverX: 760,
     coatColor: '#9f1239',
@@ -599,17 +1658,146 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_caves',
     twistTriggerKills: 6,
     hookSummary:
-      'Mireille hunts a bloodthirsty executioner who turned the deep gallery into an open slaughterhouse.',
+      'Polite, smiling Mireille hires you to "quietly downsize" a rogue executioner who supposedly went mad—despite every warrant bearing her perfume.',
+    conspiracyClue:
+      'Judicial Cleanup Order: Cassian tortured Solaris’s Ledger whistleblowers under Mireille’s direct orders; now Mireille outsources you to silence Cassian before trial.',
     giverOpeningDialogue: [
-      'The Crown ordered me to purge an apostate executioner hiding in the deep caverns with stolen demon lightning.',
-      'Cut down 6 cave monsters and put Lord Hangman Cassian in his own iron collar!',
+      'Good evening, dear Hero. The Crown’s Judiciary needs a quiet, decisive contractor to resolve an unfortunate... HR misunderstanding down here.',
+      'Eliminate 6 cave horrors and gently retire Lord Hangman Cassian before his wild accusations embarrass respectable nobles.',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Inquisitor Mireille',
+        speakerRole: 'Velvet Judiciary Envoy',
+        moodLabel: 'Sipping Tea Beside Gallows Hooks',
+        lines: [
+          'How refreshing—an Otherworlder who doesn’t faint at bloodstains! Our former Chief Executioner, Lord Hangman Cassian, appears to have gone terribly off-script.',
+          'The Crown strictly forbids unauthorized torture chambers. Naturally, the fact that this chamber has Crown chandeliers and velvet upholstery is purely ironic.',
+        ],
+        choices: [
+          {
+            id: 'sq9_ask_perfume',
+            label: '“Those execution logs on the table smell like your exact rosewater perfume.”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 50,
+            npcReply: [
+              'How observant—and perilous—of you! Take 50G for noticing scents, and remember that curiosity tends to shorten necks in Solaris.',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq9_ask_hr',
+            label: '“So I’m basically an outsourced corporate hitman for the royal court?”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'We prefer "Independent Conflict Resolution Specialist," darling. Much sleeker on tax filings.',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq9_cold',
+            label: '“Name the count and get out of my swing radius.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Crisp. Efficient. Six horrors, then Cassian himself.',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Inquisitor Mireille',
+        speakerRole: 'Velvet Judiciary Envoy',
+        moodLabel: 'Smiling Without Blinking',
+        lines: [
+          'Cut down 6 subterranean monsters and liquidate Lord Hangman Cassian in the deep gallery.',
+          'Try not to read his desk diary. It’s frightfully dull—just names, dates, and my signature.',
+        ],
+        choices: [
+          {
+            id: 'sq9_accept',
+            label: 'Accept Contract — Silence Lord Hangman Cassian',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Lovely. The Judiciary deeply values contractors who finish jobs and ask zero follow-up questions.',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Inquisitor Mireille',
+        speakerRole: 'Velvet Judiciary Envoy',
+        moodLabel: 'Filing Nails With Stiletto',
+        lines: [
+          'Still breathing, Hero? Tell me Cassian’s lightning hasn’t curled your helmet plume yet.',
+        ],
+        choices: [
+          {
+            id: 'sq9_mid_warrant',
+            label: '“Found twenty arrest warrants signed ‘Mireille’ for people who tried to leave Solaris.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Every paradise needs border control, darling. Go finish silencing him before he shouts our prince’s name too!',
+            ],
+          },
+          {
+            id: 'sq9_mid_go',
+            label: '“On my way.”',
+            tone: 'accept',
+            npcReply: ['Do mind the velvet ropes.'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Inquisitor Mireille',
+        speakerRole: 'Royal Cleanup Architect',
+        moodLabel: 'Cold Aristocratic Amusement',
+        lines: [
+          'Bravo! Truly, hiring the unsuspecting hero to purge our own executioner was my cleanest fiscal quarter yet.',
+          'Cassian wept when he realized his beloved Lady Mireille tossed him in the shredder. You won’t be next, Hero... provided you stay useful to Prince Alistair.',
+        ],
+        choices: [
+          {
+            id: 'sq9_extort',
+            label: '“Double my severance—100G, or I pin your signed warrants to the Guild Board.”',
+            tone: 'extort',
+            bonusGold: 100,
+            markConfronted: true,
+            npcReply: [
+              'Oh, I adore greed—it’s so wonderfully predictable. Here is 100G. Now go ask Prince Alistair down the tunnel about his "father."',
+            ],
+          },
+          {
+            id: 'sq9_defy',
+            label: '“Keep your silk gloves clean while you can. I’m coming for the throne next.”',
+            tone: 'ruthless',
+            bonusStatPoints: 1,
+            markConfronted: true,
+            npcReply: [
+              'How theatrical! Go march down to Prince Alistair’s camp then—see what rots at the bottom of Solaris.',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: THE CROWN’S CLEANUP BLADE',
     twistRevelation:
-      'Cassian WAS Mireille’s loyal torture-master — she ordered every prisoner murdered and now uses you to liquidate Cassian so no royal court can testify.',
+      'Cassian murdered Solaris whistleblowers on Mireille’s direct orders—she hired you purely as a disposable hitman to erase her own executioner before testimony.',
     twistDialogue: [
-      'Cassian’s gallows warrants carry Mireille’s own gilded dagger signature beside every prisoner number!',
-      'Hangman Cassian crackles with violet arcs: "So Mireille sent an outsider to chop off her own right hand?!"',
+      'A ledger of gallows warrants flutters free—every single death sentence bears Mireille’s gilded rose-dagger seal!',
+      'Lord Hangman Cassian crackles with purple lightning: "So Mireille finally hired an outsider to chop off her own right hand?!"',
     ],
     bossName: 'Lord Hangman Cassian',
     bossTitle: 'Tempest Gallows Executioner',
@@ -617,7 +1805,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 1900,
     bossHp: 710,
     bossDamage: 33,
-    bossDefeatLine: 'Watch your throat... knight... Mireille keeps sharp velvet...',
+    bossDefeatLine: 'Watch your throat... knight... Mireille’s velvet strangles tightest...',
     rewardGold: 740,
     rewardStatPoints: 6,
     rewardStarStones: 5,
@@ -625,9 +1813,11 @@ export const SIDE_QUESTS: SideQuestDef[] = [
   {
     id: 'sq_10_pale_regent',
     index: 10,
-    title: 'Throne of the Pale Regent',
+    title: 'Long Live the King (Terms Unclear)',
+    storyTheme: 'Dark Isekai Finale · Patricide Conspiracy',
+    chapterTitle: 'Act IV · The Crown’s Dirty Hands',
     giverName: 'Prince Alistair the Exiled',
-    giverRoleLabel: 'Hooded Royal Heir',
+    giverRoleLabel: 'Weeping Pretty-Boy Heir',
     giverRealm: 'outskirts_caves',
     giverX: 1210,
     coatColor: '#1e1b4b',
@@ -636,17 +1826,146 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     targetRealm: 'outskirts_caves',
     twistTriggerKills: 6,
     hookSummary:
-      'The exiled prince claims an Abyssal Usurper poisoned his father’s bloodline and nested inside the deepest cave.',
+      'Exiled Prince Alistair gives a tearful anime monologue blaming an Abyssal Monster for poisoning his father—while hiding an empty violet poison vial.',
+    conspiracyClue:
+      'THE SOLARIS LEDGER FINALE: Prince Alistair poisoned the Old King, institutionalized corruption through Kaelen, Vesper, and Mireille, and framed the King’s mutated loyal champion Vane-Rex!',
     giverOpeningDialogue: [
-      'My father’s crown was stolen by a demon warlord hiding beneath these caves — only his heart can cleanse Solaris Town!',
-      'Slay 6 cave fiends to draw out Dread Usurper Behemoth and reclaim the murdered king’s honor!',
+      'O noble hero of another world! Behold my tragic hair and sorrowful prince cape—a monstrous Dread Usurper poisoned my saintly father and drove me down here!',
+      'Slay 6 abyssal fiends and put down Dread Champion Vane-Rex so I may claim—uh, cleanse—my father’s devastated throne!',
+    ],
+    openingNodes: [
+      {
+        id: 'open_1',
+        speaker: 'Prince Alistair the Exiled',
+        speakerRole: 'Weeping Pretty-Boy Heir',
+        moodLabel: 'Practicing Tragic Anime Sighs',
+        lines: [
+          'Hark, brave Champion! Do you hear the sorrowful wind in these dank tunnels? That is the weeping of old Solaris itself!',
+          'A ruthless Abyssal Beast corrupted my father’s wine, devoured the Royal Guard, and forced poor innocent me to oversee... a few regrettable budget measures.',
+        ],
+        choices: [
+          {
+            id: 'sq10_ask_vial',
+            label: '“Then why is an empty violet nightshade vial engraved ‘Alistair’s Special Spice’ at your boots?”',
+            tone: 'investigate',
+            revealClue: true,
+            bonusGold: 60,
+            npcReply: [
+              'Gah—that’s—that’s lavender sleep-drops! For my tragic prince insomnia! Here, 60G—stop looking at my boots and look into my soulful eyes!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq10_connect_ledger',
+            label: '“I read Kaelen, Vesper, and Mireille’s papers. ALL nine dirty jobs led straight to your seal.”',
+            tone: 'quirky',
+            revealClue: true,
+            npcReply: [
+              'Wh-what?! Nobody actually reads side quest lore in this genre! You’re supposed to smash the glowing boss bar and take the Star Stones!',
+            ],
+            nextNodeId: 'open_2',
+          },
+          {
+            id: 'sq10_silent',
+            label: '“Save the speech, Prince. I’ll see what waits at the bottom.”',
+            tone: 'ruthless',
+            npcReply: [
+              'Yes! Go slay that roaring horror before it finishes spelling out my secret in blood on the cavern wall!',
+            ],
+            nextNodeId: 'open_2',
+          },
+        ],
+      },
+      {
+        id: 'open_2',
+        speaker: 'Prince Alistair the Exiled',
+        speakerRole: 'Weeping Pretty-Boy Heir',
+        moodLabel: 'Tightening Royal Cape',
+        lines: [
+          'Cut through 6 cave abominations and defeat Dread Champion Vane-Rex in the deepest vault.',
+          'Everything terrible in Solaris—the taxes, the skin-cloaks, the waivers, the mine collapses—ends once that beast stops roaring.',
+        ],
+        choices: [
+          {
+            id: 'sq10_accept',
+            label: 'Accept Final Contract — Face the Deepest Cavern',
+            tone: 'accept',
+            acceptQuest: true,
+            npcReply: [
+              'Long live Solaris! (And long live plausible deniability!)',
+            ],
+          },
+        ],
+      },
+    ],
+    midQuestNodes: [
+      {
+        id: 'mid_1',
+        speaker: 'Prince Alistair the Exiled',
+        speakerRole: 'Weeping Pretty-Boy Heir',
+        moodLabel: 'Sweating Through Silver Hair',
+        lines: [
+          'You’re still reading clues down there, aren’t you? Just kill the Dread Champion before you hear him talk!',
+        ],
+        choices: [
+          {
+            id: 'sq10_mid_press',
+            label: '“He’s wearing the Old King’s Royal Crest, Alistair. He was the King’s bodyguard.”',
+            tone: 'investigate',
+            revealClue: true,
+            npcReply: [
+              'Fine! Yes! I fed my father nightshade soup and Vane-Rex swallowed a demon core trying to stop me! Finish him anyway—nobody at the palace will believe an Otherworlder!',
+            ],
+          },
+          {
+            id: 'sq10_mid_go',
+            label: '“Back to finish this.”',
+            tone: 'accept',
+            npcReply: ['May the darkest crown endure!'],
+          },
+        ],
+      },
+    ],
+    twistConfrontationNodes: [
+      {
+        id: 'twist_1',
+        speaker: 'Prince Alistair the Exiled',
+        speakerRole: 'Unmasked Patricide Conspirator',
+        moodLabel: 'Dropping the Pretty-Boy Act',
+        lines: [
+          'Hah... so Vane-Rex spilled his lungs out before he fell. Yes, I killed my father, and yes, the entire Solaris Ledger was my funding machine!',
+          'Do you know how expensive it is to keep a bright sunny Isekai town running on top of a Demon Realm? Somebody has to supply the corpses, Hero!',
+        ],
+        choices: [
+          {
+            id: 'sq10_extort',
+            label: '“Pay the Crown War-Chest—150G, and stay hiding in this rat hole forever.”',
+            tone: 'extort',
+            bonusGold: 150,
+            markConfronted: true,
+            npcReply: [
+              'Take the royal bullion! With Vane-Rex gone and you holding the Ledger, Solaris belongs to whichever monster swings harder!',
+            ],
+          },
+          {
+            id: 'sq10_verdict',
+            label: '“I cleared every dirty secret in Solaris. Your reign ends the day I return to Castle.”',
+            tone: 'ruthless',
+            bonusStatPoints: 2,
+            markConfronted: true,
+            npcReply: [
+              'Chilling! Truly, I summoned the wrong kind of protagonist from another world...',
+            ],
+          },
+        ],
+      },
     ],
     twistTitle: 'PLOT TWIST: THE PATRICIDE PRINCE',
     twistRevelation:
-      'Alistair poisoned the Old King himself and forged an oath with the Abyssal Vanguard — the creature in the deep cave was the last loyal Royal Champion mutated while defending the king!',
+      'Alistair poisoned the Old King himself and orchestrated the entire Solaris Ledger conspiracy—Vane-Rex was the King’s last loyal champion mutated while trying to protect the throne!',
     twistDialogue: [
-      'A shattered royal signet bears tooth-marks and Alistair’s own poison vial — the usurper was NEVER the beast!',
-      'Dread Champion Malakor-Vane roars in agony: "ALISTAIR SLAUGHTERED HIS OWN FATHER — SPARE NONE OF HIS LIES!!"',
+      'A cracked royal signet and Alistair’s own nightshade vial rattle against the stone—the entire Solaris conspiracy leads to the Prince’s boot!',
+      'Dread Champion Vane-Rex roars in grief: "ALISTAIR POISONED THE TRUE KING—SPARE NONE OF THAT LIAR’S TALES!!"',
     ],
     bossName: 'Dread Champion Vane-Rex',
     bossTitle: 'Mutated Loyal Shield of Old Solaris',
@@ -654,7 +1973,7 @@ export const SIDE_QUESTS: SideQuestDef[] = [
     bossSpawnX: 2040,
     bossHp: 820,
     bossDamage: 36,
-    bossDefeatLine: 'For the true king... strike down... the lying prince...',
+    bossDefeatLine: 'Tell Solaris... the smiling town... is built on a grave... strike the prince...',
     rewardGold: 980,
     rewardStatPoints: 8,
     rewardStarStones: 6,
@@ -669,9 +1988,59 @@ export function createInitialSideQuestProgress(): Partial<Record<SideQuestId, Si
       kills: 0,
       twistRevealed: false,
       bossSpawned: false,
+      clueUncovered: false,
+      chosenOptionIds: [],
+      confronted: false,
     };
   }
   return out;
+}
+
+export function applySideQuestDialogueChoice(
+  quest: SideQuestDef,
+  prog: SideQuestProgress,
+  choice: SideQuestDialogueChoice,
+): {
+  goldDelta: number;
+  statPointsDelta: number;
+  acceptedNow: boolean;
+  clueNewlyUncovered: boolean;
+} {
+  const seen = prog.chosenOptionIds ?? [];
+  const alreadyChosen = seen.includes(choice.id);
+  if (!alreadyChosen) {
+    prog.chosenOptionIds = [...seen, choice.id];
+  }
+
+  let goldDelta = 0;
+  let statPointsDelta = 0;
+  if (!alreadyChosen) {
+    goldDelta = choice.bonusGold ?? 0;
+    statPointsDelta = choice.bonusStatPoints ?? 0;
+  }
+
+  let clueNewlyUncovered = false;
+  if (choice.revealClue && !prog.clueUncovered) {
+    prog.clueUncovered = true;
+    clueNewlyUncovered = true;
+  }
+
+  let acceptedNow = false;
+  if (choice.acceptQuest && prog.stage === 0) {
+    prog.stage = 1;
+    acceptedNow = true;
+  }
+
+  if (choice.markConfronted) {
+    prog.confronted = true;
+  }
+
+  return {
+    goldDelta,
+    statPointsDelta,
+    acceptedNow,
+    clueNewlyUncovered,
+  };
 }
 
 export function isQuestTargetEnemyKill(
@@ -776,8 +2145,8 @@ export function createSideQuestBossEnemy(
 
 export const DUNGEON_SECTOR_WIDTH = 960;
 
-export const ISEKAI_DAY_SECONDS = 300; // Turns night every 5 minutes (300s)
-export const ISEKAI_NIGHT_SECONDS = 120; // 2 minutes of cozy lit night
+export const ISEKAI_DAY_SECONDS = 180; // Turns night every 3 minutes (180s)
+export const ISEKAI_NIGHT_SECONDS = 90; // 1.5 minutes of cozy lit night
 export const ISEKAI_DAY_NIGHT_PERIOD = ISEKAI_DAY_SECONDS + ISEKAI_NIGHT_SECONDS;
 
 export interface IsekaiDayNightState {
@@ -913,7 +2282,9 @@ export type CaravanTarget =
   | 'demon_realm'
   | 'carriage_escort'
   | 'demon_king_arena'
-  | 'seventeen_demon_kings';
+  | 'seventeen_demon_kings'
+  | 'elf_kingdom'
+  | 'raider_guild';
 
 export interface CaravanParseResult {
   ok: boolean;
@@ -927,13 +2298,52 @@ export function parseCaravanDestination(
   currentRealm: RealmMode,
   guildRank: GuildRank,
   acceptedMissionId: GuildMissionId | null,
+  elfKingdomInvited = false,
 ): CaravanParseResult {
   const q = rawInput.trim().toLowerCase();
   if (!q) {
     return {
       ok: false,
       message:
-        'Type a destination first! (e.g., Goblin Dungeon, Demon Realm, Princess Escort, Demon King Citadel, 17 Demon Kings, or Solaris Town)',
+        'Type a destination first! (e.g., Goblin Dungeon, Elf Kingdom, Demon Realm, Princess Escort, Demon King Citadel, 17 Demon Kings, or Solaris Town)',
+    };
+  }
+
+  if (
+    q.includes('elf') ||
+    q.includes('elven') ||
+    q.includes('aethelgard') ||
+    q.includes('sylvaria') ||
+    q.includes('dinner') ||
+    q.includes('banquet') ||
+    q.includes('feast') ||
+    q.includes('party')
+  ) {
+    if (!elfKingdomInvited) {
+      return {
+        ok: false,
+        message:
+          'Border Ward Sealed! Speak [F] with Royal Elf Herald Thalindor in Solaris Town Plaza first to receive Queen Sylvaria’s Moon-Crest Dinner Invitation.',
+      };
+    }
+    return {
+      ok: true,
+      target: 'elf_kingdom',
+      label: 'Aethelgard Elf Kingdom',
+      message: 'Moon-Crest Seal verified! Riding the Silver-Bough Highway to the Elf Kingdom Dinner Party!',
+    };
+  }
+
+  if (
+    q.includes('raider') ||
+    q.includes('bastion') ||
+    q.includes('108')
+  ) {
+    return {
+      ok: true,
+      target: 'raider_guild',
+      label: 'Dungeon Raider Guild Bastion',
+      message: 'Riding directly to the Obsidian Dungeon Raider Guild Bastion!',
     };
   }
 
@@ -1091,10 +2501,10 @@ export function parseCaravanDestination(
     };
   }
 
-  const hintBack = currentRealm === 'dungeon_exterior' ? ' or Solaris Town' : '';
+  const hintBack = currentRealm === 'dungeon_exterior' || currentRealm === 'elf_kingdom' ? ' or Solaris Town' : '';
   return {
     ok: false,
-    message: `Never heard of "${rawInput.trim()}" on the Kingdom roads. Try typing: Goblin Dungeon, Demon Realm, Princess Escort, Demon King Citadel, 17 Demon Kings${hintBack}.`,
+    message: `Never heard of "${rawInput.trim()}" on the Kingdom roads. Try typing: Goblin Dungeon, Elf Kingdom, Demon Realm, Princess Escort, Demon King Citadel, 17 Demon Kings${hintBack}.`,
   };
 }
 
@@ -1152,6 +2562,10 @@ export function resetPlayerForIsekai(
   player.chronoFreezeTimer = 0;
   player.invulnTimer = 0;
   player.parryTimer = 0;
+  player.whiteAuraTimer = 0;
+  player.whiteAuraCooldown = 0;
+  player.standGuardTimer = 0;
+  player.standGuardCooldown = 0;
 
   const existing = inventory.find((it) => it.id === 'rank_badge_f');
   if (existing) {
@@ -1306,15 +2720,50 @@ export function buyOrEquipWardrobeItem(
   unlockedIds: string[],
   itemId: string,
   crownUnlocked: boolean,
+  elfCrownUnlocked = false,
 ): { ok: boolean; message: string } {
   if (itemId === 'toggle_crown') {
     if (!crownUnlocked) {
       return { ok: false, message: 'Defeat the 3 Demon Kings (A-Rank) to earn the Royal Crown!' };
     }
-    player.customization.crownEquipped = !player.customization.crownEquipped;
+    const switchingStyle =
+      player.customization.crownEquipped && player.customization.crownStyle === 'elf_emerald';
+    if (switchingStyle) {
+      player.customization.crownStyle = 'solaris_gold';
+      player.customization.crownEquipped = true;
+    } else {
+      player.customization.crownStyle = 'solaris_gold';
+      player.customization.crownEquipped = !player.customization.crownEquipped;
+    }
     return {
       ok: true,
-      message: player.customization.crownEquipped ? 'Royal Crown equipped!' : 'Royal Crown stored safely.',
+      message: player.customization.crownEquipped
+        ? 'Solaris Sovereign Crown equipped!'
+        : 'Solaris Sovereign Crown stored safely.',
+    };
+  }
+
+  if (itemId === 'toggle_elf_crown') {
+    if (!elfCrownUnlocked) {
+      return {
+        ok: false,
+        message: 'Defend Queen Sylvaria’s Elf Kingdom Dinner Party from the Eldritch Ambush to claim the Elf Crown!',
+      };
+    }
+    const switchingStyle =
+      player.customization.crownEquipped && player.customization.crownStyle !== 'elf_emerald';
+    if (switchingStyle) {
+      player.customization.crownStyle = 'elf_emerald';
+      player.customization.crownEquipped = true;
+    } else {
+      player.customization.crownStyle = 'elf_emerald';
+      player.customization.crownEquipped = !player.customization.crownEquipped;
+    }
+    return {
+      ok: true,
+      message: player.customization.crownEquipped
+        ? 'Elf Sovereign Emerald Crown equipped!'
+        : 'Elf Sovereign Emerald Crown stored safely.',
     };
   }
 
@@ -1959,6 +3408,14 @@ export function buildIsekaiRoomPlatforms(realm: RealmMode): Platform[] {
       { id: 'cav_ledge_3', x: 1360, y: FLOOR_Y - 52, w: 120, h: 12, kind: 'brick' },
       { id: 'cav_ledge_4', x: 1820, y: FLOOR_Y - 62, w: 114, h: 12, kind: 'brick' },
     );
+  } else if (realm === 'elf_kingdom') {
+    plats.push(
+      { id: 'elf_walk_1', x: 520, y: FLOOR_Y - 48, w: 130, h: 10, kind: 'bridge' },
+      { id: 'elf_promenade_tier', x: 840, y: FLOOR_Y - 66, w: 180, h: 10, kind: 'bridge' },
+      { id: 'elf_balcony_l', x: 1460, y: FLOOR_Y - 58, w: 165, h: 10, kind: 'bridge' },
+      { id: 'elf_balcony_r', x: 1940, y: FLOOR_Y - 58, w: 165, h: 10, kind: 'bridge' },
+      { id: 'elf_dais_step', x: 2380, y: FLOOR_Y - 26, w: 380, h: 26, kind: 'brick' },
+    );
   }
   return plats;
 }
@@ -2003,6 +3460,20 @@ export function buildIsekaiRoomInteractables(realm: RealmMode): InteractableProp
         label: 'Enter Adventure Guild Hall',
         speaker: 'Adventure Guild',
         dialogue: ['Stepping into the Two-Story Solaris Adventure Guild Hall...'],
+        activated: false,
+      },
+      {
+        id: 'prop_elf_herald',
+        x: 414,
+        y: FLOOR_Y - 44,
+        w: 32,
+        h: 44,
+        kind: 'elf_herald',
+        label: 'Royal Elf Herald Thalindor · Dinner Invitation [F]',
+        speaker: 'Lord-Envoy Thalindor',
+        dialogue: [
+          'By decree of Queen Sylvaria of Aethelgard, you are cordially summoned to the Silver-Bough Royal Dinner Party!',
+        ],
         activated: false,
       },
       {
@@ -2051,6 +3522,18 @@ export function buildIsekaiRoomInteractables(realm: RealmMode): InteractableProp
         label: 'Enter Grand Weapons Shop',
         speaker: 'Grand Solaris Armory',
         dialogue: ['Stepping inside the Grand Weapons Armory...'],
+        activated: false,
+      },
+      {
+        id: 'door_raider_guild',
+        x: 1365,
+        y: FLOOR_Y - 58,
+        w: 44,
+        h: 58,
+        kind: 'raider_guild_door',
+        label: 'Enter Dungeon Raider Guild Bastion (108 Dungeons & Ranks) [F]',
+        speaker: 'Raider Guild Bastion',
+        dialogue: ['Stepping inside the Obsidian Dungeon Raider Guild Bastion...'],
         activated: false,
       },
       {
@@ -2238,6 +3721,63 @@ export function buildIsekaiRoomInteractables(realm: RealmMode): InteractableProp
         label: 'Descend Endless Deeper Chamber',
         speaker: 'Abyssal Descent Gate',
         dialogue: ['Descending deeper into endless subterranean darkness...'],
+        activated: false,
+      },
+    ];
+  }
+  if (realm === 'elf_kingdom') {
+    return [
+      {
+        id: 'prop_elf_caravan_return',
+        x: 56,
+        y: FLOOR_Y - 48,
+        w: 92,
+        h: 48,
+        kind: 'elf_caravan_return',
+        label: 'Moon-Gate Caravan · Return to Solaris Town / Travel [F]',
+        speaker: 'Caravan Rider Vance',
+        dialogue: ['Ready to ride back down the Silver-Bough Highway to Solaris Town?'],
+        activated: false,
+      },
+      {
+        id: 'prop_elf_kaelen',
+        x: 1165,
+        y: FLOOR_Y - 38,
+        w: 28,
+        h: 38,
+        kind: 'elf_swordsman_npc',
+        label: 'Sword Saint Kaelen · Speak Before Dinner [F]',
+        speaker: 'Sword Saint Kaelen',
+        dialogue: [
+          'So you are the foreign steel-knight the Herald sang poems about. Keep your blade loose beneath your cloak.',
+          'The nobles clink star-wine glasses while something wet and toothed scratches beneath the banquet marble.',
+        ],
+        activated: false,
+      },
+      {
+        id: 'prop_elf_banquet_table',
+        x: 1650,
+        y: FLOOR_Y - 44,
+        w: 240,
+        h: 44,
+        kind: 'elf_banquet_table',
+        label: 'Grand Royal Banquet Table · Begin Dinner Party / Toast [F]',
+        speaker: 'Grand Banquet Pavilion',
+        dialogue: ['Crystal chandeliers glitter over silver platters and star-wine decanters...'],
+        activated: false,
+      },
+      {
+        id: 'prop_elf_queen_dais',
+        x: 2540,
+        y: FLOOR_Y - 68,
+        w: 58,
+        h: 42,
+        kind: 'elf_queen_dais',
+        label: 'Queen Sylvaria · Sovereign Emerald Dais [F]',
+        speaker: 'Queen Sylvaria',
+        dialogue: [
+          'Welcome to Aethelgard, Champion. Take your seat at the Grand Banquet Hall west of the dais whenever you are ready.',
+        ],
         activated: false,
       },
     ];
@@ -2454,6 +3994,7 @@ function makeEnemy(
   darkness = 0,
   variantStyle?: EnemyState['variantStyle'],
 ): EnemyState {
+  const finalHp = isDungeonBoss ? Math.round(hp * 2) : hp;
   const scaledW = Math.round(w * sizeScale);
   const scaledH = Math.round(h * sizeScale);
   const adjustedY = y - (scaledH - h);
@@ -2467,8 +4008,8 @@ function makeEnemy(
     vy: 0,
     w: scaledW,
     h: scaledH,
-    hp,
-    maxHp: hp,
+    hp: finalHp,
+    maxHp: finalHp,
     facing: -1,
     state: 'patrol',
     stateTimer: 0.45,
@@ -3055,8 +4596,8 @@ export function createThreeDemonKingsInit(
       vy: 0,
       w: 32,
       h: 46,
-      hp: Math.round(760 * defeatedMult),
-      maxHp: Math.round(760 * defeatedMult),
+      hp: Math.round(760 * 2 * defeatedMult),
+      maxHp: Math.round(760 * 2 * defeatedMult),
       facing: -1,
       hitFlash: 0,
       purpleFlameTimer: 1.5,
@@ -3091,8 +4632,8 @@ export function createThreeDemonKingsInit(
       vy: 0,
       w: 32,
       h: 48,
-      hp: Math.round(860 * defeatedMult),
-      maxHp: Math.round(860 * defeatedMult),
+      hp: Math.round(860 * 2 * defeatedMult),
+      maxHp: Math.round(860 * 2 * defeatedMult),
       facing: -1,
       hitFlash: 0,
       purpleFlameTimer: 1.65,
@@ -3127,8 +4668,8 @@ export function createThreeDemonKingsInit(
       vy: 0,
       w: 36,
       h: 52,
-      hp: Math.round(980 * defeatedMult),
-      maxHp: Math.round(980 * defeatedMult),
+      hp: Math.round(980 * 2 * defeatedMult),
+      maxHp: Math.round(980 * 2 * defeatedMult),
       facing: -1,
       hitFlash: 0,
       purpleFlameTimer: 1.8,
@@ -3525,7 +5066,7 @@ export function createSeventeenDemonKingsInit(
     const stage = i + 1;
     const h = Math.round(44 * bp.sizeScale);
     const w = Math.round(30 * bp.sizeScale);
-    const hp = Math.round(bp.hpBase * 2 * defeatedMult);
+    const hp = Math.round(bp.hpBase * 4 * defeatedMult);
     const shield = bp.shieldBase ? Math.round(bp.shieldBase * defeatedMult) : 0;
     return {
       id: `dk17_${stage}`,
@@ -5515,7 +7056,7 @@ export function createTownRaidBoss(
   spawnX?: number,
 ): ActiveTownRaid {
   const isRimuru = raiderId === 'rimuru_tempest';
-  const hp = Math.max(240, Math.round(playerMaxHp * 6));
+  const hp = Math.max(480, Math.round(playerMaxHp * 12));
   const atk = Math.max(8, Math.round(playerAttack));
   const w = 38;
   const h = 52;
@@ -5547,6 +7088,7 @@ export function createTownRaidBoss(
     activeSkillTimer: 0,
     stunTimer: 0,
     windVulnerable: false,
+    lastSkillThresholdPct: 100,
   };
 }
 
@@ -5597,6 +7139,18 @@ export function stepTownRaidAi(
     raid.stunTimer = Math.max(0, (raid.stunTimer ?? 0) - dt);
     raid.vx *= 0.8;
     return result;
+  }
+
+  // Every time Town Raid boss HP drops by 12%, force an immediate AoE skill cast!
+  raid.lastSkillThresholdPct ??= 100;
+  const raidHpPct = (raid.hp / Math.max(1, raid.maxHp)) * 100;
+  if (raid.hp > 0 && raidHpPct <= raid.lastSkillThresholdPct - 12) {
+    while (raid.lastSkillThresholdPct - 12 >= raidHpPct && raid.lastSkillThresholdPct > 0) {
+      raid.lastSkillThresholdPct -= 12;
+    }
+    raid.aoeCooldown = 0;
+    raid.state = 'aoe_cast';
+    raid.stateTimer = 0;
   }
 
   const raidCenter = raid.x + raid.w / 2;
@@ -5918,4 +7472,351 @@ export function stepTownRebuildNpcs(
 
   return { completedIndices, activeRebuilders };
 }
+
+export interface ElfCutsceneBeatDef {
+  speaker: string;
+  speakerTitle: string;
+  portraitKind: 'queen' | 'swordsman' | 'herald' | 'boss' | 'warrior';
+  moodLabel: string;
+  lines: string[];
+  choices?: (ElfCutsceneChoiceHud & {
+    healFull?: boolean;
+    bonusGold?: number;
+    atkBoostMult?: number;
+    atkBoostSec?: number;
+  })[];
+}
+
+export function createElfKingdomNpcs(stage: ElfKingdomStage): IsekaiNpc[] {
+  const isCelebration = stage === 'celebration';
+  const npcs: IsekaiNpc[] = [
+    {
+      id: 'elf_sentinel_gate',
+      name: 'Sentinel Vaelor',
+      role: 'guard',
+      x: 265,
+      y: FLOOR_Y - 26,
+      minX: 190,
+      maxX: 390,
+      speed: 20,
+      facing: 1,
+      walkCycle: 0.4,
+      coatColor: '#065f46',
+      hairColor: '#e2e8f0',
+      shirtColor: '#d1fae5',
+      dialogue: isCelebration
+        ? [
+            'To think a mortal guest cut down an abyssal flesh-sovereign beside Sword Saint Kaelen!',
+            'The lanterns of Aethelgard will burn emerald in your honor all season, Crowned Champion!',
+          ]
+        : [
+            'Halt—ah, you carry the Moon-Crest Seal! Welcome across the Silver-Bough Moon-Gate.',
+            'Head east past the Silver Fountain Promenade to reach the Grand Banquet Hall.',
+          ],
+    },
+    {
+      id: 'elf_chronicler_lyra',
+      name: 'Chronicler Lyra',
+      role: 'adventurer',
+      x: 730,
+      y: FLOOR_Y - 26,
+      minX: 640,
+      maxX: 850,
+      speed: 22,
+      facing: -1,
+      walkCycle: 1.2,
+      coatColor: '#0f766e',
+      hairColor: '#fef08a',
+      shirtColor: '#f8fafc',
+      dialogue: isCelebration
+        ? [
+            'Every quill in the Royal Archive is smoking! "The Banquet of Ichor & Starlight" is already our proudest ballad!',
+          ]
+        : [
+            'I am recording every toast of Queen Sylvaria’s Royal Dinner Party tonight!',
+            'Wait... did you hear wet scraping under the silver fountain too, or is the vintage star-wine playing tricks?',
+          ],
+    },
+    {
+      id: 'elf_sommelier_theren',
+      name: 'Sommelier Theren',
+      role: 'merchant',
+      x: 1470,
+      y: FLOOR_Y - 26,
+      minX: 1380,
+      maxX: 1585,
+      speed: 18,
+      facing: 1,
+      walkCycle: 2.0,
+      coatColor: '#7c2d12',
+      hairColor: '#cbd5e1',
+      shirtColor: '#fef3c7',
+      dialogue: isCelebration
+        ? [
+            'Open every cellar cask! Starlight Ambrosia flows free tonight for the Crowned Savior of Aethelgard!',
+          ]
+        : [
+            'Three-hundred-year Moon-Dew Vintage and roasted silver-pheasant await at the Grand Table just ahead!',
+            'Though honestly... the cellar barrels have been shaking violently all evening.',
+          ],
+    },
+    {
+      id: 'elf_courtier_elara',
+      name: 'Lady Elara',
+      role: 'townfolk',
+      x: 2050,
+      y: FLOOR_Y - 26,
+      minX: 1930,
+      maxX: 2180,
+      speed: -20,
+      facing: -1,
+      walkCycle: 0.9,
+      coatColor: '#047857',
+      hairColor: '#f5d0fe',
+      shirtColor: '#ecfdf5',
+      dialogue: isCelebration
+        ? [
+            'That emerald crown gleams so fiercely on you! Please stay and dance beneath the star-lanterns!',
+          ]
+        : [
+            'How thrilling to dine with an otherworlder knight! Just... stay close to Sword Saint Kaelen if the floor trembles.',
+          ],
+    },
+    {
+      id: 'elf_steward_vaelen',
+      name: 'Steward Vaelen',
+      role: 'receptionist',
+      x: 2450,
+      y: FLOOR_Y - 26 - 26,
+      minX: 2410,
+      maxX: 2510,
+      speed: 12,
+      facing: -1,
+      walkCycle: 0.2,
+      coatColor: '#1e293b',
+      hairColor: '#94a3b8',
+      shirtColor: '#fbbf24',
+      dialogue: isCelebration
+        ? [
+            'Long live Queen Sylvaria and our newly crowned Sovereign Guest of Aethelgard!',
+          ]
+        : [
+            'Her Majesty awaits at the Sovereign Emerald Dais, while tonight’s Grand Feast is laid out at the Banquet Table.',
+          ],
+    },
+  ];
+  return npcs;
+}
+
+export function createElfSwordsmanAlly(): AlliedNpc {
+  return {
+    id: 'ally_kaelen_sword_saint',
+    name: 'Sword Saint Kaelen',
+    role: 'elf_swordsman',
+    x: 1380,
+    y: FLOOR_Y - 28,
+    vx: 0,
+    facing: 1,
+    hp: 2400,
+    maxHp: 2400,
+    attackCooldown: 0.15,
+    walkCycle: 0,
+    hitFlash: 0,
+    armorColor: '#ecfdf5',
+    cloakColor: '#065f46',
+    weaponColor: '#34d399',
+    dashTimer: 0,
+    slashBurstTimer: 0,
+    callout: 'Step aside, flesh-filth. Starlight Tempests spare nothing.',
+    calloutTimer: 2.2,
+  };
+}
+
+export function createElfAmbushWave(wave: 1 | 2, playerLevel = 1): EnemyState[] {
+  const lvlMult = Math.max(1, 1 + (Math.max(1, playerLevel) - 1) * 0.14);
+  if (wave === 1) {
+    const specs: { arch: EnemyArchetype; name: string; x: number; w: number; h: number; hp: number; dmg: number }[] = [
+      { arch: 'eldritch_ichor_hound', name: 'Ichor-Hound Stalker', x: 1490, w: 22, h: 24, hp: 165, dmg: 18 },
+      { arch: 'eldritch_tendril_fiend', name: 'Marrow-Tendril Maw', x: 1680, w: 24, h: 32, hp: 235, dmg: 22 },
+      { arch: 'eldritch_ichor_hound', name: 'Bone-Spur Gorger', x: 1890, w: 22, h: 24, hp: 175, dmg: 19 },
+      { arch: 'eldritch_tendril_fiend', name: 'Viscera-Choir Weaver', x: 2080, w: 24, h: 32, hp: 250, dmg: 24 },
+      { arch: 'eldritch_ichor_hound', name: 'Crimson Bile-Reaver', x: 2240, w: 22, h: 24, hp: 185, dmg: 20 },
+    ];
+    return specs.map((s, idx) =>
+      makeEnemy(
+        `elf_w1_${Date.now()}_${idx}`,
+        s.arch,
+        s.name,
+        s.x,
+        FLOOR_Y - s.h,
+        Math.round(s.hp * lvlMult),
+        s.w,
+        s.h,
+        'volcano',
+        Math.round(52 * lvlMult),
+        Math.round(s.dmg * lvlMult),
+        false,
+        1.1,
+        0.1,
+      ),
+    );
+  }
+
+  const wave2Specs: {
+    arch: EnemyArchetype;
+    name: string;
+    x: number;
+    w: number;
+    h: number;
+    hp: number;
+    dmg: number;
+    boss?: boolean;
+    scale?: number;
+  }[] = [
+    { arch: 'eldritch_ichor_hound', name: 'Sanguine Rib-Hound', x: 1460, w: 22, h: 24, hp: 195, dmg: 21 },
+    { arch: 'eldritch_tendril_fiend', name: 'Flesh-Hymn Cantor', x: 1640, w: 24, h: 32, hp: 265, dmg: 24 },
+    {
+      arch: 'eldritch_feast_boss',
+      name: 'Malakor, the Feast-Devourer',
+      x: 1920,
+      w: 44,
+      h: 54,
+      hp: 1680,
+      dmg: 30,
+      boss: true,
+      scale: 1.25,
+    },
+    { arch: 'eldritch_tendril_fiend', name: 'Abyssal Spine-Gorgon', x: 2150, w: 24, h: 32, hp: 270, dmg: 24 },
+  ];
+  return wave2Specs.map((s, idx) =>
+    makeEnemy(
+      `elf_w2_${Date.now()}_${idx}`,
+      s.arch,
+      s.name,
+      s.x,
+      FLOOR_Y - s.h,
+      Math.round(s.hp * lvlMult),
+      s.w,
+      s.h,
+      'volcano',
+      s.boss ? Math.round(320 * lvlMult) : Math.round(64 * lvlMult),
+      Math.round(s.dmg * lvlMult),
+      Boolean(s.boss),
+      s.scale ?? 1.12,
+      s.boss ? 0.15 : 0.1,
+    ),
+  );
+}
+
+export function buildElfDinnerCutsceneBeats(): ElfCutsceneBeatDef[] {
+  return [
+    {
+      speaker: 'Queen Sylvaria',
+      speakerTitle: 'Sovereign of Aethelgard',
+      portraitKind: 'queen',
+      moodLabel: 'Candlelit Royal Welcome',
+      lines: [
+        'Raise your chalices, House Silver-Bough! Tonight our table honors the wandering knight whose blade echoed from Bastera Citadel to Solaris Plaza.',
+        'Drink deep of three-century Star-Wine and feast until dawn—for inside these alabaster walls, no shadow dares intrude.',
+      ],
+    },
+    {
+      speaker: 'Sommelier Theren',
+      speakerTitle: 'Keeper of the Royal Table',
+      portraitKind: 'herald',
+      moodLabel: 'Crystal Decanters Gleaming',
+      lines: [
+        'Your goblet awaits, Honored Guest! How do you answer Her Majesty’s royal toast before the first course is carved?',
+      ],
+      choices: [
+        {
+          id: 'elf_toast_courtesy',
+          label: '“To eternal friendship between Solaris and Aethelgard!” (+25G Royal Gift)',
+          reply: 'Queen Sylvaria smiles warmly and signals the Steward to press an Elven moon-gold coin pouch into your palm.',
+          bonusTag: '+25G ROYAL GIFT',
+          bonusGold: 25,
+        },
+        {
+          id: 'elf_toast_feast',
+          label: '“Skip the speech—this roasted silver-pheasant smells unreal!” (Full HP & Stamina)',
+          reply: 'The Elven courtiers burst out laughing as you devour two platters in three seconds—vitality surging through your veins!',
+          bonusTag: 'FULL HP + STAMINA',
+          healFull: true,
+        },
+        {
+          id: 'elf_toast_blade',
+          label: '“I’ll toast once we check what’s rattling beneath the marble floor.” (+20% ATK Boost)',
+          reply: 'Sword Saint Kaelen smirks approvingly as you keep one gauntlet on your hilt, battle instincts razor-sharp!',
+          bonusTag: '+20% ATK (60s)',
+          atkBoostMult: 1.2,
+          atkBoostSec: 60,
+        },
+      ],
+    },
+    {
+      speaker: 'Sword Saint Kaelen',
+      speakerTitle: 'First Blade of the Elf Kingdom',
+      portraitKind: 'swordsman',
+      moodLabel: 'Hand Tightening on Emerald Hilt',
+      lines: [
+        'Everyone put your forks down. Look at the star-wine in the crystal goblets—the ripples aren’t coming from the musicians.',
+        'Something wet, starved, and ancient just chewed through the World-Root seal beneath the banquet hall.',
+      ],
+    },
+    {
+      speaker: 'Malakor, the Feast-Devourer',
+      speakerTitle: 'Voice Beneath the Shattered Marble',
+      portraitKind: 'boss',
+      moodLabel: 'CHANDELIERS SHATTER · ICHOR ERUPTS',
+      lines: [
+        'SCREEEEECH—SUCH FRAGRANT ELVEN MARROW AND IRON-RICH HERO BLOOD!!',
+        'Black-crimson ichor geysers split the banquet floor! Jagged bone spurs and writhing flesh-tendrils burst among the overturned tables!',
+      ],
+    },
+    {
+      speaker: 'Sword Saint Kaelen',
+      speakerTitle: 'Blademaster Ally · Real-Time Combat',
+      portraitKind: 'swordsman',
+      moodLabel: 'Emerald Aura Ignited',
+      lines: [
+        'Protect the Queen and guests! Stay on your toes, Hero—we carve these eldritch horrors back into the abyss together!',
+      ],
+    },
+  ];
+}
+
+export function buildElfCoronationCutsceneBeats(): ElfCutsceneBeatDef[] {
+  return [
+    {
+      speaker: 'Sword Saint Kaelen',
+      speakerTitle: 'First Blade of the Elf Kingdom',
+      portraitKind: 'swordsman',
+      moodLabel: 'Sheathing Emerald-Silver Katana',
+      lines: [
+        'Hmph... not bad at all, Outsider. Most knights freeze when an eldritch choir opens its ribs in front of them.',
+        'The abyssal fissure is cauterized. You earned a place beside Aethelgard’s finest.',
+      ],
+    },
+    {
+      speaker: 'Queen Sylvaria',
+      speakerTitle: 'Sovereign of Aethelgard',
+      portraitKind: 'queen',
+      moodLabel: 'Royal Emerald Coronation',
+      lines: [
+        'Kneel, Savior of the Silver-Bough Feast. Though our dinner was torn open by nightmares, your steel kept every courtier breathing.',
+        'Accept the Living Emerald Crown of Aethelgard—forged from mithril and World-Root crystal!',
+      ],
+    },
+    {
+      speaker: 'Royal Herald Thalindor',
+      speakerTitle: 'Aethelgard Royal Feast Master',
+      portraitKind: 'herald',
+      moodLabel: 'STAR-LANTERNS LIT · ROYAL FEAST BEGINS',
+      lines: [
+        'All hail our Crowned Champion! Relight the chandeliers, sweep the marble clean, and let the Eternal Royal Feast of Aethelgard begin!',
+      ],
+    },
+  ];
+}
+
 

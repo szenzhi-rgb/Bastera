@@ -188,22 +188,22 @@ export const BossBattleOverlay: React.FC<BossBattleOverlayProps> = ({
         )}
         <div
           key={`citadel-boss-wrap-${fxState.mode === 'none' ? 'idle' : fxState.key}`}
-          className={`fixed inset-x-0 top-14 z-20 pointer-events-none flex flex-col items-center px-3 ${shakeClass}`}
+          className={`fixed inset-x-0 top-10 sm:top-14 z-20 pointer-events-none flex flex-col items-center px-2 sm:px-3 ${shakeClass}`}
           data-testid="citadel-boss-overlay"
           data-shake-mode={fxState.mode}
         >
           {/* Dynamic Sarcastic JoJo Dialogue directly ABOVE the Boss Health Bar */}
           <div
             data-testid="citadel-boss-jojo-dialogue"
-            className="mb-1.5 max-w-[540px] w-full bg-[#160812]/95 border border-amber-400/85 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2"
+            className="mb-1 max-w-[460px] sm:max-w-[540px] w-full bg-[#160812]/95 border border-amber-400/85 px-2.5 py-1 shadow-[0_4px_16px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2"
           >
-            <span className="font-pixel-mono text-[10px] sm:text-[11px] text-amber-100 leading-snug">
+            <span className="font-pixel-mono text-[9px] sm:text-[11px] text-amber-100 leading-snug truncate">
               {activeBoss.skillDialogue ?? `${activeBoss.name} [${activeBoss.standName}]: "${activeBoss.voiceLine}"`}
             </span>
             {skillTag && (
               <span
                 data-testid="citadel-boss-skill-tag"
-                className="px-2 py-0.5 bg-rose-950 border border-rose-400 font-pixel-mono text-[9px] font-bold text-rose-200 whitespace-nowrap shrink-0"
+                className="px-1.5 py-0.5 bg-rose-950 border border-rose-400 font-pixel-mono text-[8.5px] font-bold text-rose-200 whitespace-nowrap shrink-0"
               >
                 {skillTag.toUpperCase()}
                 {skillTag === 'Burst Crush!' ? ` (${activeBoss.burstStreak}/3)` : ''}
@@ -211,10 +211,10 @@ export const BossBattleOverlay: React.FC<BossBattleOverlayProps> = ({
             )}
           </div>
 
-          {/* Dedicated Top Boss Health Bar with 1.9x Scaled HP Readout */}
+          {/* Dedicated Top Boss Health Bar */}
           <div
             data-testid="citadel-boss-hp-bar"
-            className={`relative flex items-center gap-3 bg-[#12090f]/95 border-2 px-3.5 py-2 w-full max-w-[540px] shadow-[0_6px_22px_rgba(0,0,0,0.9)] ${
+            className={`relative flex items-center gap-2 sm:gap-3 bg-[#12090f]/95 border-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 w-full max-w-[460px] sm:max-w-[540px] shadow-[0_6px_22px_rgba(0,0,0,0.9)] ${
               fxState.mode === 'skill'
                 ? 'border-rose-400'
                 : fxState.mode === 'crit'

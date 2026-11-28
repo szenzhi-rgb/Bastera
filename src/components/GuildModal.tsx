@@ -51,43 +51,43 @@ export const GuildModal: React.FC<GuildModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80"
       data-testid="guild-reception-modal"
     >
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-[#1a0f0a] border-2 border-amber-400/85 text-amber-50 shadow-[0_10px_36px_rgba(0,0,0,0.92)] overflow-hidden">
-        <span className="absolute top-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 right-0 w-2 h-2 bg-amber-300" />
+      <div className="relative w-full max-w-[92%] sm:max-w-4xl max-h-[86%] flex flex-col bg-[#1a0f0a] border-2 border-amber-400/85 text-amber-50 shadow-[0_10px_36px_rgba(0,0,0,0.92)] overflow-hidden">
+        <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
 
         {/* Reception Counter Header */}
-        <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[#2a170e] border-b border-amber-500/45">
-          <div className="flex items-center gap-3">
-            <PixelItemIcon itemId={badgeId} size={42} />
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-display text-lg font-bold text-amber-100">
+        <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-[#2a170e] border-b border-amber-500/45 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <PixelItemIcon itemId={badgeId} size={32} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h2 className="font-display text-sm sm:text-base font-bold text-amber-100 truncate">
                   Solaris Grand Adventure Guild
                 </h2>
-                <span className={`px-2 py-0.5 border font-pixel-mono text-[10px] font-bold ${RANK_PILL_STYLE[hud.guildRank]}`}>
+                <span className={`px-1.5 py-0.5 border font-pixel-mono text-[9px] font-bold ${RANK_PILL_STYLE[hud.guildRank]}`}>
                   {hud.guildRank}-RANK · {RANK_TITLES[hud.guildRank]}
                 </span>
                 <span
                   data-testid="guild-rank-progress-badge"
-                  className="px-2 py-0.5 bg-[#140b07] border border-emerald-400/60 font-pixel-mono text-[10px] font-bold text-emerald-200"
+                  className="px-1.5 py-0.5 bg-[#140b07] border border-emerald-400/60 font-pixel-mono text-[9px] font-bold text-emerald-200"
                 >
                   {hud.guildRank === 'S'
                     ? 'MAX SOVEREIGN RANK'
-                    : `Rank Progress: ${doneCount}/${reqCount} Missions`}
+                    : `Rank: ${doneCount}/${reqCount}`}
                 </span>
               </div>
-              <p className="font-pixel-mono text-[11px] text-amber-200/80 mt-0.5">
-                Complete {reqCount} Guild Missions per rank to promote! After accepting a contract, walk outside to Caravan Rider Vance!
+              <p className="font-pixel-mono text-[9px] sm:text-[10px] text-amber-200/80 mt-0.5 truncate">
+                Complete {reqCount} Guild Missions per rank to promote, then speak with Caravan Vance!
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               tabIndex={-1}
@@ -95,7 +95,7 @@ export const GuildModal: React.FC<GuildModalProps> = ({
                 e.currentTarget.blur();
                 onClose();
               }}
-              className="px-3 py-1.5 bg-[#3a1f12] hover:bg-[#4e2a18] border border-amber-400/75 font-pixel-mono text-xs text-amber-100 cursor-pointer"
+              className="px-2.5 py-1 bg-[#3a1f12] hover:bg-[#4e2a18] border border-amber-400/75 font-pixel-mono text-[10px] sm:text-xs text-amber-100 cursor-pointer whitespace-nowrap"
             >
               Close [Esc]
             </button>
@@ -103,8 +103,8 @@ export const GuildModal: React.FC<GuildModalProps> = ({
         </div>
 
         {/* Floor 1 / Floor 2 Switcher Bar */}
-        <div className="px-5 py-2.5 bg-[#140b07] border-b border-amber-500/30 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
+        <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-[#140b07] border-b border-amber-500/30 flex items-center justify-between gap-2 flex-wrap shrink-0">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               tabIndex={-1}
@@ -113,13 +113,13 @@ export const GuildModal: React.FC<GuildModalProps> = ({
                 e.currentTarget.blur();
                 setFloorTab(1);
               }}
-              className={`px-3 py-1 border font-pixel-mono text-[11px] font-bold cursor-pointer ${
+              className={`px-2.5 py-0.5 border font-pixel-mono text-[10px] font-bold cursor-pointer whitespace-nowrap ${
                 floorTab === 1
                   ? 'bg-[#7c2d12] border-amber-300 text-amber-50'
                   : 'bg-[#1f120b] border-amber-700/50 text-amber-200/75 hover:border-amber-400'
               }`}
             >
-              1st Floor · Reception (F–C)
+              1st Floor (F–C)
             </button>
             <button
               type="button"
@@ -129,7 +129,7 @@ export const GuildModal: React.FC<GuildModalProps> = ({
                 e.currentTarget.blur();
                 setFloorTab(2);
               }}
-              className={`px-3 py-1 border font-pixel-mono text-[11px] font-bold cursor-pointer ${
+              className={`px-2.5 py-0.5 border font-pixel-mono text-[10px] font-bold cursor-pointer whitespace-nowrap ${
                 floorTab === 2
                   ? floor2Unlocked
                     ? 'bg-[#581c87] border-purple-300 text-purple-50'
@@ -139,21 +139,21 @@ export const GuildModal: React.FC<GuildModalProps> = ({
                     : 'bg-[#1a1012] border-rose-900/60 text-rose-300/70 hover:border-rose-400'
               }`}
             >
-              {floor2Unlocked ? '2nd Floor · Royal Command (B+)' : '🔒 2nd Floor · Royal Command (B+ Only)'}
+              {floor2Unlocked ? '2nd Floor · Royal (B+)' : '🔒 2nd Floor (B+)'}
             </button>
           </div>
-          <span className="font-pixel-mono text-xs text-yellow-300 font-bold">Gold: {hud.gold}G</span>
+          <span className="font-pixel-mono text-[10px] sm:text-xs text-yellow-300 font-bold tabular-nums">Gold: {hud.gold}G</span>
         </div>
 
         {/* Travel Reminder Banner */}
-        <div className="px-5 py-2 bg-[#1c1008] border-b border-amber-500/25 font-pixel-mono text-[10px] text-amber-200">
-          🧭 <strong className="text-emerald-300">No Instant Teleport:</strong> Accept your contract below, walk out the Guild West Door into Solaris Town, and speak <strong className="text-yellow-300">[F]</strong> with <strong className="text-yellow-300">Caravan Rider Vance</strong> to ride to the dungeon!
+        <div className="px-3 py-1 bg-[#1c1008] border-b border-amber-500/25 font-pixel-mono text-[9px] text-amber-200 shrink-0 truncate">
+          🧭 Accept contract below, walk out to Solaris Town, and talk <strong className="text-yellow-300">[F]</strong> with <strong className="text-yellow-300">Caravan Vance</strong>.
         </div>
 
         {/* Body: Left Mission Board + Right Online Adventurers Party List */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-5 overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-4 p-2.5 sm:p-4 overflow-y-auto">
           {/* Mission Board */}
-          <div className="lg:col-span-8 space-y-2.5">
+          <div className="lg:col-span-8 space-y-2">
             {floorTab === 2 && !floor2Unlocked && (
               <div
                 data-testid="guild-floor2-locked-banner"

@@ -44,51 +44,52 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80"
       data-testid="worlds-modal"
     >
-      <div className="relative w-full max-w-2xl bg-[#110c14] border-2 border-cyan-400/80 p-5 text-amber-50 shadow-[0_8px_32px_rgba(0,0,0,0.9)]">
-        <span className="absolute top-0 left-0 w-2 h-2 bg-cyan-300" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-cyan-300" />
-        <span className="absolute bottom-0 left-0 w-2 h-2 bg-cyan-300" />
-        <span className="absolute bottom-0 right-0 w-2 h-2 bg-cyan-300" />
+      <div className="relative w-full max-w-[92%] sm:max-w-2xl max-h-[86%] flex flex-col bg-[#110c14] border-2 border-cyan-400/80 p-3 sm:p-4 text-amber-50 shadow-[0_8px_32px_rgba(0,0,0,0.9)] overflow-hidden">
+        <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-cyan-300" />
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-cyan-300" />
+        <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-cyan-300" />
+        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-cyan-300" />
 
-        <div className="flex items-start justify-between gap-3 border-b border-cyan-500/30 pb-3 mb-4">
-          <div>
-            <h2 className="font-display text-xl font-bold text-cyan-100">
+        <div className="flex items-start justify-between gap-2 border-b border-cyan-500/30 pb-2 mb-2.5 shrink-0">
+          <div className="min-w-0">
+            <h2 className="font-display text-base sm:text-lg font-bold text-cyan-100 truncate">
               Online Bastera Worlds · Co-op Citadel
             </h2>
-            <p className="font-pixel-mono text-[11px] text-cyan-200/80 mt-0.5">
-              Explore, fight citadel monsters &amp; share torches side-by-side.{' '}
+            <p className="font-pixel-mono text-[9.5px] sm:text-[11px] text-cyan-200/80 mt-0.5 truncate">
+              Explore &amp; fight side-by-side.{' '}
               <span className="text-amber-300 font-bold">
-                Joined guests cannot fight bosses (Host only).
+                Guests cannot fight bosses (Host only).
               </span>
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={onRefreshWorlds}
               data-testid="refresh-worlds-btn"
-              className="px-2.5 py-1 bg-[#142236] border border-cyan-400/60 hover:border-cyan-200 font-pixel-mono text-[11px] text-cyan-100 cursor-pointer"
+              className="px-2 py-1 bg-[#142236] border border-cyan-400/60 hover:border-cyan-200 font-pixel-mono text-[10px] text-cyan-100 cursor-pointer"
             >
               Refresh
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1 bg-[#291318] border border-amber-400/70 hover:bg-[#3b1b22] font-pixel-mono text-xs text-amber-100 cursor-pointer"
+              className="px-2.5 py-1 bg-[#291318] border border-amber-400/70 hover:bg-[#3b1b22] font-pixel-mono text-[10px] sm:text-xs text-amber-100 cursor-pointer"
             >
               Close
             </button>
           </div>
         </div>
 
+        <div className="overflow-y-auto flex-1 pr-1 space-y-2.5">
         {/* Current Session Status */}
-        <div className="bg-[#17121e] border border-cyan-500/40 p-3 mb-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-[#17121e] border border-cyan-500/40 p-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="font-pixel-mono text-xs text-cyan-200">
+              <div className="font-pixel-mono text-[11px] text-cyan-200">
                 {worldRole === 'host' ? (
                   <>
                     Hosting World <strong className="text-amber-300">{worldId}</strong> ·{' '}
@@ -104,20 +105,20 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
                   </>
                 )}
               </div>
-              <div className="font-pixel-mono text-[10px] text-amber-200/70 mt-1">
+              <div className="font-pixel-mono text-[9.5px] text-amber-200/70 mt-0.5">
                 {worldRole === 'host'
                   ? 'Share your World ID so friends can join your Bastera realm.'
                   : 'You can hunt monsters, use skills, and explore safely alongside the host.'}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {worldRole === 'host' ? (
                 <>
                   <button
                     type="button"
                     onClick={() => void handleCopyId()}
-                    className="px-2.5 py-1.5 bg-[#1e293b] border border-cyan-400/60 hover:border-cyan-200 font-pixel-mono text-[11px] text-cyan-100 cursor-pointer"
+                    className="px-2 py-1 bg-[#1e293b] border border-cyan-400/60 hover:border-cyan-200 font-pixel-mono text-[10px] text-cyan-100 cursor-pointer"
                   >
                     {copied ? 'Copied!' : `Copy ${worldId}`}
                   </button>
@@ -125,7 +126,7 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
                     type="button"
                     data-testid="toggle-world-public-btn"
                     onClick={() => onTogglePublic(!isWorldPublic)}
-                    className={`px-2.5 py-1.5 border font-pixel-mono text-[11px] cursor-pointer ${
+                    className={`px-2 py-1 border font-pixel-mono text-[10px] cursor-pointer ${
                       isWorldPublic
                         ? 'bg-[#14532d] border-emerald-400 text-emerald-100'
                         : 'bg-[#3b151e] border-rose-400 text-rose-100'
@@ -139,7 +140,7 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
                   type="button"
                   data-testid="leave-world-btn"
                   onClick={onLeaveWorld}
-                  className="px-3 py-1.5 bg-[#7f1d1d] hover:bg-[#991b1b] border border-amber-300 font-pixel-mono text-xs font-bold text-amber-50 cursor-pointer"
+                  className="px-2.5 py-1 bg-[#7f1d1d] hover:bg-[#991b1b] border border-amber-300 font-pixel-mono text-[10px] font-bold text-amber-50 cursor-pointer"
                 >
                   Return to My World
                 </button>
@@ -149,7 +150,7 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
         </div>
 
         {/* Direct Join by World ID */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={joinCode}
@@ -158,7 +159,7 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
             placeholder="Enter World ID (e.g. W-ABCD)"
             aria-label="World ID"
             data-testid="join-world-input"
-            className="flex-1 px-3 py-2 bg-[#09070d] border border-cyan-500/45 text-xs font-pixel-mono text-cyan-100 focus:outline-none focus:border-cyan-300"
+            className="flex-1 px-2.5 py-1.5 bg-[#09070d] border border-cyan-500/45 text-xs font-pixel-mono text-cyan-100 focus:outline-none focus:border-cyan-300"
           />
           <button
             type="button"
@@ -168,14 +169,14 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
               if (!joinCode.trim()) return;
               onJoinWorld(joinCode.trim());
             }}
-            className="px-4 py-2 bg-[#0e7490] hover:bg-[#0891b2] disabled:opacity-45 border border-cyan-300 font-pixel-mono text-xs font-bold text-white cursor-pointer whitespace-nowrap"
+            className="px-3 py-1.5 bg-[#0e7490] hover:bg-[#0891b2] disabled:opacity-45 border border-cyan-300 font-pixel-mono text-xs font-bold text-white cursor-pointer whitespace-nowrap"
           >
             Join by ID
           </button>
         </div>
 
         {/* Active Public Worlds Browser */}
-        <div className="max-h-[270px] overflow-y-auto space-y-2 pr-1">
+        <div className="space-y-1.5">
           {onlineWorlds.length === 0 ? (
             <div className="py-8 text-center bg-[#0c0810] border border-cyan-900/50 font-pixel-mono text-xs text-cyan-200/70">
               No active online Bastera worlds listed right now. Click Refresh or share your World ID!
@@ -237,6 +238,7 @@ export const WorldsModal: React.FC<WorldsModalProps> = ({
               );
             })
           )}
+        </div>
         </div>
       </div>
     </div>

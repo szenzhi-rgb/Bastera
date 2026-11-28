@@ -1037,7 +1037,7 @@ export function getBossDef(bossIndex: number, bossesDefeated = 0): BossDef {
 
   const diffMult = getBossDifficultyMultiplier(safeIndex);
   const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
-  const baseMaxHp = Math.round((115 + zero * 14) * 2 * diffMult);
+  const baseMaxHp = Math.round((115 + zero * 14) * 2 * diffMult * 2);
 
   return {
     index: safeIndex,
@@ -1092,7 +1092,7 @@ export function createGyroZeppeliBossDef(
   bossesDefeated = 0,
 ): BossDef {
   const defeatedScale = getBossDefeatedMultiplier(bossesDefeated);
-  const baseMaxHp = Math.max(600, Math.round(playerMaxHp * 6));
+  const baseMaxHp = Math.max(1200, Math.round(playerMaxHp * 12));
   const targetHp = Math.round(baseMaxHp * defeatedScale);
   const exactAtk = Math.max(1, Math.round(playerAttack * defeatedScale));
   return {

@@ -4,6 +4,7 @@ import { createMegaBossDef } from '../game/megaBoss';
 import {
   AnimeExpression,
   drawBossPortrait,
+  drawSideQuestNpcPortrait,
   drawStandPortrait,
   drawWarriorPortrait,
   getBakedItemIcon,
@@ -89,6 +90,7 @@ export const PixelWarriorPortrait: React.FC<WarriorPortraitProps> = ({
     customization?.outfitStyle,
     customization?.headgearStyle,
     customization?.crownEquipped,
+    customization?.crownStyle,
   ]);
 
   return (
@@ -207,6 +209,37 @@ export const PixelStandPortrait: React.FC<{
       style={{ width: size, height: size }}
       className={`pixel-canvas shrink-0 border border-amber-400/75 bg-[#120810] ${className}`}
       aria-label={`${standId} stand portrait`}
+    />
+  );
+};
+
+export const PixelSideQuestNpcPortrait: React.FC<{
+  questIndex: number;
+  coatColor: string;
+  hairColor: string;
+  shirtColor: string;
+  twistRevealed: boolean;
+  size?: number;
+  className?: string;
+}> = ({ questIndex, coatColor, hairColor, shirtColor, twistRevealed, size = 64, className = '' }) => {
+  const ref = useRef<HTMLCanvasElement | null>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, 64, 64);
+    drawSideQuestNpcPortrait(ctx, questIndex, coatColor, hairColor, shirtColor, twistRevealed, 64);
+  }, [questIndex, coatColor, hairColor, shirtColor, twistRevealed]);
+  return (
+    <canvas
+      ref={ref}
+      width={64}
+      height={64}
+      style={{ width: size, height: size }}
+      className={`pixel-canvas shrink-0 border border-amber-400/80 bg-[#09060b] ${className}`}
+      aria-label={`Quest giver ${questIndex} portrait`}
     />
   );
 };

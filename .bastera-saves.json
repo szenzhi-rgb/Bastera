@@ -3,24 +3,24 @@
     "version": 1,
     "saveId": "autosave",
     "playerName": "BasteraKnight",
-    "savedAt": "2026-11-25T12:52:24.857Z",
+    "savedAt": "2026-11-26T10:02:31.560Z",
     "biome": "castle",
     "player": {
-      "x": 310,
+      "x": 408.64473125675977,
       "y": 200,
       "vx": 0,
       "vy": 0,
       "w": 16,
       "h": 26,
       "facing": 1,
-      "onGround": false,
-      "coyoteTimer": 0,
+      "onGround": true,
+      "coyoteTimer": 0.13,
       "jumpBufferTimer": 0,
       "hp": 115,
       "maxHp": 115,
-      "stamina": 100,
+      "stamina": 87.99799999999999,
       "maxStamina": 100,
-      "gold": 25,
+      "gold": 50,
       "equippedWeapon": "claymore",
       "unlockedWeapons": [
         "claymore",
@@ -53,8 +53,8 @@
       "hitFlash": 0,
       "squashX": 1,
       "squashY": 1,
-      "walkCycle": 0,
-      "idleTimer": 0,
+      "walkCycle": 13.74916806000787,
+      "idleTimer": 0.4166000000000005,
       "bossesDefeated": 0,
       "monstersSlain": 0,
       "secretsFound": 0,
@@ -79,7 +79,11 @@
       "unlockedStands": [
         "star_platinum"
       ],
-      "dinoFormTimer": 0
+      "dinoFormTimer": 0,
+      "whiteAuraTimer": 0,
+      "whiteAuraCooldown": 0,
+      "standGuardTimer": 0,
+      "standGuardCooldown": 0
     },
     "inventory": [
       {
@@ -225,7 +229,7 @@
     "rankMissionsCompleted": 0,
     "bRankEscortsCompleted": 0,
     "acceptedMissionId": null,
-    "isekaiClockSeconds": 0,
+    "isekaiClockSeconds": 6,
     "arenaWins": 0,
     "unlockedWardrobe": [
       "outfit_knight_plate",
@@ -235,67 +239,99 @@
     "crownUnlocked": false,
     "gyroDefeated": false,
     "isekaiCompleted": false,
-    "townRaidTimer": 1200,
+    "townRaidTimer": 294,
     "sideQuestProgress": {
       "sq_01_crimson_tithe": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": true,
+        "chosenOptionIds": [
+          "sq1_ask_combo"
+        ],
+        "confronted": false
       },
       "sq_02_butcher_well": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_03_glass_bride": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_04_plague_apothecary": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_05_hollow_bell": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_06_twin_fang_oath": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_07_ash_archivist": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_08_chained_hound": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_09_velvet_gallows": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       },
       "sq_10_pale_regent": {
         "stage": 0,
         "kills": 0,
         "twistRevealed": false,
-        "bossSpawned": false
+        "bossSpawned": false,
+        "clueUncovered": false,
+        "chosenOptionIds": [],
+        "confronted": false
       }
     },
     "trackedSideQuestId": null

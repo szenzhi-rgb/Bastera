@@ -667,6 +667,21 @@ export function drawWarriorPortrait(
   px(ctx, 18, 15, 3, 2, customization.visorColor);
   px(ctx, 13, 15, 1, 1, '#ffffff');
   px(ctx, 19, 15, 1, 1, '#ffffff');
+  if (customization.crownEquipped) {
+    if (customization.crownStyle === 'elf_emerald') {
+      px(ctx, 9, 4, 14, 4, '#cbd5e1');
+      px(ctx, 9, 1, 3, 4, '#34d399');
+      px(ctx, 14, 0, 4, 5, '#10b981');
+      px(ctx, 20, 1, 3, 4, '#34d399');
+      px(ctx, 15, 4, 2, 2, '#fde047');
+    } else {
+      px(ctx, 9, 4, 14, 4, '#f59e0b');
+      px(ctx, 9, 1, 3, 4, '#fbbf24');
+      px(ctx, 14, 0, 4, 5, '#fef08a');
+      px(ctx, 20, 1, 3, 4, '#fbbf24');
+      px(ctx, 15, 5, 2, 2, '#e11d48');
+    }
+  }
   // Vertical blade hint (blazing crimson-orange for Fire Sword!)
   if (weaponId === 'fire_sword') {
     px(ctx, 26, 3, 3, 25, '#dc2626');
@@ -1520,7 +1535,8 @@ export function getBakedWarriorBattleSprite(
   isSlashing: boolean,
   customization: WarriorCustomization = DEFAULT_WARRIOR_CUSTOMIZATION,
 ): HTMLCanvasElement {
-  const key = `${weaponId}_${isSlashing ? 'atk' : 'idle'}_${customization.cloakColor}_${customization.armorColor}_${customization.visorColor}_${customization.plumeColor}_${customization.outfitStyle ?? 'knight_plate'}_${customization.headgearStyle ?? 'helm'}_${customization.crownEquipped ? 'C' : 'N'}`;
+  const crownTag = customization.crownEquipped ? customization.crownStyle ?? 'solaris_gold' : 'N';
+  const key = `${weaponId}_${isSlashing ? 'atk' : 'idle'}_${customization.cloakColor}_${customization.armorColor}_${customization.visorColor}_${customization.plumeColor}_${customization.outfitStyle ?? 'knight_plate'}_${customization.headgearStyle ?? 'helm'}_${crownTag}`;
   const cached = warriorBattleCache.get(key);
   if (cached) return cached;
   if (warriorBattleCache.size > 40) {
@@ -1613,13 +1629,24 @@ export function getBakedWarriorBattleSprite(
   px(ctx, bx - 19, by - 50, 7, 3, plumeRamp.base);
 
   if (customization.crownEquipped) {
-    // Gleaming S-Rank Royal Sovereign Crown perched atop helm!
-    px(ctx, bx - 9, by - 59, 18, 5, '#09060b');
-    px(ctx, bx - 8, by - 58, 16, 4, '#f59e0b');
-    px(ctx, bx - 8, by - 62, 3, 4, '#fbbf24');
-    px(ctx, bx - 2, by - 64, 4, 6, '#fef08a');
-    px(ctx, bx + 5, by - 62, 3, 4, '#fbbf24');
-    px(ctx, bx - 1, by - 57, 2, 2, '#e11d48');
+    if (customization.crownStyle === 'elf_emerald') {
+      // Elf Sovereign Emerald & Mithril Leaf Crown perched atop helm!
+      px(ctx, bx - 10, by - 59, 20, 5, '#09060b');
+      px(ctx, bx - 9, by - 58, 18, 4, '#cbd5e1');
+      px(ctx, bx - 9, by - 63, 3, 5, '#34d399');
+      px(ctx, bx - 3, by - 66, 6, 8, '#10b981');
+      px(ctx, bx - 1, by - 65, 2, 6, '#a7f3d0');
+      px(ctx, bx + 6, by - 63, 3, 5, '#34d399');
+      px(ctx, bx - 2, by - 57, 4, 2, '#fde047');
+    } else {
+      // Gleaming S-Rank Royal Sovereign Crown perched atop helm!
+      px(ctx, bx - 9, by - 59, 18, 5, '#09060b');
+      px(ctx, bx - 8, by - 58, 16, 4, '#f59e0b');
+      px(ctx, bx - 8, by - 62, 3, 4, '#fbbf24');
+      px(ctx, bx - 2, by - 64, 4, 6, '#fef08a');
+      px(ctx, bx + 5, by - 62, 3, 4, '#fbbf24');
+      px(ctx, bx - 1, by - 57, 2, 2, '#e11d48');
+    }
   }
 
   // Equipped Weapon Blade + Gauntlet
@@ -1871,7 +1898,7 @@ export function getBakedWeaponWorldSprite(weaponId: WeaponId): HTMLCanvasElement
   const existing = weaponWorldCache.get(weaponId);
   if (existing) return existing;
 
-  const wDef = WEAPONS[weaponId];
+  const wDef = WEAPONS[weaponId] ?? WEAPONS.claymore;
   const W = 24;
   const H = 64;
   const c = document.createElement('canvas');
@@ -1991,7 +2018,7 @@ export function getBakedWeaponIcon(weaponId: WeaponId): HTMLCanvasElement {
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
-  const weapon = WEAPONS[weaponId];
+  const weapon = WEAPONS[weaponId] ?? WEAPONS.claymore;
   const bladeRamp = makeRamp(weapon.color);
   const accentRamp = makeRamp(weapon.accentColor);
 
@@ -2277,7 +2304,7 @@ export function getBakedStandWorldSprite(standId: StandId, frame: 0 | 1): HTMLCa
   const existing = standWorldSpriteCache.get(key);
   if (existing) return existing;
 
-  const def = STANDS[standId];
+  const def = STANDS[standId] ?? STANDS.star_platinum;
   const c = document.createElement('canvas');
   c.width = 96;
   c.height = 96;
@@ -2681,6 +2708,137 @@ export function drawStandPortrait(
   }
 
   px(ctx, 4, 58, 56, 4, def.accentColor);
+  ctx.restore();
+}
+
+export function drawSideQuestNpcPortrait(
+  ctx: CanvasRenderingContext2D,
+  questIndex: number,
+  coatColor: string,
+  hairColor: string,
+  shirtColor: string,
+  twistRevealed: boolean,
+  size = 64,
+): void {
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  const s = size / 64;
+  ctx.scale(s, s);
+
+  const coat = makeRamp(coatColor);
+  const hair = makeRamp(hairColor);
+  const shirt = makeRamp(shirtColor);
+
+  // Dark gothic parchment backdrop
+  px(ctx, 0, 0, 64, 64, '#09060b');
+  px(ctx, 2, 2, 60, 60, twistRevealed ? '#1e0910' : '#140c14');
+  const g = ctx.createRadialGradient(32, 26, 4, 32, 32, 30);
+  g.addColorStop(0, twistRevealed ? 'rgba(244, 63, 94, 0.35)' : `${coatColor}44`);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(2, 2, 60, 60);
+
+  // Shoulders & Coat silhouette with ink outline
+  px(ctx, 11, 37, 42, 25, '#09060b');
+  px(ctx, 13, 39, 38, 22, coat.base);
+  px(ctx, 13, 39, 10, 22, coat.sh);
+  px(ctx, 25, 40, 14, 21, shirt.base);
+  px(ctx, 21, 39, 4, 16, coat.hi);
+  px(ctx, 39, 39, 4, 16, coat.hi);
+
+  // Neck & Head
+  px(ctx, 27, 34, 10, 7, '#d9a679');
+  px(ctx, 19, 13, 26, 23, '#09060b');
+  px(ctx, 21, 15, 22, 19, '#f3c69f');
+  px(ctx, 21, 15, 22, 4, '#d9a679');
+  px(ctx, 21, 29, 22, 5, '#e2b28b');
+
+  // Hair silhouette
+  px(ctx, 18, 9, 28, 10, '#09060b');
+  px(ctx, 20, 10, 24, 8, hair.base);
+  px(ctx, 22, 10, 16, 3, hair.hi);
+  px(ctx, 19, 15, 4, 12, hair.sh);
+  px(ctx, 41, 15, 4, 12, hair.sh);
+
+  // Eyes (shifty/unhinged after twist, suspicious smirk/sweat before)
+  if (twistRevealed) {
+    // Glowing sinister slit eyes + wicked grin
+    px(ctx, 23, 21, 6, 4, '#09060b');
+    px(ctx, 35, 21, 6, 4, '#09060b');
+    px(ctx, 25, 22, 3, 2, '#f43f5e');
+    px(ctx, 37, 22, 3, 2, '#f43f5e');
+    px(ctx, 26, 29, 12, 3, '#09060b');
+    px(ctx, 27, 30, 10, 1, '#fef2f2');
+  } else {
+    px(ctx, 24, 22, 5, 4, '#ffffff');
+    px(ctx, 35, 22, 5, 4, '#ffffff');
+    px(ctx, 26, 23, 3, 3, '#0f172a');
+    px(ctx, 37, 23, 3, 3, '#0f172a');
+    px(ctx, 23, 20, 6, 2, '#1e1b4b');
+    px(ctx, 35, 20, 6, 2, '#1e1b4b');
+    // Subtle nervous anime sweatdrop
+    px(ctx, 44, 18, 3, 5, '#38bdf8');
+    px(ctx, 45, 19, 1, 2, '#e0f2fe');
+    px(ctx, 28, 30, 8, 2, '#78350f');
+  }
+
+  // Unique per-NPC props for all 10 quests
+  if (questIndex === 1) {
+    // Kaelen: crooked captain peaked cap & chocolate-foil gold coin
+    px(ctx, 18, 7, 28, 7, '#09060b');
+    px(ctx, 20, 8, 24, 5, '#991b1b');
+    px(ctx, 17, 13, 30, 2, '#fbbf24');
+    px(ctx, 48, 42, 10, 10, '#09060b');
+    px(ctx, 49, 43, 8, 8, '#fbbf24');
+  } else if (questIndex === 2) {
+    // Marlowe: giant red-tipped tailor shears & stitched collar
+    px(ctx, 46, 36, 12, 20, '#94a3b8');
+    px(ctx, 48, 38, 3, 12, '#f43f5e');
+    px(ctx, 26, 42, 12, 3, '#f43f5e');
+  } else if (questIndex === 3) {
+    // Severin: tall inquisitor collar & blood-red chalice
+    px(ctx, 18, 36, 28, 5, '#fef2f2');
+    px(ctx, 47, 40, 10, 12, '#fbbf24');
+    px(ctx, 49, 41, 6, 4, '#dc2626');
+  } else if (questIndex === 4) {
+    // Gideon: glowing toxic green plague goggles + "miracle" vial
+    px(ctx, 22, 20, 8, 6, '#09060b');
+    px(ctx, 34, 20, 8, 6, '#09060b');
+    px(ctx, 24, 21, 4, 4, '#4ade80');
+    px(ctx, 36, 21, 4, 4, '#4ade80');
+    px(ctx, 47, 41, 9, 14, '#09060b');
+    px(ctx, 48, 44, 7, 10, '#22c55e');
+  } else if (questIndex === 5) {
+    // Lyra: scout hood + flashy gold traitor whistle
+    px(ctx, 15, 7, 34, 7, '#14532d');
+    px(ctx, 26, 45, 10, 6, '#fbbf24');
+  } else if (questIndex === 6) {
+    // Thorne: suspiciously pinned empty sleeve + medal
+    px(ctx, 13, 44, 8, 14, '#18181b');
+    px(ctx, 34, 44, 6, 8, '#fbbf24');
+  } else if (questIndex === 7) {
+    // Vesper: scorched brass monocle + cursed flesh-bound tome
+    px(ctx, 34, 20, 8, 7, '#f59e0b');
+    px(ctx, 45, 39, 13, 16, '#7f1d1d');
+    px(ctx, 48, 42, 7, 10, '#fecdd3');
+  } else if (questIndex === 8) {
+    // Balthus: iron mining helmet + glowing quartz detonator
+    px(ctx, 17, 6, 30, 8, '#f59e0b');
+    px(ctx, 29, 7, 6, 5, '#fef08a');
+    px(ctx, 47, 43, 10, 11, '#ef4444');
+  } else if (questIndex === 9) {
+    // Mireille: crimson velvet judicial veil + gilded dagger pin
+    px(ctx, 16, 8, 32, 6, '#9f1239');
+    px(ctx, 29, 43, 4, 12, '#fef08a');
+  } else {
+    // Alistair: crooked prince circlet + glowing violet poison vial
+    px(ctx, 20, 7, 24, 5, '#fbbf24');
+    px(ctx, 24, 5, 4, 3, '#fde047');
+    px(ctx, 36, 5, 4, 3, '#fde047');
+    px(ctx, 47, 41, 9, 14, '#a855f7');
+  }
+
+  px(ctx, 2, 59, 60, 3, twistRevealed ? '#f43f5e' : '#fbbf24');
   ctx.restore();
 }
 

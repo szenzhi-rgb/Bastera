@@ -22,38 +22,38 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
   const [selectedSlot, setSelectedSlot] = useState<0 | 1 | 2>(0);
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/75">
-      <div className="w-full max-w-2xl bg-[#130c10] border-2 border-amber-500/60 p-5 text-amber-50 max-h-[88vh] flex flex-col">
-        <div className="flex items-center justify-between border-b border-amber-500/25 pb-3 mb-4">
-          <div>
-            <h2 className="font-display text-xl font-bold text-amber-100">Royal Satchel & Arsenal</h2>
-            <p className="font-pixel-mono text-xs text-amber-300/80">
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-2 sm:p-4 bg-black/75">
+      <div className="w-full max-w-[92%] sm:max-w-2xl bg-[#130c10] border-2 border-amber-500/60 p-3 sm:p-4 text-amber-50 max-h-[86%] flex flex-col">
+        <div className="flex items-center justify-between border-b border-amber-500/25 pb-2 mb-2.5 shrink-0">
+          <div className="min-w-0">
+            <h2 className="font-display text-base sm:text-lg font-bold text-amber-100 truncate">Royal Satchel &amp; Arsenal</h2>
+            <p className="font-pixel-mono text-[10px] sm:text-xs text-amber-300/80 tabular-nums">
               Gold: {hud.gold}G · Secrets: {hud.secretsFound}/{hud.totalSecrets}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-pixel-mono bg-[#24161e] border border-amber-500/40 hover:border-amber-300 cursor-pointer"
+            className="px-2.5 py-1 text-[10px] sm:text-xs font-pixel-mono bg-[#24161e] border border-amber-500/40 hover:border-amber-300 cursor-pointer shrink-0 whitespace-nowrap"
           >
             Close [I]
           </button>
         </div>
 
         {/* Segmented tabs */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-1.5 mb-2.5 shrink-0 overflow-x-auto">
           {(['weapons', 'skills', 'pouch'] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`px-4 py-1.5 text-xs font-semibold border transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-[10px] sm:text-xs font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                 tab === t
                   ? 'bg-[#991b1b] border-amber-300 text-amber-50'
                   : 'bg-[#1c1117] border-amber-500/25 text-amber-200/75 hover:text-amber-100'
               }`}
             >
-              {t === 'weapons' ? 'Sword Styles' : t === 'skills' ? '3 Skill Slots' : 'Magic Items & Resources'}
+              {t === 'weapons' ? 'Sword Styles' : t === 'skills' ? '3 Skill Slots' : 'Items & Resources'}
             </button>
           ))}
         </div>

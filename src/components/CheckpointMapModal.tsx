@@ -22,31 +22,31 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
   }, [biomeFilter]);
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/75">
-      <div className="w-full max-w-2xl bg-[#130c10] border-2 border-amber-500/60 p-5 text-amber-50 max-h-[88vh] flex flex-col">
-        <div className="flex items-center justify-between border-b border-amber-500/25 pb-3 mb-4">
-          <div>
-            <h2 className="font-display text-xl font-bold text-amber-100">
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-2 sm:p-4 bg-black/75">
+      <div className="w-full max-w-[92%] sm:max-w-2xl bg-[#130c10] border-2 border-amber-500/60 p-3 sm:p-4 text-amber-50 max-h-[86%] flex flex-col">
+        <div className="flex items-center justify-between border-b border-amber-500/25 pb-2 mb-2.5 shrink-0">
+          <div className="min-w-0">
+            <h2 className="font-display text-base sm:text-lg font-bold text-amber-100 truncate">
               Citadel Checkpoints &amp; {TOTAL_BOSSES} JoJo Codex
             </h2>
-            <p className="font-pixel-mono text-xs text-amber-300/80">
-              Biome shifts every 5 Bosses · Bosses: {hud.bossesDefeated}/{TOTAL_BOSSES} · Secrets: {hud.secretsFound}/{hud.totalSecrets}
+            <p className="font-pixel-mono text-[10px] sm:text-xs text-amber-300/80 tabular-nums">
+              Bosses: {hud.bossesDefeated}/{TOTAL_BOSSES} · Secrets: {hud.secretsFound}/{hud.totalSecrets}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-pixel-mono bg-[#24161e] border border-amber-500/40 hover:border-amber-300 cursor-pointer"
+            className="px-2.5 py-1 text-[10px] sm:text-xs font-pixel-mono bg-[#24161e] border border-amber-500/40 hover:border-amber-300 cursor-pointer shrink-0 whitespace-nowrap"
           >
             Close [M]
           </button>
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-1.5 mb-2.5 shrink-0">
           <button
             type="button"
             onClick={() => setView('checkpoints')}
-            className={`px-4 py-1.5 text-xs font-semibold border cursor-pointer ${
+            className={`px-3 py-1 text-[10px] sm:text-xs font-semibold border cursor-pointer whitespace-nowrap ${
               view === 'checkpoints'
                 ? 'bg-[#991b1b] border-amber-300 text-amber-50'
                 : 'bg-[#1c1117] border-amber-500/25 text-amber-200/75'
@@ -57,7 +57,7 @@ export const CheckpointMapModal: React.FC<CheckpointMapModalProps> = ({
           <button
             type="button"
             onClick={() => setView('codex')}
-            className={`px-4 py-1.5 text-xs font-semibold border cursor-pointer ${
+            className={`px-3 py-1 text-[10px] sm:text-xs font-semibold border cursor-pointer whitespace-nowrap ${
               view === 'codex'
                 ? 'bg-[#991b1b] border-amber-300 text-amber-50'
                 : 'bg-[#1c1117] border-amber-500/25 text-amber-200/75'

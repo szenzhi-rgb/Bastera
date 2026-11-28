@@ -1,4 +1,4 @@
-import type { BiomeId, BossDef, MegaSkillAnimStyle, SkillId, WeaponId } from './types';
+import type { BiomeId, BossDef, MegaSkillAnimStyle, RealmMode, SkillId, WeaponId } from './types';
 
 class GameAudioEngine {
   private ctx: AudioContext | null = null;
@@ -7,6 +7,7 @@ class GameAudioEngine {
   private stepIndex = 0;
   private activeBossMusic: BossDef | null = null;
   private activeBiome: BiomeId = 'castle';
+  private activeRealm: RealmMode = 'citadel';
   private playingMusic = false;
   private noiseBuffer: AudioBuffer | null = null;
 
@@ -629,21 +630,32 @@ class GameAudioEngine {
     }
   }
 
-  public startMusic(biome: BiomeId, boss: BossDef | null): void {
+  public startMusic(biome: BiomeId, boss: BossDef | null, realm: RealmMode = 'citadel'): void {
     if (this.muted) return;
     const sameTrack =
       this.playingMusic &&
       this.activeBiome === biome &&
+      this.activeRealm === realm &&
       this.activeBossMusic?.index === boss?.index;
     if (sameTrack) return;
 
     this.stopMusic();
     this.activeBiome = biome;
+    this.activeRealm = realm;
     this.activeBossMusic = boss;
     this.playingMusic = true;
     this.stepIndex = 0;
 
-    const bpm = boss ? boss.music.bpm : biome === 'castle' ? 92 : biome === 'forest' ? 84 : 112;
+    const isRoseRemix = !boss && realm === 'isekai_town';
+    const bpm = boss
+      ? boss.music.bpm
+      : isRoseRemix
+        ? 116
+        : biome === 'castle'
+          ? 92
+          : biome === 'forest'
+            ? 84
+            : 112;
     const stepMs = Math.round((60 / bpm / 2) * 1000);
 
     this.musicTimer = window.setInterval(() => {
@@ -694,6 +706,118 @@ class GameAudioEngine {
         leadGain.connect(ctx.destination);
         leadOsc.start(now);
         leadOsc.stop(now + 0.17);
+      }
+    } else if (this.activeRealm === 'isekai_town') {
+      // Kingdom of Rose (Solaris Harbor Remix): G minor -> Eb -> Bb -> D7 regal orchestral synth + groove
+      // 32-step melodic phrase (MIDI semitones relative to G3 = 196Hz)
+      const roseMelody: (number | null)[] = [
+        12, null, 14, 15, 19, null, 17, 15,
+        14, null, 10, 12, 14, 15, 14, null,
+        8, null, 10, 12, 15, null, 14, 12,
+        10, 12, 14, 17, 19, null, 15, 14,
+        12, null, 15, 19, 24, null, 22, 19,
+        17, null, 15, 14, 15, 17, 19, null,
+        8, 12, 15, 19, 17, 15, 14, 11,
+        12, null, 14, 15, 19, null, 14, null,
+      ];
+      // Regal chord roots per 8-step bar: Gm (0), Bb (3), Eb (8), D (7) -> Gm (0), F (-2), Eb (8), D7 (7)
+      const chordRoots = [0, 3, 8, 7, 0, -2, 8, 7];
+      const barIdx = Math.floor((step % 64) / 8);
+      const chordRoot = chordRoots[barIdx];
+      const rootHz = 196.0; // G3
+
+      // 1. Syncopated remix bass pulse (beats + offbeat bounce)
+      const stepInBar = step % 8;
+      if (stepInBar === 0 || stepInBar === 3 || stepInBar === 4 || stepInBar === 6) {
+        const bassHz = (rootHz / 2) * Math.pow(2, chordRoot / 12);
+        const bassOsc = ctx.createOscillator();
+        const bassFilter = ctx.createBiquadFilter();
+        const bassGain = ctx.createGain();
+        bassOsc.type = 'sawtooth';
+        bassOsc.frequency.setValueAtTime(bassHz, now);
+        bassFilter.type = 'lowpass';
+        bassFilter.frequency.setValueAtTime(stepInBar === 0 ? 520 : 380, now);
+        bassGain.gain.setValueAtTime(stepInBar === 0 ? 0.042 : 0.028, now);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+        bassOsc.connect(bassFilter);
+        bassFilter.connect(bassGain);
+        bassGain.connect(ctx.destination);
+        bassOsc.start(now);
+        bassOsc.stop(now + 0.2);
+      }
+
+      // 2. Royal harp / harpsichord arpeggio backing
+      const arpOffsets = [0, 7, 12, 15, 12, 7, 19, 12];
+      const arpNote = chordRoot + arpOffsets[stepInBar];
+      const arpHz = rootHz * Math.pow(2, arpNote / 12);
+      const arpOsc = ctx.createOscillator();
+      const arpGain = ctx.createGain();
+      arpOsc.type = 'triangle';
+      arpOsc.frequency.setValueAtTime(arpHz, now);
+      arpGain.gain.setValueAtTime(0.015, now);
+      arpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      arpOsc.connect(arpGain);
+      arpGain.connect(ctx.destination);
+      arpOsc.start(now);
+      arpOsc.stop(now + 0.16);
+
+      // 3. Lead Kingdom of Rose orchestral-bell melody + subtle octave remix shimmer
+      const leadNote = roseMelody[step % roseMelody.length];
+      if (leadNote !== null) {
+        const leadHz = rootHz * Math.pow(2, leadNote / 12);
+        const leadOsc = ctx.createOscillator();
+        const leadGain = ctx.createGain();
+        leadOsc.type = 'triangle';
+        leadOsc.frequency.setValueAtTime(leadHz, now);
+        leadGain.gain.setValueAtTime(0.032, now);
+        leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        leadOsc.connect(leadGain);
+        leadGain.connect(ctx.destination);
+        leadOsc.start(now);
+        leadOsc.stop(now + 0.3);
+
+        if (step % 4 === 0) {
+          const chime = ctx.createOscillator();
+          const cg = ctx.createGain();
+          chime.type = 'sine';
+          chime.frequency.setValueAtTime(leadHz * 2, now);
+          cg.gain.setValueAtTime(0.011, now);
+          cg.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          chime.connect(cg);
+          cg.connect(ctx.destination);
+          chime.start(now);
+          chime.stop(now + 0.23);
+        }
+      }
+
+      // 4. Light remix percussion: crisp off-beat hi-hat & kick pulse
+      if (stepInBar % 2 === 1) {
+        const hat = ctx.createBufferSource();
+        hat.buffer = this.getNoiseBuffer(ctx);
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.setValueAtTime(5200, now);
+        const hg = ctx.createGain();
+        hg.gain.setValueAtTime(stepInBar === 4 || stepInBar === 5 ? 0.014 : 0.009, now);
+        hg.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+        hat.connect(hp);
+        hp.connect(hg);
+        hg.connect(ctx.destination);
+        hat.start(now);
+        hat.stop(now + 0.05);
+      }
+      if (stepInBar === 0 || stepInBar === 4) {
+        const kick = ctx.createOscillator();
+        const kg = ctx.createGain();
+        kick.type = 'sine';
+        kick.frequency.setValueAtTime(stepInBar === 0 ? 112 : 96, now);
+        kick.frequency.exponentialRampToValueAtTime(42, now + 0.08);
+        kg.gain.setValueAtTime(0.032, now);
+        kg.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        kick.connect(kg);
+        kg.connect(ctx.destination);
+        kick.start(now);
+        kick.stop(now + 0.095);
       }
     } else {
       // Ambient Biome Exploration Music

@@ -19,29 +19,29 @@ export const WardrobeModal: React.FC<WardrobeModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80"
       data-testid="wardrobe-shop-modal"
     >
-      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-[#1b0f18] border-2 border-pink-300/85 text-amber-50 shadow-[0_10px_36px_rgba(0,0,0,0.92)] overflow-hidden">
-        <span className="absolute top-0 left-0 w-2 h-2 bg-pink-200" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-pink-200" />
-        <span className="absolute bottom-0 left-0 w-2 h-2 bg-pink-200" />
-        <span className="absolute bottom-0 right-0 w-2 h-2 bg-pink-200" />
+      <div className="relative w-full max-w-[92%] sm:max-w-2xl max-h-[86%] flex flex-col bg-[#1b0f18] border-2 border-pink-300/85 text-amber-50 shadow-[0_10px_36px_rgba(0,0,0,0.92)] overflow-hidden">
+        <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-pink-200" />
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-pink-200" />
+        <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-pink-200" />
+        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-pink-200" />
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[#2d1626] border-b border-pink-300/40">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-[#2d1626] border-b border-pink-300/40 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
             <PixelWarriorPortrait
               weaponId={hud.equippedWeapon}
               customization={hud.customization}
-              size={58}
+              size={42}
             />
-            <div>
-              <h2 className="font-display text-lg font-bold text-pink-100">
-                Atelier Sylvie&apos;s Solaris Wardrobe Shop
+            <div className="min-w-0">
+              <h2 className="font-display text-sm sm:text-base font-bold text-pink-100 truncate">
+                Atelier Sylvie&apos;s Wardrobe Shop
               </h2>
-              <p className="font-pixel-mono text-[11px] text-amber-200/85">
-                Traditional Isekai Adventurer Garb &amp; Royal Regalia · Gold:{' '}
+              <p className="font-pixel-mono text-[9px] sm:text-[10px] text-amber-200/85">
+                Isekai Garb &amp; Regalia · Gold:{' '}
                 <strong className="text-yellow-300">{hud.gold}G</strong>
               </p>
             </div>
@@ -54,34 +54,59 @@ export const WardrobeModal: React.FC<WardrobeModalProps> = ({
               e.currentTarget.blur();
               onClose();
             }}
-            className="px-3 py-1.5 bg-[#3d1f35] hover:bg-[#522947] border border-pink-300/75 font-pixel-mono text-xs text-pink-100 cursor-pointer"
+            className="px-2.5 py-1 bg-[#3d1f35] hover:bg-[#522947] border border-pink-300/75 font-pixel-mono text-[10px] sm:text-xs text-pink-100 cursor-pointer shrink-0"
           >
             Close [Esc]
           </button>
         </div>
 
-        <div className="p-5 overflow-y-auto space-y-4">
-          {/* Royal Crown Toggle Banner */}
-          <div className="p-3.5 bg-[#2a1b0b] border-2 border-yellow-400/85 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-display text-sm font-bold text-yellow-200">
-                ♛ Sovereign Royal Crown {hud.crownUnlocked ? '(S-RANK UNLOCKED)' : '(A-Rank Reward)'}
+        <div className="p-2.5 sm:p-4 overflow-y-auto space-y-2.5 sm:space-y-3">
+          {/* Royal Crown & Elf Sovereign Crown Toggle Banners */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="p-2 sm:p-2.5 bg-[#2a1b0b] border border-yellow-400/85 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-display text-xs font-bold text-yellow-200 truncate">
+                  ♛ Solaris Crown {hud.crownUnlocked ? '(UNLOCKED)' : '(A-Rank)'}
+                </div>
+                <p className="font-pixel-mono text-[9px] text-amber-100/80 truncate">
+                  {hud.crownUnlocked ? 'From 3 Demon Kings' : 'Defeat 3 Demon Kings'}
+                </p>
               </div>
-              <p className="font-pixel-mono text-[10px] text-amber-100/85 mt-0.5">
-                {hud.crownUnlocked
-                  ? 'Presented by King Solaris after defeating the 3 Demon Kings.'
-                  : 'Complete the A-Rank Three Demon Kings Judgment quest to claim your Royal Crown!'}
-              </p>
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled={!hud.crownUnlocked}
+                onClick={() => onBuyOrEquip('toggle_crown')}
+                className="px-2 py-1 bg-yellow-700 hover:bg-yellow-600 disabled:opacity-40 border border-yellow-200 font-pixel-mono text-[9px] font-bold text-white cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                {hud.customization.crownEquipped && hud.customization.crownStyle !== 'elf_emerald'
+                  ? 'Unequip'
+                  : 'Wear ♛'}
+              </button>
             </div>
-            <button
-              type="button"
-              tabIndex={-1}
-              disabled={!hud.crownUnlocked}
-              onClick={() => onBuyOrEquip('toggle_crown')}
-              className="px-3 py-1.5 bg-yellow-700 hover:bg-yellow-600 disabled:opacity-40 border border-yellow-200 font-pixel-mono text-[11px] font-bold text-white cursor-pointer"
-            >
-              {hud.customization.crownEquipped ? 'Unequip Crown' : 'Wear Crown ♛'}
-            </button>
+
+            <div className="p-2 sm:p-2.5 bg-[#0b231b] border border-emerald-400/85 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-display text-xs font-bold text-emerald-200 truncate">
+                  🌿 Elf Crown {hud.elfCrownUnlocked ? '(UNLOCKED)' : '(Aethelgard)'}
+                </div>
+                <p className="font-pixel-mono text-[9px] text-emerald-100/80 truncate">
+                  {hud.elfCrownUnlocked ? '+8% ATK/Speed Regalia' : 'Defend Elf Banquet'}
+                </p>
+              </div>
+              <button
+                type="button"
+                tabIndex={-1}
+                disabled={!hud.elfCrownUnlocked}
+                data-testid="wardrobe-toggle-elf-crown-btn"
+                onClick={() => onBuyOrEquip('toggle_elf_crown')}
+                className="px-2 py-1 bg-emerald-800 hover:bg-emerald-700 disabled:opacity-40 border border-emerald-200 font-pixel-mono text-[9px] font-bold text-white cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                {hud.customization.crownEquipped && hud.customization.crownStyle === 'elf_emerald'
+                  ? 'Unequip'
+                  : 'Wear 🌿'}
+              </button>
+            </div>
           </div>
 
           {/* Outfits */}

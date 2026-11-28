@@ -52,7 +52,16 @@ export type EnemyArchetype =
   | 'bandit_brute'
   | 'demon_succubus'
   | 'demon_tank'
-  | 'demon_lightning';
+  | 'demon_lightning'
+  | 'eldritch_ichor_hound'
+  | 'eldritch_tendril_fiend'
+  | 'eldritch_feast_boss'
+  | 'raider_abyssal_imp'
+  | 'raider_iron_golem'
+  | 'raider_frost_wraith'
+  | 'raider_spore_stalker'
+  | 'raider_void_acolyte'
+  | 'raider_hell_executioner';
 
 export interface WeaponDef {
   id: WeaponId;
@@ -180,7 +189,10 @@ export type RealmMode =
   | 'demon_king_arena'
   | 'dueling_arena'
   | 'outskirts_forest'
-  | 'outskirts_caves';
+  | 'outskirts_caves'
+  | 'elf_kingdom'
+  | 'raider_guild'
+  | 'raider_dungeon';
 
 export type SideQuestId =
   | 'sq_01_crimson_tithe'
@@ -196,10 +208,34 @@ export type SideQuestId =
 
 export type SideQuestStage = 0 | 1 | 2 | 3;
 
+export interface SideQuestDialogueChoice {
+  id: string;
+  label: string;
+  tone: 'quirky' | 'ruthless' | 'investigate' | 'accept' | 'extort';
+  npcReply: string[];
+  revealClue?: boolean;
+  bonusGold?: number;
+  bonusStatPoints?: number;
+  acceptQuest?: boolean;
+  markConfronted?: boolean;
+  nextNodeId?: string;
+}
+
+export interface SideQuestDialogueNode {
+  id: string;
+  speaker: string;
+  speakerRole: string;
+  moodLabel: string;
+  lines: string[];
+  choices?: SideQuestDialogueChoice[];
+}
+
 export interface SideQuestDef {
   id: SideQuestId;
   index: number;
   title: string;
+  storyTheme: string;
+  chapterTitle: string;
   giverName: string;
   giverRoleLabel: string;
   giverRealm: 'isekai_town' | 'outskirts_forest' | 'outskirts_caves';
@@ -210,7 +246,11 @@ export interface SideQuestDef {
   targetRealm: 'outskirts_forest' | 'outskirts_caves';
   twistTriggerKills: number;
   hookSummary: string;
+  conspiracyClue: string;
   giverOpeningDialogue: string[];
+  openingNodes: SideQuestDialogueNode[];
+  midQuestNodes: SideQuestDialogueNode[];
+  twistConfrontationNodes: SideQuestDialogueNode[];
   twistTitle: string;
   twistRevelation: string;
   twistDialogue: string[];
@@ -231,6 +271,9 @@ export interface SideQuestProgress {
   kills: number;
   twistRevealed: boolean;
   bossSpawned: boolean;
+  clueUncovered?: boolean;
+  chosenOptionIds?: string[];
+  confronted?: boolean;
 }
 
 export type GuildRank = 'F' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
@@ -262,6 +305,7 @@ export interface WarriorCustomization {
   outfitStyle?: OutfitStyle;
   headgearStyle?: HeadgearStyle;
   crownEquipped?: boolean;
+  crownStyle?: 'solaris_gold' | 'elf_emerald';
 }
 
 export type MegaBossArchetype = 'mega_dio' | 'mega_undead_knight';
@@ -403,7 +447,16 @@ export interface InteractableProp {
     | 'outskirts_return_town'
     | 'outskirts_cave_entrance'
     | 'outskirts_cave_exit'
-    | 'side_quest_npc';
+    | 'side_quest_npc'
+    | 'elf_herald'
+    | 'elf_caravan_return'
+    | 'elf_banquet_table'
+    | 'elf_queen_dais'
+    | 'elf_swordsman_npc'
+    | 'raider_guild_door'
+    | 'raider_guild_desk'
+    | 'raider_floor_stairs'
+    | 'raider_dungeon_exit';
   label: string;
   dialogue: string[];
   speaker: string;
@@ -460,6 +513,7 @@ export interface EnemyState {
   statusVenomTimer?: number;
   stunTimer?: number;
   sideQuestId?: SideQuestId;
+  lastSkillThresholdPct?: number;
 }
 
 export type CitadelBossSkillName = 'Ram n Charge' | 'Stand Barrage' | 'Burst Crush!';
@@ -514,6 +568,7 @@ export interface ActiveBoss {
   activeDialogueTimer?: number;
   ramHitPlayer?: boolean;
   stunTimer?: number;
+  lastSkillThresholdPct?: number;
 }
 
 export interface Projectile {
@@ -633,6 +688,10 @@ export interface PlayerState {
   equippedStand?: StandId;
   unlockedStands?: StandId[];
   dinoFormTimer?: number;
+  whiteAuraTimer?: number;
+  whiteAuraCooldown?: number;
+  standGuardTimer?: number;
+  standGuardCooldown?: number;
 }
 
 export type WorldRole = 'host' | 'guest';
@@ -813,7 +872,7 @@ export interface IsekaiNpc {
 export interface AlliedNpc {
   id: string;
   name: string;
-  role: 'knight' | 'lancer' | 'mage';
+  role: 'knight' | 'lancer' | 'mage' | 'elf_swordsman';
   x: number;
   y: number;
   vx: number;
@@ -827,6 +886,10 @@ export interface AlliedNpc {
   armorColor: string;
   cloakColor: string;
   weaponColor: string;
+  dashTimer?: number;
+  slashBurstTimer?: number;
+  callout?: string | null;
+  calloutTimer?: number;
 }
 
 export type DemonKingFaceStyle =
@@ -913,6 +976,7 @@ export interface DemonKingEntity {
   stunTimer?: number;
   windVulnerable?: boolean;
   damageMult?: number;
+  lastSkillThresholdPct?: number;
 }
 
 export type PurpleFlameKind =
@@ -970,7 +1034,12 @@ export type PurpleFlameKind =
   | 'jjk_meteor_crater'
   | 'jjk_supernova_ring'
   | 'jjk_gavel_verdict'
-  | 'jjk_hairpin_mine';
+  | 'jjk_hairpin_mine'
+  | 'eldritch_ichor_geyser'
+  | 'eldritch_bone_spire'
+  | 'raider_hellfire_meteor'
+  | 'raider_abyssal_wave'
+  | 'raider_cursed_sigil';
 
 export interface PurpleFlameZone {
   id: string;
@@ -1028,6 +1097,7 @@ export interface ActiveTownRaid {
   activeSkillTimer: number;
   stunTimer?: number;
   windVulnerable?: boolean;
+  lastSkillThresholdPct?: number;
 }
 
 export interface CarriageEscortState {
@@ -1086,6 +1156,161 @@ export interface CoronationCutsceneHud {
   phase: 'approach' | 'crowning' | 'cheering';
   progress: number;
   subtitle: string;
+}
+
+export type ElfKingdomStage =
+  | 'uninvited'
+  | 'invited'
+  | 'banquet_ready'
+  | 'ambush_active'
+  | 'celebration';
+
+export interface ElfCutsceneChoiceHud {
+  id: string;
+  label: string;
+  reply: string;
+  bonusTag?: string;
+}
+
+export interface ElfCutsceneHud {
+  act: 'dinner' | 'coronation';
+  beatIndex: number;
+  totalBeats: number;
+  speaker: string;
+  speakerTitle: string;
+  portraitKind: 'queen' | 'swordsman' | 'herald' | 'boss' | 'warrior';
+  moodLabel: string;
+  lines: string[];
+  choices?: ElfCutsceneChoiceHud[];
+  chosenReply?: string | null;
+  canAdvance: boolean;
+}
+
+export interface ElfKingdomHud {
+  stage: ElfKingdomStage;
+  wave: number;
+  totalWaves: number;
+  enemiesRemaining: number;
+  bossName: string | null;
+  bossHp: number;
+  bossMaxHp: number;
+  allySwordsman: {
+    name: string;
+    hp: number;
+    maxHp: number;
+    callout: string | null;
+  } | null;
+}
+
+export type RaiderRankId =
+  | 'Bronze'
+  | 'Silver'
+  | 'Gold'
+  | 'Platinum'
+  | 'Mythril'
+  | 'Orichalcum'
+  | 'Adamantite'
+  | 'Monarch';
+
+export type DungeonDesignId =
+  | 'sunken_crypt'
+  | 'obsidian_forge'
+  | 'crimson_abbey'
+  | 'glacial_spire'
+  | 'blighted_hive'
+  | 'clockwork_babel'
+  | 'void_observatory'
+  | 'flesh_labyrinth'
+  | 'pandemonium_citadel';
+
+export type DemonicBossMutation =
+  | 'six_eyed_seraph_rot'
+  | 'magma_horn_colossus'
+  | 'chained_executioner'
+  | 'frost_abyss_archfiend'
+  | 'chitin_plague_lord'
+  | 'clockwork_beelzebub'
+  | 'astral_void_overlord'
+  | 'flayed_rib_monarch'
+  | 'apocalypse_archdemon';
+
+export interface RaiderDungeonDef {
+  id: number; // 1 .. 108
+  code: string; // e.g., D-001
+  name: string;
+  design: DungeonDesignId;
+  designLabel: string;
+  requiredRank: RaiderRankId;
+  floors: number; // 3 .. 5
+  recommendedLevel: number;
+  monsterPool: EnemyArchetype[];
+  bossName: string;
+  bossTitle: string;
+  bossMutation: DemonicBossMutation;
+  bossPrimaryColor: string;
+  bossSecondaryColor: string;
+  bossAuraColor: string;
+  bossHornStyle: 'twisted_ram' | 'crown_spikes' | 'halo_bones' | 'curved_oni';
+  bossWeaponStyle: 'hell_cleaver' | 'twin_scythes' | 'chain_greatsword' | 'abyss_trident';
+  rewardGold: number;
+  rewardRaiderPoints: number;
+  rewardStarStones: number;
+}
+
+export interface RaiderDemonicBossEntity {
+  dungeonId: number;
+  name: string;
+  title: string;
+  mutation: DemonicBossMutation;
+  primaryColor: string;
+  secondaryColor: string;
+  auraColor: string;
+  hornStyle: 'twisted_ram' | 'crown_spikes' | 'halo_bones' | 'curved_oni';
+  weaponStyle: 'hell_cleaver' | 'twin_scythes' | 'chain_greatsword' | 'abyss_trident';
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  w: number;
+  h: number;
+  hp: number;
+  maxHp: number;
+  attackDamage: number;
+  facing: 1 | -1;
+  state: 'march' | 'windup' | 'attack' | 'skill_cast' | 'frenzy_charge' | 'recover';
+  stateTimer: number;
+  attackCooldown: number;
+  skillCooldown: number;
+  castIndex: number;
+  hitFlash: number;
+  walkCycle: number;
+  berserk: boolean;
+  activeSkillBanner: string | null;
+  activeSkillTimer: number;
+  stunTimer: number;
+  lastSkillThresholdPct?: number;
+}
+
+export interface RaiderDungeonHud {
+  dungeonId: number;
+  code: string;
+  name: string;
+  design: DungeonDesignId;
+  designLabel: string;
+  requiredRank: RaiderRankId;
+  floor: number;
+  totalFloors: number;
+  floorCleared: boolean;
+  stairsUnlocked: boolean;
+  enemiesRemaining: number;
+  boss: {
+    name: string;
+    title: string;
+    hp: number;
+    maxHp: number;
+    berserk: boolean;
+    activeSkillBanner: string | null;
+  } | null;
 }
 
 export type ArenaChallengerId =
@@ -1251,6 +1476,10 @@ export interface HudSnapshot {
   skillSlots: [SkillId, SkillId, SkillId];
   skillCooldowns: [number, number, number];
   dashCooldown: number;
+  whiteAuraSeconds: number;
+  whiteAuraCooldown: number;
+  standGuardSeconds: number;
+  standGuardCooldown: number;
   starPlatinumActive: boolean;
   starStones: number;
   equippedStand: StandId;
@@ -1279,6 +1508,15 @@ export interface HudSnapshot {
   secondsToNightToggle: number;
   unlockedWardrobe: string[];
   crownUnlocked: boolean;
+  elfCrownUnlocked: boolean;
+  elfKingdomInvited: boolean;
+  elfKingdomStage: ElfKingdomStage;
+  elfCutscene: ElfCutsceneHud | null;
+  elfKingdomHud: ElfKingdomHud | null;
+  raiderRank: RaiderRankId;
+  raiderPoints: number;
+  clearedRaiderDungeons: number[];
+  activeRaiderDungeon: RaiderDungeonHud | null;
   gyroDefeated: boolean;
   isekaiPortalOpen: boolean;
   isekaiMission: IsekaiMissionHud | null;

@@ -23,6 +23,13 @@ import {
 } from './data';
 import { CHUNK_WIDTH, FLOOR_Y, generateChunk, getBiomeForChunk } from './worldGen';
 import {
+  STAND_GUARD_COOLDOWN,
+  STAND_GUARD_DURATION,
+  WHITE_AURA_COOLDOWN,
+  WHITE_AURA_DURATION,
+  WHITE_AURA_SPEED_MULTIPLIER,
+  activateStandGuard,
+  activateWhiteAuraDash,
   addInventoryResource,
   allocateStatPoint,
   applyDamageToBoss,
@@ -82,6 +89,7 @@ import {
   TOWN_RAID_REWARD_GOLD,
   WARDROBE_CATALOG,
   applyHotSpringRest,
+  applySideQuestDialogueChoice,
   buildIsekaiRoomInteractables,
   buildIsekaiRoomPlatforms,
   buyOrEquipWardrobeItem,
@@ -1251,14 +1259,43 @@ test('10 violent plot-twist side quests, Royal Town East Gate, Outskirts Forest 
   assert.equal(sqBoss.rewardGold, sq1.rewardGold);
   assert.equal(isQuestTargetEnemyKill(sq1, 'outskirts_forest', sqBoss), false);
 
-  // Side Quest state persists cleanly through saveSystem
+  // Reworked full interactive dialogues, branching choices & Solaris Ledger clues
+  for (const q of SIDE_QUESTS) {
+    assert.ok(q.storyTheme.length > 5);
+    assert.ok(q.chapterTitle.length > 5);
+    assert.ok(q.conspiracyClue.length > 20);
+    assert.ok(q.openingNodes.length >= 2);
+    assert.ok((q.openingNodes[0].choices?.length ?? 0) >= 2);
+    assert.ok(q.midQuestNodes.length >= 1);
+    assert.ok(q.twistConfrontationNodes.length >= 1);
+    assert.ok((q.twistConfrontationNodes[0].choices?.length ?? 0) >= 2);
+  }
+
+  // Dialogue choice state transitions + anti-exploit once-only gold/stat rewards
   const progress = createInitialSideQuestProgress();
-  progress.sq_01_crimson_tithe = {
-    stage: 1,
-    kills: 3,
-    twistRevealed: true,
-    bossSpawned: true,
-  };
+  const sq1Prog = progress.sq_01_crimson_tithe!;
+  const investigateChoice = sq1.openingNodes[0].choices!.find((c) => c.bonusGold && c.revealClue)!;
+  const firstPick = applySideQuestDialogueChoice(sq1, sq1Prog, investigateChoice);
+  assert.equal(firstPick.clueNewlyUncovered, true);
+  assert.ok(firstPick.goldDelta > 0);
+  assert.equal(sq1Prog.clueUncovered, true);
+  const repeatPick = applySideQuestDialogueChoice(sq1, sq1Prog, investigateChoice);
+  assert.equal(repeatPick.goldDelta, 0);
+  assert.equal(repeatPick.clueNewlyUncovered, false);
+
+  const acceptChoice = sq1.openingNodes[1].choices!.find((c) => c.acceptQuest)!;
+  const acceptRes = applySideQuestDialogueChoice(sq1, sq1Prog, acceptChoice);
+  assert.equal(acceptRes.acceptedNow, true);
+  assert.equal(sq1Prog.stage, 1);
+
+  sq1Prog.kills = 3;
+  sq1Prog.twistRevealed = true;
+  sq1Prog.bossSpawned = true;
+  const confrontChoice = sq1.twistConfrontationNodes[0].choices![0];
+  applySideQuestDialogueChoice(sq1, sq1Prog, confrontChoice);
+  assert.equal(sq1Prog.confronted, true);
+
+  // Side Quest state persists cleanly through saveSystem
   const player = createInitialPlayer();
   const inv = createInitialInventory();
   const payload = createSavePayload({
@@ -1281,7 +1318,61 @@ test('10 violent plot-twist side quests, Royal Town East Gate, Outskirts Forest 
   assert.equal(loaded.realm, 'outskirts_forest');
   assert.equal(loaded.trackedSideQuestId, 'sq_01_crimson_tithe');
   assert.equal(loaded.sideQuestProgress?.sq_01_crimson_tithe?.twistRevealed, true);
+  assert.equal(loaded.sideQuestProgress?.sq_01_crimson_tithe?.clueUncovered, true);
+  assert.equal(loaded.sideQuestProgress?.sq_01_crimson_tithe?.confronted, true);
+  assert.ok((loaded.sideQuestProgress?.sq_01_crimson_tithe?.chosenOptionIds?.length ?? 0) >= 2);
 });
+
+test('Double-Tap Dash activates White Aura Overdrive (1.5s invincibility + 30% speed) and Double-Tap Stand activates Defensive Stand Guard (1.5s)', () => {
+  const floor = [{ id: 'test_floor', x: -500, y: FLOOR_Y, w: 3000, h: 44, kind: 'floor' as const }];
+  const moveRight = { left: false, right: true, jumpJustPressed: false, jumpHeld: false };
+  const idleInput = { left: false, right: false, jumpJustPressed: false, jumpHeld: false };
+
+  const player = createInitialPlayer();
+  player.stamina = 100;
+
+  // Baseline horizontal velocity check
+  const baseline = createInitialPlayer();
+  baseline.x = player.x;
+  baseline.y = player.y;
+  baseline.onGround = true;
+  stepPlayerPhysics(baseline, moveRight, floor, 0.016);
+  const normalVx = baseline.vx;
+
+  // Activate White Aura Overdrive on double-tap dash
+  const auraActivated = activateWhiteAuraDash(player);
+  assert.equal(auraActivated, true);
+  assert.equal(player.whiteAuraTimer, WHITE_AURA_DURATION);
+  assert.equal(player.whiteAuraCooldown, WHITE_AURA_COOLDOWN);
+  assert.ok(player.invulnTimer >= WHITE_AURA_DURATION);
+  assert.ok(Math.abs(player.vx) > normalVx);
+
+  // Cooldown prevents instant re-trigger
+  assert.equal(activateWhiteAuraDash(player), false);
+
+  // Physics applies 1.3x movement speed multiplier during White Aura
+  player.vx = 0;
+  player.onGround = true;
+  stepPlayerPhysics(player, moveRight, floor, 0.016);
+  assert.ok(
+    Math.abs(player.vx - normalVx * WHITE_AURA_SPEED_MULTIPLIER) < 0.01,
+    `Expected ${player.vx} to equal ${normalVx * WHITE_AURA_SPEED_MULTIPLIER}`,
+  );
+  assert.ok((player.whiteAuraTimer ?? 0) < WHITE_AURA_DURATION);
+
+  // Activate Defensive Stand Guard on double-tap Stand
+  const guardActivated = activateStandGuard(player);
+  assert.equal(guardActivated, true);
+  assert.equal(player.standGuardTimer, STAND_GUARD_DURATION);
+  assert.equal(player.standGuardCooldown, STAND_GUARD_COOLDOWN);
+  assert.equal(activateStandGuard(player), false);
+
+  // Timers tick cleanly down to zero
+  stepPlayerPhysics(player, idleInput, floor, 2.0);
+  assert.equal(player.whiteAuraTimer, 0);
+  assert.equal(player.standGuardTimer, 0);
+});
+
 
 
 

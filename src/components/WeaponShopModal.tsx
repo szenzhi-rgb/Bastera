@@ -16,36 +16,33 @@ export const WeaponShopModal: React.FC<WeaponShopModalProps> = ({
 }) => {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/82"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/82"
       role="dialog"
       aria-modal="true"
       aria-label="Grand Solaris Weapons Armory"
       data-testid="weapons-shop-modal"
     >
-      <div className="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-[#160f0d] border-2 border-amber-400/90 text-amber-50 shadow-[0_12px_42px_rgba(0,0,0,0.94)] overflow-hidden">
-        <span className="absolute top-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 left-0 w-2 h-2 bg-amber-300" />
-        <span className="absolute bottom-0 right-0 w-2 h-2 bg-amber-300" />
+      <div className="relative w-full max-w-[92%] sm:max-w-3xl max-h-[86%] flex flex-col bg-[#160f0d] border-2 border-amber-400/90 text-amber-50 shadow-[0_12px_42px_rgba(0,0,0,0.94)] overflow-hidden">
+        <span className="absolute top-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-amber-300" />
+        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-amber-300" />
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[#251610] border-b border-amber-500/45">
-          <div>
-            <div className="font-pixel-mono text-[10px] tracking-[0.2em] text-amber-400 uppercase">
-              GRAND SOLARIS ARMORY HALL
+        <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-[#251610] border-b border-amber-500/45 shrink-0">
+          <div className="min-w-0">
+            <div className="font-pixel-mono text-[8.5px] sm:text-[10px] tracking-[0.14em] text-amber-400 uppercase truncate">
+              GRAND SOLARIS ARMORY
             </div>
-            <h2 className="font-display text-lg sm:text-xl font-bold text-amber-50">
-              Masterwork Weapons Gallery ({WEAPON_SHOP_ORDER.length} Signature Blades)
+            <h2 className="font-display text-sm sm:text-base font-bold text-amber-50 truncate">
+              Masterwork Weapons ({WEAPON_SHOP_ORDER.length} Blades)
             </h2>
-            <p className="font-pixel-mono text-[11px] text-amber-200/80 mt-0.5">
-              Every weapon has its own custom blade color, physical length/width scale, and passive special effect.
-            </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right font-pixel-mono text-xs">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-right font-pixel-mono text-[10px] sm:text-xs tabular-nums">
               <div className="text-yellow-300 font-bold">{hud.gold}G</div>
-              <div className="text-[10px] text-amber-200/80">
-                Equipped: {WEAPONS[hud.equippedWeapon].name}
+              <div className="text-[9px] text-amber-200/80 truncate max-w-[110px]">
+                {WEAPONS[hud.equippedWeapon].name}
               </div>
             </div>
             <button
@@ -56,7 +53,7 @@ export const WeaponShopModal: React.FC<WeaponShopModalProps> = ({
                 e.currentTarget.blur();
                 onClose();
               }}
-              className="px-3 py-1.5 bg-[#3a1f14] hover:bg-[#522b1b] border border-amber-300 font-pixel-mono text-xs text-amber-50 cursor-pointer"
+              className="px-2.5 py-1 bg-[#3a1f14] hover:bg-[#522b1b] border border-amber-300 font-pixel-mono text-[10px] sm:text-xs text-amber-50 cursor-pointer"
             >
               Close [Esc]
             </button>
@@ -64,7 +61,7 @@ export const WeaponShopModal: React.FC<WeaponShopModalProps> = ({
         </div>
 
         {/* Wide Multi-Column Weapon Rack Grid */}
-        <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div className="p-2.5 sm:p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-2">
           {WEAPON_SHOP_ORDER.map((wid) => {
             const w = WEAPONS[wid];
             const unlocked = hud.unlockedWeapons.includes(wid);
@@ -77,7 +74,7 @@ export const WeaponShopModal: React.FC<WeaponShopModalProps> = ({
               <div
                 key={wid}
                 data-testid={`armory-weapon-${wid}`}
-                className={`p-2.5 border flex flex-col justify-between gap-2 ${
+                className={`p-2 border flex flex-col justify-between gap-1.5 ${
                   equipped
                     ? 'bg-[#2a1712] border-amber-300'
                     : unlocked
@@ -85,9 +82,9 @@ export const WeaponShopModal: React.FC<WeaponShopModalProps> = ({
                       : 'bg-[#130d0b] border-amber-800/50'
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2">
                   <div className="relative shrink-0">
-                    <PixelWeaponIcon weaponId={wid} size={52} />
+                    <PixelWeaponIcon weaponId={wid} size={38} />
                     <span
                       title={`Blade Color ${w.color}`}
                       className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border border-black"

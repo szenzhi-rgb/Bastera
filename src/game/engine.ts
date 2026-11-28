@@ -24,6 +24,9 @@ import {
   TOWN_RAID_INTERVAL_SECONDS,
   TOWN_RAID_REWARD_GOLD,
   applyHotSpringRest,
+  applySideQuestDialogueChoice,
+  buildElfCoronationCutsceneBeats,
+  buildElfDinnerCutsceneBeats,
   buildIsekaiRoomInteractables,
   buildIsekaiRoomPlatforms,
   buyOrEquipWardrobeItem,
@@ -41,6 +44,9 @@ import {
   createDemonRealmWave,
   createDungeonSectorEnemies,
   createDungeonSectorPlatforms,
+  createElfAmbushWave,
+  createElfKingdomNpcs,
+  createElfSwordsmanAlly,
   createGoblinDungeonWave,
   createGuildNpcs,
   createInitialSideQuestProgress,
@@ -67,6 +73,7 @@ import {
   stepTownRaidAi,
   stepTownRebuildNpcs,
   type CaravanTarget,
+  type ElfCutsceneBeatDef,
 } from './isekai';
 import {
   LABEL_SCALE,
@@ -82,6 +89,7 @@ import {
   drawDuelingArenaBackdrop,
   drawDungeonDepthOverlay,
   drawDungeonExteriorBackdrop,
+  drawElfKingdomBackdrop,
   drawGoblinDungeonBackdrop,
   drawIsekaiFloors,
   drawIsekaiGuildInterior,
@@ -94,9 +102,27 @@ import {
   drawOutskirtsCavesBackdrop,
   drawOutskirtsForestBackdrop,
   drawPurpleFlameZones,
+  drawRaiderDemonicBoss,
+  drawRaiderDungeonBackdrop,
+  drawRaiderGuildInterior,
   drawRoyalCarriage,
   drawTownRaidBoss,
 } from './isekaiSprites';
+import {
+  DUNGEON_DESIGNS,
+  buildRaiderDungeonFloorInteractables,
+  buildRaiderDungeonFloorPlatforms,
+  buildRaiderGuildInteractables,
+  buildRaiderGuildPlatforms,
+  createRaiderDemonicBoss,
+  createRaiderFloorEnemies,
+  createRaiderGuildNpcs,
+  getRaiderDungeonById,
+  getRaiderRankDef,
+  getRaiderRankForPoints,
+  isRaiderDungeonUnlocked,
+  stepRaiderDemonicBoss,
+} from './raiderGuild';
 import {
   createMegaBossDef,
   createMegaBossInstance,
@@ -121,6 +147,7 @@ import {
   drawPlatforms,
   drawPokemonBossStage,
   drawProjectiles,
+  drawStandGuardBarrier,
   drawStarPlatinumGuardian,
   drawVolcanoPitChasm,
   drawWarrior,
@@ -140,6 +167,8 @@ import {
 import {
   FLAME_ORB_HP_RATIO,
   WIND_ORB_DAMAGE_BONUS,
+  activateStandGuard,
+  activateWhiteAuraDash,
   addInventoryResource,
   allocateStatPoint,
   applyDamageToBoss,
@@ -185,6 +214,9 @@ import type {
   DemonKingEntity,
   DialogueState,
   DungeonChoicePending,
+  ElfCutsceneHud,
+  ElfKingdomHud,
+  ElfKingdomStage,
   EnemyArchetype,
   EnemyState,
   GameStatus,
@@ -208,6 +240,9 @@ import type {
   PlayerState,
   Projectile,
   PurpleFlameZone,
+  RaiderDemonicBossEntity,
+  RaiderDungeonHud,
+  RaiderRankId,
   RealmMode,
   SideQuestId,
   SideQuestProgress,
@@ -429,6 +464,28 @@ export class BasteraGameEngine {
   private sideQuestProgress: Partial<Record<SideQuestId, SideQuestProgress>> = createInitialSideQuestProgress();
   private trackedSideQuestId: SideQuestId | null = null;
   private outskirtsRespawnTimer = 0;
+
+  // Elf Kingdom of Aethelgard & Dinner Party Ambush State
+  private elfKingdomInvited = false;
+  private elfKingdomStage: ElfKingdomStage = 'uninvited';
+  private elfCrownUnlocked = false;
+  private elfCutscene: {
+    act: 'dinner' | 'coronation';
+    beats: ElfCutsceneBeatDef[];
+    beatIndex: number;
+    chosenReply: string | null;
+  } | null = null;
+  private elfAmbushWave: 0 | 1 | 2 = 0;
+  private elfAmbushBossName: string | null = null;
+
+  // Dungeon Raider Guild (108 Unique Dungeons, 8 Ranks, Floors/Stairs, Demonic Overlords)
+  private raiderRank: RaiderRankId = 'Bronze';
+  private raiderPoints = 0;
+  private clearedRaiderDungeons: number[] = [];
+  private activeRaiderDungeonId: number | null = null;
+  private activeRaiderFloor = 1;
+  private raiderDemonicBoss: RaiderDemonicBossEntity | null = null;
+
   private lastSlashInputTime = -10;
   private lastDashInputTime = -10;
   private meleeHitIds = new Set<string>();
@@ -440,6 +497,8 @@ export class BasteraGameEngine {
     onOpenCaravanRider?: () => void;
     onOpenDuelingArena?: () => void;
     onOpenStandShrine?: () => void;
+    onOpenRaiderGuild?: () => void;
+    onOpenSideQuestDialogue?: (questId: SideQuestId) => void;
   } = {};
 
   // Multiplayer Co-op World Rooms & Saving
@@ -459,6 +518,9 @@ export class BasteraGameEngine {
   private starPlatinumTickTimer = 0;
   private chiliPepperTimer = 0;
   private chiliPepperZapTimer = 0;
+  private lastDashTapTime = -10;
+  private lastStandTapTime = -10;
+  private standGuardTickTimer = 0;
   private standSummonFx: { standId: StandId; timer: number; facing: 1 | -1 } | null = null;
   private resolveBonusTimer = 0;
   private bossesFoughtStreak = 0;
@@ -508,6 +570,8 @@ export class BasteraGameEngine {
     onOpenCaravanRider?: () => void;
     onOpenDuelingArena?: () => void;
     onOpenStandShrine?: () => void;
+    onOpenRaiderGuild?: () => void;
+    onOpenSideQuestDialogue?: (questId: SideQuestId) => void;
   }): void {
     this.uiCallbacks = cbs;
   }
@@ -568,7 +632,7 @@ export class BasteraGameEngine {
       gameAudio.unlock();
       this.clearAllInputs(true);
       const activeBoss = this.realm === 'citadel' ? this.getActiveNearbyBoss() : null;
-      gameAudio.startMusic(this.getCurrentBiome(), activeBoss?.def ?? null);
+      gameAudio.startMusic(this.getCurrentBiome(), activeBoss?.def ?? null, this.realm);
     }
     this.emitHud(true);
   }
@@ -597,6 +661,9 @@ export class BasteraGameEngine {
     this.starPlatinumTickTimer = 0;
     this.chiliPepperTimer = 0;
     this.chiliPepperZapTimer = 0;
+    this.lastDashTapTime = -10;
+    this.lastStandTapTime = -10;
+    this.standGuardTickTimer = 0;
     this.standSummonFx = null;
     this.resolveBonusTimer = 0;
     this.bossesFoughtStreak = 0;
@@ -656,6 +723,18 @@ export class BasteraGameEngine {
     this.sideQuestProgress = createInitialSideQuestProgress();
     this.trackedSideQuestId = null;
     this.outskirtsRespawnTimer = 0;
+    this.elfKingdomInvited = false;
+    this.elfKingdomStage = 'uninvited';
+    this.elfCrownUnlocked = false;
+    this.elfCutscene = null;
+    this.elfAmbushWave = 0;
+    this.elfAmbushBossName = null;
+    this.raiderRank = 'Bronze';
+    this.raiderPoints = 0;
+    this.clearedRaiderDungeons = [];
+    this.activeRaiderDungeonId = null;
+    this.activeRaiderFloor = 1;
+    this.raiderDemonicBoss = null;
 
     this.chunksDirty = true;
     this.ensureChunksAround(0);
@@ -699,6 +778,12 @@ export class BasteraGameEngine {
       unlockedWardrobe: this.unlockedWardrobe,
       foughtIsekaiEnemies: this.foughtIsekaiEnemies,
       crownUnlocked: this.crownUnlocked,
+      elfCrownUnlocked: this.elfCrownUnlocked,
+      elfKingdomInvited: this.elfKingdomInvited,
+      elfKingdomStage: this.elfKingdomStage,
+      raiderRank: this.raiderRank,
+      raiderPoints: this.raiderPoints,
+      clearedRaiderDungeons: this.clearedRaiderDungeons,
       gyroDefeated: this.gyroDefeated,
       isekaiCompleted: this.isekaiCompleted,
       sideQuestProgress: this.sideQuestProgress,
@@ -761,6 +846,22 @@ export class BasteraGameEngine {
     this.unlockedWardrobe = clean.unlockedWardrobe ? [...clean.unlockedWardrobe] : ['outfit_knight_plate', 'hat_helm'];
     this.foughtIsekaiEnemies = clean.foughtIsekaiEnemies ? [...clean.foughtIsekaiEnemies] : [];
     this.crownUnlocked = Boolean(clean.crownUnlocked);
+    this.elfCrownUnlocked = Boolean(clean.elfCrownUnlocked);
+    this.elfKingdomInvited = Boolean(clean.elfKingdomInvited);
+    this.elfKingdomStage =
+      clean.elfKingdomStage ?? (this.elfCrownUnlocked ? 'celebration' : this.elfKingdomInvited ? 'invited' : 'uninvited');
+    if (this.elfKingdomStage === 'ambush_active') {
+      this.elfKingdomStage = 'banquet_ready';
+    }
+    this.elfCutscene = null;
+    this.elfAmbushWave = 0;
+    this.elfAmbushBossName = null;
+    this.raiderPoints = clean.raiderPoints ?? 0;
+    this.raiderRank = clean.raiderRank ?? getRaiderRankForPoints(this.raiderPoints);
+    this.clearedRaiderDungeons = clean.clearedRaiderDungeons ? [...clean.clearedRaiderDungeons] : [];
+    this.activeRaiderDungeonId = null;
+    this.activeRaiderFloor = 1;
+    this.raiderDemonicBoss = null;
     this.gyroDefeated = Boolean(clean.gyroDefeated);
     this.isekaiCompleted = Boolean(clean.isekaiCompleted);
     this.isekaiPortalOpen = this.gyroDefeated || this.realm !== 'citadel';
@@ -769,6 +870,9 @@ export class BasteraGameEngine {
     this.outskirtsRespawnTimer = 0;
     this.starPlatinumTimer = 0;
     this.starPlatinumTickTimer = 0;
+    this.lastDashTapTime = -10;
+    this.lastStandTapTime = -10;
+    this.standGuardTickTimer = 0;
     this.lastSavedAt = clean.savedAt;
 
     this.chunks.clear();
@@ -794,7 +898,9 @@ export class BasteraGameEngine {
         this.realm === 'dungeon_exterior' ||
         this.realm === 'dueling_arena' ||
         this.realm === 'outskirts_forest' ||
-        this.realm === 'outskirts_caves'
+        this.realm === 'outskirts_caves' ||
+        this.realm === 'elf_kingdom' ||
+        this.realm === 'raider_guild'
           ? this.realm
           : 'isekai_town';
       this.enterIsekaiRoom(
@@ -803,7 +909,8 @@ export class BasteraGameEngine {
         targetHub === 'dungeon_exterior' ||
         targetHub === 'dueling_arena' ||
         targetHub === 'outskirts_forest' ||
-        targetHub === 'outskirts_caves'
+        targetHub === 'outskirts_caves' ||
+        targetHub === 'elf_kingdom'
           ? clean.player.x
           : 96,
       );
@@ -961,7 +1068,13 @@ export class BasteraGameEngine {
   }
 
   public buyOrEquipWardrobeItemById(itemId: string): { ok: boolean; message: string } {
-    const res = buyOrEquipWardrobeItem(this.player, this.unlockedWardrobe, itemId, this.crownUnlocked);
+    const res = buyOrEquipWardrobeItem(
+      this.player,
+      this.unlockedWardrobe,
+      itemId,
+      this.crownUnlocked,
+      this.elfCrownUnlocked,
+    );
     if (res.ok) {
       gameAudio.playSecretFound();
     }
@@ -1036,6 +1149,7 @@ export class BasteraGameEngine {
       this.realm,
       this.guildRank,
       this.acceptedMissionId,
+      this.elfKingdomInvited,
     );
     if (!parsed.ok || !parsed.target) {
       this.showAnnouncement(parsed.message);
@@ -1046,15 +1160,19 @@ export class BasteraGameEngine {
       parsed.label ??
       (parsed.target === 'isekai_town'
         ? 'Solaris Town'
-        : parsed.target === 'carriage_escort'
-          ? 'Kingdom Royal Highway'
-          : parsed.target === 'seventeen_demon_kings'
-            ? '17 Manhwa Demon Kings Outskirts'
-            : parsed.target === 'demon_king_arena'
-              ? 'Three Demon Kings Forest'
-              : parsed.target === 'demon_realm'
-                ? 'Demon Realm Forest Outskirts'
-                : 'Goblin Dungeon Forest Outskirts');
+        : parsed.target === 'elf_kingdom'
+          ? 'Aethelgard Elf Kingdom'
+          : parsed.target === 'raider_guild'
+            ? 'Dungeon Raider Guild Bastion'
+            : parsed.target === 'carriage_escort'
+              ? 'Kingdom Royal Highway'
+              : parsed.target === 'seventeen_demon_kings'
+                ? '17 Manhwa Demon Kings Outskirts'
+                : parsed.target === 'demon_king_arena'
+                  ? 'Three Demon Kings Forest'
+                  : parsed.target === 'demon_realm'
+                    ? 'Demon Realm Forest Outskirts'
+                    : 'Goblin Dungeon Forest Outskirts');
 
     this.caravanRide = {
       target: parsed.target,
@@ -1073,6 +1191,30 @@ export class BasteraGameEngine {
     if (ride.target === 'isekai_town') {
       this.enterIsekaiRoom('isekai_town', 478);
       this.showAnnouncement('Caravan arrived safely back in Solaris Town!');
+      this.emitHud(true);
+      return;
+    }
+
+    if (ride.target === 'elf_kingdom') {
+      if (this.elfKingdomStage === 'uninvited' || this.elfKingdomStage === 'invited') {
+        this.elfKingdomStage = 'banquet_ready';
+      }
+      this.enterIsekaiRoom('elf_kingdom', 92);
+      gameAudio.playSecretFound();
+      this.showSecretCaption(
+        'AETHELGARD ELF KINGDOM',
+        this.elfKingdomStage === 'celebration'
+          ? 'Welcome back to the Eternal Royal Feast! Star-lanterns shine in honor of the Crowned Savior!'
+          : 'Walk east past Sword Saint Kaelen to the Grand Banquet Table [F] for Queen Sylvaria’s Royal Dinner Party!',
+      );
+      this.emitHud(true);
+      return;
+    }
+
+    if (ride.target === 'raider_guild') {
+      this.enterIsekaiRoom('raider_guild', 90);
+      gameAudio.playSecretFound();
+      this.showAnnouncement('Arrived at the Dungeon Raider Guild Bastion! Speak to Guildmaster Vexor [F].');
       this.emitHud(true);
       return;
     }
@@ -1266,6 +1408,9 @@ export class BasteraGameEngine {
     this.groundCracks = [];
     this.bossGrabLockTimer = 0;
     this.dialogue = null;
+    this.lastDashTapTime = -10;
+    this.lastStandTapTime = -10;
+    this.standGuardTickTimer = 0;
     resetPlayerForIsekai(this.player, this.inventory);
     this.guildRank = 'F';
     this.bRankEscortsCompleted = 0;
@@ -1320,8 +1465,24 @@ export class BasteraGameEngine {
     this.purpleFlameZones = [];
     this.activeCastBanner = null;
     this.projectiles = [];
-    this.isekaiPlatforms = buildIsekaiRoomPlatforms(room);
-    this.isekaiInteractables = buildIsekaiRoomInteractables(room);
+    this.elfCutscene = null;
+    if (room !== 'raider_dungeon') {
+      this.activeRaiderDungeonId = null;
+      this.activeRaiderFloor = 1;
+      this.raiderDemonicBoss = null;
+    }
+    if (room !== 'elf_kingdom') {
+      this.elfAmbushWave = 0;
+      this.elfAmbushBossName = null;
+      if (this.elfKingdomStage === 'ambush_active') {
+        this.elfKingdomStage = 'banquet_ready';
+      }
+    }
+
+    this.isekaiPlatforms =
+      room === 'raider_guild' ? buildRaiderGuildPlatforms() : buildIsekaiRoomPlatforms(room);
+    this.isekaiInteractables =
+      room === 'raider_guild' ? buildRaiderGuildInteractables() : buildIsekaiRoomInteractables(room);
     this.isekaiNpcs =
       room === 'isekai_town'
         ? createTownNpcs(this.crownUnlocked)
@@ -1333,7 +1494,11 @@ export class BasteraGameEngine {
               ? createPotionShopNpcs()
               : room === 'isekai_weapons_shop'
                 ? createWeaponsShopNpcs()
-                : [];
+                : room === 'elf_kingdom'
+                  ? createElfKingdomNpcs(this.elfKingdomStage)
+                  : room === 'raider_guild'
+                    ? createRaiderGuildNpcs(this.raiderRank)
+                    : [];
 
     if (room === 'outskirts_forest' || room === 'outskirts_caves') {
       this.isekaiEnemies = createOutskirtsAmbientEnemies(room, this.player.level);
@@ -1350,6 +1515,279 @@ export class BasteraGameEngine {
     this.player.stamina = this.player.maxStamina;
     this.camX = Math.max(0, Math.min(Math.max(0, bounds.maxX - PIXEL_W), this.player.x - PIXEL_W * 0.34));
     this.syncHostWorldMeta();
+    if (this.status === 'playing') {
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
+    }
+    this.emitHud(true);
+  }
+
+  public startElfDinnerPartyCutscene(): void {
+    if (this.realm !== 'elf_kingdom') return;
+    if (this.elfKingdomStage === 'ambush_active') {
+      this.showAnnouncement('Eldritch horrors are attacking the banquet — fight beside Sword Saint Kaelen!');
+      return;
+    }
+    if (this.elfKingdomStage === 'celebration') {
+      this.openDialogue('Queen Sylvaria & Sword Saint Kaelen', 'throne', '#34d399', [
+        'Raise your emerald goblet high, Sovereign Guest! The Silver-Bough Banquet Hall shines in eternal celebration!',
+        'You may equip your Living Emerald Crown anytime in Atelier Sylvie’s Wardrobe Shop back in Solaris Town.',
+      ]);
+      return;
+    }
+    this.clearAllInputs(true);
+    this.elfCutscene = {
+      act: 'dinner',
+      beats: buildElfDinnerCutsceneBeats(),
+      beatIndex: 0,
+      chosenReply: null,
+    };
+    gameAudio.playSecretFound();
+    this.emitHud(true);
+  }
+
+  public selectElfCutsceneChoice(choiceId: string): void {
+    if (!this.elfCutscene) return;
+    const beat = this.elfCutscene.beats[this.elfCutscene.beatIndex];
+    const choice = beat?.choices?.find((c) => c.id === choiceId);
+    if (!choice) return;
+    this.elfCutscene.chosenReply = choice.reply;
+    if (choice.bonusGold) {
+      this.player.gold += choice.bonusGold;
+      this.spawnFloatingText(this.player.x + 8, this.player.y - 12, `+${choice.bonusGold}G`, '#fde047');
+    }
+    if (choice.healFull) {
+      this.player.hp = this.player.maxHp;
+      this.player.stamina = this.player.maxStamina;
+      this.spawnFloatingText(this.player.x + 8, this.player.y - 12, 'FULL VITALITY!', '#6ee7b7');
+    }
+    if (choice.atkBoostMult && choice.atkBoostSec) {
+      this.player.damageBoostMultiplier = Math.max(this.player.damageBoostMultiplier, choice.atkBoostMult);
+      this.player.damageBoostTimer = Math.max(this.player.damageBoostTimer, choice.atkBoostSec);
+      this.spawnFloatingText(this.player.x + 8, this.player.y - 12, '+20% ATK!', '#34d399');
+    }
+    gameAudio.playSecretFound();
+    this.emitHud(true);
+  }
+
+  public advanceElfCutscene(): void {
+    if (!this.elfCutscene) return;
+    const cs = this.elfCutscene;
+    const currentBeat = cs.beats[cs.beatIndex];
+    if (currentBeat?.choices && currentBeat.choices.length > 0 && !cs.chosenReply) {
+      return;
+    }
+    if (cs.beatIndex + 1 < cs.beats.length) {
+      cs.beatIndex += 1;
+      cs.chosenReply = null;
+      const nextBeat = cs.beats[cs.beatIndex];
+      if (nextBeat?.portraitKind === 'boss') {
+        this.trauma = Math.min(1, this.trauma + 0.75);
+        this.encounterFlashTimer = 0.25;
+        gameAudio.playMegaGlitchCrash();
+      } else {
+        gameAudio.playDialogueBlip('npc', 74);
+      }
+      this.emitHud(true);
+      return;
+    }
+
+    const finishedAct = cs.act;
+    this.elfCutscene = null;
+    if (finishedAct === 'dinner') {
+      this.beginElfEldritchAmbush();
+    } else {
+      this.finishElfCoronationVictory();
+    }
+  }
+
+  private beginElfEldritchAmbush(): void {
+    this.elfKingdomStage = 'ambush_active';
+    this.elfAmbushWave = 1;
+    this.elfAmbushBossName = null;
+    this.alliedNpcs = [createElfSwordsmanAlly()];
+    this.isekaiEnemies = createElfAmbushWave(1, this.player.level);
+    this.purpleFlameZones = [
+      {
+        id: `elf_ichor_start_1_${Date.now()}`,
+        x: 1580,
+        y: FLOOR_Y - 38,
+        w: 64,
+        h: 38,
+        life: 3.4,
+        maxLife: 3.4,
+        damage: 14,
+        kind: 'eldritch_ichor_pool',
+        hasHit: false,
+      },
+      {
+        id: `elf_bone_start_2_${Date.now()}`,
+        x: 1860,
+        y: FLOOR_Y - 46,
+        w: 50,
+        h: 46,
+        life: 3.4,
+        maxLife: 3.4,
+        damage: 16,
+        kind: 'eldritch_bone_spurs',
+        hasHit: false,
+      },
+    ];
+    this.player.x = 1440;
+    this.player.y = FLOOR_Y - this.player.h;
+    this.camX = Math.max(0, this.player.x - PIXEL_W * 0.34);
+    this.trauma = 0.7;
+    this.speedLineTimer = 0.75;
+    gameAudio.playBattleEncounterStinger();
+    this.showSecretCaption(
+      'BANQUET UNDER ELDRITCH SIEGE!',
+      'Wave 1/2: Fight alongside Sword Saint Kaelen against the Ichor-Hounds and Marrow-Tendril Horrors!',
+    );
+    this.emitHud(true);
+  }
+
+  private finishElfCoronationVictory(): void {
+    this.elfKingdomStage = 'celebration';
+    this.elfAmbushWave = 0;
+    this.elfAmbushBossName = null;
+    this.elfCrownUnlocked = true;
+    this.player.customization.crownStyle = 'elf_emerald';
+    this.player.customization.crownEquipped = true;
+    this.player.gold += 650;
+    this.player.statPoints += 8;
+    this.player.starStones = (this.player.starStones ?? 0) + 3;
+    this.player.hp = this.player.maxHp;
+    this.player.stamina = this.player.maxStamina;
+    this.alliedNpcs = [];
+    this.purpleFlameZones = [];
+    this.isekaiNpcs = createElfKingdomNpcs('celebration');
+    gameAudio.playSecretFound();
+    this.spawnBurst(this.player.x + 8, this.player.y, 32, '#34d399');
+    this.showSecretCaption(
+      'ELF SOVEREIGN EMERALD CROWN UNLOCKED!',
+      '+650G · +8 Stat Pts · +3 Star Stones! Aethelgard celebrates the Royal Feast in your honor forever!',
+    );
+    void this.saveCurrentGame('autosave', true);
+    this.emitHud(true);
+  }
+
+  public enterRaiderDungeon(dungeonId: number): { ok: boolean; message: string } {
+    const dungeon = getRaiderDungeonById(dungeonId);
+    if (!isRaiderDungeonUnlocked(dungeon, this.raiderRank)) {
+      const msg = `Requires ${dungeon.requiredRank} Raider Rank to enter ${dungeon.code} ${dungeon.name}!`;
+      this.showAnnouncement(msg);
+      return { ok: false, message: msg };
+    }
+    this.activeRaiderDungeonId = dungeon.id;
+    this.activeRaiderFloor = 1;
+    this.loadRaiderDungeonFloor(dungeon, 1);
+    gameAudio.playBattleEncounterStinger();
+    this.showSecretCaption(
+      `${dungeon.code}: ${dungeon.name.toUpperCase()}`,
+      `Floor 1/${dungeon.floors} · ${dungeon.designLabel} · Clear every monster to unlock the Ascending Stairs!`,
+    );
+    this.emitHud(true);
+    return { ok: true, message: `Entered ${dungeon.code} ${dungeon.name}` };
+  }
+
+  private loadRaiderDungeonFloor(dungeon: import('./types').RaiderDungeonDef, floor: number): void {
+    this.restoreArenaPlayerHp();
+    this.realm = 'raider_dungeon';
+    this.bossBattle = null;
+    this.megaCutscene = null;
+    this.activeMissionId = null;
+    this.caravanRide = null;
+    this.elfCutscene = null;
+    this.isekaiNpcs = [];
+    this.alliedNpcs = [];
+    this.arenaDuel = null;
+    this.carriageEscort = null;
+    this.demonKings = [];
+    this.purpleFlameZones = [];
+    this.projectiles = [];
+    this.activeCastBanner = null;
+    this.activeRaiderFloor = floor;
+    this.isekaiPlatforms = buildRaiderDungeonFloorPlatforms(dungeon, floor);
+    this.isekaiInteractables = buildRaiderDungeonFloorInteractables(dungeon, floor);
+    this.isekaiEnemies = createRaiderFloorEnemies(dungeon, floor, this.player.level);
+    const isBossFloor = floor >= dungeon.floors;
+    this.raiderDemonicBoss = isBossFloor ? createRaiderDemonicBoss(dungeon, this.player.level) : null;
+    this.player.x = 84;
+    this.player.y = FLOOR_Y - this.player.h;
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.camX = 0;
+    this.syncHostWorldMeta();
+    if (this.status === 'playing') {
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
+    }
+  }
+
+  public ascendRaiderDungeonStairs(): void {
+    if (this.realm !== 'raider_dungeon' || !this.activeRaiderDungeonId) return;
+    const dungeon = getRaiderDungeonById(this.activeRaiderDungeonId);
+    const aliveEnemies = this.isekaiEnemies.filter((e) => e.state !== 'ko' && e.hp > 0).length;
+    if (aliveEnemies > 0) {
+      this.showAnnouncement(`Staircase sealed! Defeat the remaining ${aliveEnemies} monster(s) on Floor ${this.activeRaiderFloor}!`);
+      return;
+    }
+    if (this.activeRaiderFloor >= dungeon.floors) return;
+    const nextFloor = this.activeRaiderFloor + 1;
+    this.loadRaiderDungeonFloor(dungeon, nextFloor);
+    gameAudio.playJump();
+    const isBossFloor = nextFloor >= dungeon.floors;
+    if (isBossFloor && this.raiderDemonicBoss) {
+      gameAudio.playMegaGlitchCrash();
+      this.trauma = 0.65;
+      this.speedLineTimer = 0.7;
+      this.showSecretCaption(
+        `FINAL FLOOR ${nextFloor}/${dungeon.floors} · DEMONIC OVERLORD!`,
+        `${this.raiderDemonicBoss.name} awakens! Watch out for Berserk Awakening below 50% HP!`,
+      );
+    } else {
+      this.showSecretCaption(
+        `${dungeon.code} · FLOOR ${nextFloor}/${dungeon.floors}`,
+        'Clear all floor monsters to unlock the next ascending staircase!',
+      );
+    }
+    this.emitHud(true);
+  }
+
+  private completeRaiderDungeonVictory(): void {
+    if (!this.activeRaiderDungeonId) return;
+    const dungeon = getRaiderDungeonById(this.activeRaiderDungeonId);
+    const bossName = this.raiderDemonicBoss?.name ?? dungeon.bossName;
+    this.raiderDemonicBoss = null;
+    this.isekaiEnemies = [];
+    this.purpleFlameZones = [];
+    this.projectiles = [];
+
+    const rankDef = getRaiderRankDef(this.raiderRank);
+    const goldEarned = Math.round(dungeon.rewardGold * (1 + rankDef.goldBonusPct / 100));
+    const isFirstClear = !this.clearedRaiderDungeons.includes(dungeon.id);
+    if (isFirstClear) {
+      this.clearedRaiderDungeons.push(dungeon.id);
+    }
+    const rpEarned = isFirstClear ? dungeon.rewardRaiderPoints : Math.max(12, Math.round(dungeon.rewardRaiderPoints * 0.45));
+    const prevRank = this.raiderRank;
+    this.raiderPoints += rpEarned;
+    this.raiderRank = getRaiderRankForPoints(this.raiderPoints);
+
+    this.player.gold += goldEarned;
+    this.player.statPoints += isFirstClear ? 6 : 3;
+    this.player.starStones = (this.player.starStones ?? 0) + dungeon.rewardStarStones;
+    grantKillStatPoints(this.player, 'boss');
+
+    const promoted = prevRank !== this.raiderRank;
+    this.enterIsekaiRoom('raider_guild', 460);
+    gameAudio.playSecretFound();
+    this.spawnBurst(this.player.x + 8, this.player.y, 32, '#ef4444');
+    this.showSecretCaption(
+      promoted
+        ? `DUNGEON CLEARED · RANK UP TO ${this.raiderRank.toUpperCase()}!`
+        : `${dungeon.code} CONQUERED!`,
+      `Slain ${bossName}! +${goldEarned}G · +${rpEarned} Raider Pts · +${dungeon.rewardStarStones} Star Stones!`,
+    );
+    void this.saveCurrentGame('autosave', true);
     this.emitHud(true);
   }
 
@@ -1376,6 +1814,61 @@ export class BasteraGameEngine {
     this.trackedSideQuestId = questId;
     this.spawnPendingSideQuestBossesInRealm();
     this.emitHud(true);
+  }
+
+  public selectSideQuestDialogueChoice(
+    questId: SideQuestId,
+    nodeId: string,
+    choiceId: string,
+  ): void {
+    const quest = SIDE_QUESTS.find((q) => q.id === questId);
+    if (!quest) return;
+    const allNodes = [
+      ...quest.openingNodes,
+      ...quest.midQuestNodes,
+      ...quest.twistConfrontationNodes,
+    ];
+    const node = allNodes.find((n) => n.id === nodeId);
+    const choice = node?.choices?.find((c) => c.id === choiceId);
+    if (!choice) return;
+
+    const prog = this.sideQuestProgress[questId] ?? {
+      stage: 0,
+      kills: 0,
+      twistRevealed: false,
+      bossSpawned: false,
+      clueUncovered: false,
+      chosenOptionIds: [],
+      confronted: false,
+    };
+    this.sideQuestProgress[questId] = prog;
+
+    const res = applySideQuestDialogueChoice(quest, prog, choice);
+    if (res.goldDelta > 0) {
+      this.player.gold += res.goldDelta;
+      this.spawnFloatingText(this.player.x + 12, this.player.y - 12, `+${res.goldDelta}G`, '#fbbf24');
+      gameAudio.playSecretFound();
+    }
+    if (res.statPointsDelta > 0) {
+      this.player.statPoints += res.statPointsDelta;
+      this.spawnFloatingText(this.player.x + 12, this.player.y - 24, `+${res.statPointsDelta} STAT`, '#38bdf8');
+      gameAudio.playSecretFound();
+    }
+    if (res.acceptedNow) {
+      this.trackedSideQuestId = quest.id;
+      gameAudio.playSecretFound();
+      this.showSecretCaption(
+        `CONTRACT ACCEPTED: ${quest.title.toUpperCase()}`,
+        `${quest.hookSummary}`,
+      );
+      this.spawnPendingSideQuestBossesInRealm();
+    } else if (res.clueNewlyUncovered) {
+      gameAudio.playSecretFound();
+      this.showAnnouncement(`Ledger Clue Uncovered: ${quest.title}`);
+    }
+
+    this.emitHud(true);
+    void this.saveCurrentGame('autosave', true);
   }
 
   private spawnPendingSideQuestBossesInRealm(): void {
@@ -1505,6 +1998,9 @@ export class BasteraGameEngine {
     this.ensureChunksAround(this.player.x);
     this.camX = Math.max(-640, this.player.x - PIXEL_W * 0.34);
     this.syncHostWorldMeta();
+    if (this.status === 'playing') {
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
+    }
     this.showAnnouncement('Returned to Bastera Endless Citadel!');
     this.emitHud(true);
   }
@@ -1559,6 +2055,24 @@ export class BasteraGameEngine {
       this.executeSpinPokeDash();
       return;
     }
+    if (this.simTime - this.lastDashTapTime <= 0.48 && activateWhiteAuraDash(this.player)) {
+      this.lastDashTapTime = -10;
+      this.lastDashInputTime = this.simTime;
+      gameAudio.playSkill('blade_dash');
+      gameAudio.playSecretFound();
+      this.spawnAfterimage('#ffffff');
+      this.spawnBurst(this.player.x + 8, this.player.y + 13, 24, '#ffffff');
+      this.spawnFloatingText(
+        this.player.x + 8,
+        this.player.y - 16,
+        'WHITE AURA! +30% SPD · INVINCIBLE',
+        '#ffffff',
+      );
+      this.speedLineTimer = 0.55;
+      this.emitHud(true);
+      return;
+    }
+    this.lastDashTapTime = this.simTime;
     this.lastDashInputTime = this.simTime;
     if (triggerPlayerDash(this.player)) {
       gameAudio.playSkill('blade_dash');
@@ -1706,15 +2220,46 @@ export class BasteraGameEngine {
       return;
     }
 
-    // Real-time Demon King Arena, Dueling Arena & Town Raid orb support
+    // Real-time Demon King Arena, Dueling Arena, Town Raid & Raider Demonic Boss orb support
     if (
       (this.realm === 'demon_king_arena' && this.demonKings.length > 0) ||
       (this.realm === 'dueling_arena' && this.arenaDuel) ||
-      (this.realm === 'isekai_town' && this.townRaid && this.townRaid.hp > 0)
+      (this.realm === 'isekai_town' && this.townRaid && this.townRaid.hp > 0) ||
+      (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0)
     ) {
       const orbItem = this.inventory.find((i) => i.id === orbId);
       if (!orbItem || orbItem.count <= 0) {
         this.showAnnouncement('No orbs of that element left!');
+        return;
+      }
+
+      if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+        const rb = this.raiderDemonicBoss;
+        orbItem.count -= 1;
+        if (orbId === 'orb_flame') {
+          const dmg = Math.max(1, Math.round(rb.maxHp * FLAME_ORB_HP_RATIO));
+          rb.hp = Math.max(0, rb.hp - dmg);
+          rb.hitFlash = 0.25;
+          this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 14, `-${dmg} (25% HP)`, '#f97316');
+          this.spawnBurst(rb.x + rb.w / 2, rb.y + 22, 24, '#f97316');
+          gameAudio.playSkill('candlefire_wave');
+          if (rb.hp <= 0) this.completeRaiderDungeonVictory();
+        } else if (orbId === 'orb_wind') {
+          const dmg = Math.max(1, Math.round(rb.maxHp * 0.14));
+          rb.hp = Math.max(0, rb.hp - dmg);
+          rb.hitFlash = 0.2;
+          this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 14, `WIND GALE -${dmg}`, '#2dd4bf');
+          this.spawnBurst(rb.x + rb.w / 2, rb.y + 20, 16, '#2dd4bf');
+          gameAudio.playSkill('blade_dash');
+          if (rb.hp <= 0) this.completeRaiderDungeonVictory();
+        } else {
+          rb.stunTimer = 2.6;
+          this.spawnBurst(rb.x + rb.w / 2, rb.y + 20, 14, '#facc15');
+          gameAudio.playSkill('chrono_freeze');
+          this.showAnnouncement(`Electrical Orb: ${rb.name} STUNNED!`);
+        }
+        this.trauma = Math.min(1, this.trauma + 0.35);
+        this.emitHud(true);
         return;
       }
 
@@ -1835,7 +2380,7 @@ export class BasteraGameEngine {
       this.player.y = FLOOR_Y - this.player.h - 4;
       this.camX = Math.max(-640, this.player.x - PIXEL_W * 0.34);
       this.completeBossEncounterProgress();
-      gameAudio.startMusic(this.getCurrentBiome(), null);
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
       this.emitHud(true);
       const cb = this.pendingSanctuaryCallback;
       this.pendingSanctuaryCallback = null;
@@ -1869,8 +2414,8 @@ export class BasteraGameEngine {
   public toggleMute(): void {
     const muted = gameAudio.toggleMute();
     if (!muted && this.status === 'playing') {
-      const boss = this.getActiveNearbyBoss();
-      gameAudio.startMusic(this.getCurrentBiome(), boss?.def ?? null);
+      const boss = this.realm === 'citadel' ? this.getActiveNearbyBoss() : null;
+      gameAudio.startMusic(this.getCurrentBiome(), boss?.def ?? null, this.realm);
     }
     this.emitHud();
   }
@@ -2146,6 +2691,15 @@ export class BasteraGameEngine {
       return;
     }
 
+    // Elf Kingdom Dinner Party / Coronation Visual-Novel Cutscene freezes movement until dismissed
+    if (this.elfCutscene) {
+      this.clearAllInputs(true);
+      this.updateParticles(dt);
+      this.emitHud();
+      this.justPressed.clear();
+      return;
+    }
+
     // Mega Boss / Gyro Zeppeli Glitch-Crash Cutscene spawns real-time Citadel fight when finished (no Pokemon combat!)
     if (this.megaCutscene) {
       this.clearAllInputs(true);
@@ -2169,7 +2723,7 @@ export class BasteraGameEngine {
         this.encounterFlashTimer = 0.28;
         this.speedLineTimer = 0.65;
         gameAudio.playBattleEncounterStinger();
-        gameAudio.startMusic(this.getCurrentBiome(), pending.def);
+        gameAudio.startMusic(this.getCurrentBiome(), pending.def, this.realm);
         this.showAnnouncement(`⚔ REAL-TIME BREACH: ${pending.def.name} attacks!`);
         this.emitHud(true);
       } else {
@@ -2298,7 +2852,7 @@ export class BasteraGameEngine {
         }
       }
     }
-    if (!arenaRoundLocked && (this.justPressed.has('Digit1') || this.justPressed.has('KeyQ'))) {
+    if (!arenaRoundLocked && this.justPressed.has('Digit1')) {
       this.player.idleTimer = 0;
       this.executeSkill(0);
     }
@@ -2400,7 +2954,7 @@ export class BasteraGameEngine {
         this.realm,
         this.player.idleTimer,
         this.status === 'playing',
-        Boolean(this.bossBattle || this.megaCutscene || this.coronationCutscene || this.volcanoBridgeFallTimer > 0),
+        Boolean(this.bossBattle || this.megaCutscene || this.coronationCutscene || this.elfCutscene || this.volcanoBridgeFallTimer > 0),
       )
     ) {
       this.enterIsekaiTown('idle');
@@ -2437,6 +2991,33 @@ export class BasteraGameEngine {
       }
       if (this.chiliPepperTimer === 0) {
         this.emitHud();
+      }
+    }
+    if ((this.player.whiteAuraTimer ?? 0) > 0) {
+      this.player.invulnTimer = Math.max(this.player.invulnTimer, this.player.whiteAuraTimer ?? 0);
+      // Emit crisp upward leaking white aura wisps from pooled ring buffer (zero GC)
+      for (let w = 0; w < 2; w++) {
+        const p = this.particles[this.particleCursor];
+        this.particleCursor = (this.particleCursor + 1) % this.particles.length;
+        p.active = true;
+        p.x = this.player.x + 2 + Math.random() * 12;
+        p.y = this.player.y + 4 + Math.random() * 18;
+        p.vx = (Math.random() - 0.5) * 26;
+        p.vy = -48 - Math.random() * 44;
+        p.maxLife = 0.24 + Math.random() * 0.16;
+        p.life = p.maxLife;
+        p.size = Math.random() > 0.45 ? 3 : 2;
+        p.color = Math.random() > 0.3 ? '#ffffff' : '#e0f2fe';
+      }
+      if (Math.floor(this.simTime * 18) !== Math.floor((this.simTime - dt) * 18)) {
+        this.spawnAfterimage('#ffffff');
+      }
+    }
+    if ((this.player.standGuardTimer ?? 0) > 0) {
+      this.standGuardTickTimer -= dt;
+      if (this.standGuardTickTimer <= 0) {
+        this.standGuardTickTimer = 0.16;
+        this.resolveStandGuardTick(activeChunks);
       }
     }
 
@@ -2598,6 +3179,7 @@ export class BasteraGameEngine {
     gameAudio.startMusic(
       this.getCurrentBiome(),
       this.bossCooldownSeconds > 0 ? null : (nearbyBoss?.def ?? null),
+      this.realm,
     );
     if (nearbyBoss && this.bossCooldownSeconds <= 0 && this.lastBossVoiceTriggered !== nearbyBoss.def.index) {
       this.lastBossVoiceTriggered = nearbyBoss.def.index;
@@ -2649,7 +3231,7 @@ export class BasteraGameEngine {
     this.bossBattle = createBossBattleState(boss);
     this.lastBossVoiceTriggered = boss.def.index;
     gameAudio.playBattleEncounterStinger();
-    gameAudio.startMusic(this.getCurrentBiome(), boss.def);
+    gameAudio.startMusic(this.getCurrentBiome(), boss.def, this.realm);
     this.emitHud(true);
   }
 
@@ -2723,7 +3305,7 @@ export class BasteraGameEngine {
       this.player.y = FLOOR_Y - this.player.h - 4;
       this.camX = Math.max(-640, this.player.x - PIXEL_W * 0.34);
       this.completeBossEncounterProgress();
-      gameAudio.startMusic(this.getCurrentBiome(), null);
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
       if (this.bossCooldownSeconds <= 0) {
         this.showAnnouncement('Retreated safely to your Main Sanctuary Interface.');
       }
@@ -2784,7 +3366,7 @@ export class BasteraGameEngine {
           vx: this.player.facing * 390,
           vy: 0,
           radius: 15,
-          damage: calculateAttackDamage(this.player, 1.05, false),
+          damage: this.getPlayerAttackDamage(1.05, false),
           fromPlayer: true,
           color: '#22c55e',
           life: 1.45,
@@ -2813,7 +3395,7 @@ export class BasteraGameEngine {
             vx: this.player.facing * (isFireSword ? 265 : 250),
             vy: 0,
             radius: isFireSword || weapon.id === 'solar_excalibur' ? 10 : 8,
-            damage: Math.round(calculateAttackDamage(this.player, isFireSword ? 0.85 : 0.72)),
+            damage: Math.round(this.getPlayerAttackDamage(isFireSword ? 0.85 : 0.72)),
             fromPlayer: true,
             color: isFireSword ? '#fb923c' : weapon.accentColor,
             life: isFireSword ? 0.65 : 0.58,
@@ -2911,13 +3493,19 @@ export class BasteraGameEngine {
     }
   }
 
+  private getPlayerAttackDamage(skillMult = 1, isSkill = false): number {
+    const base = calculateAttackDamage(this.player, skillMult, isSkill);
+    const rankBonus = 1 + getRaiderRankDef(this.raiderRank).atkBonusPct / 100;
+    return Math.round(base * rankBonus);
+  }
+
   private resolveMeleeHits(
     chunks: GeneratedChunk[],
     skillMult: number,
     isSkill = false,
   ): void {
     const hb = computeWeaponHitbox(this.player);
-    const dmg = calculateAttackDamage(this.player, skillMult, isSkill);
+    const dmg = this.getPlayerAttackDamage(skillMult, isSkill);
     const weapon = WEAPONS[this.player.equippedWeapon];
     const kb = weapon.knockback * this.player.facing;
     let landedHit = false;
@@ -3083,6 +3671,27 @@ export class BasteraGameEngine {
       }
     }
 
+    if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+      const rb = this.raiderDemonicBoss;
+      const rbKey = `raider_boss_${rb.dungeonId}`;
+      if ((isSkill || !this.meleeHitIds.has(rbKey)) && rectsOverlap(hb.x, hb.y, hb.w, hb.h, rb.x, rb.y, rb.w, rb.h)) {
+        if (!isSkill) this.meleeHitIds.add(rbKey);
+        rb.hp = Math.max(0, rb.hp - dmg);
+        rb.hitFlash = 0.16;
+        rb.vx = kb * 0.25;
+        this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 10, `${dmg}`, '#fde047');
+        this.spawnBurst(rb.x + rb.w / 2, rb.y + 22, 14, rb.auraColor);
+        if (weapon.specialEffect === 'lifesteal' && !isSkill) {
+          const heal = Math.max(2, Math.round(dmg * 0.15));
+          this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+        }
+        landedHit = true;
+        if (rb.hp <= 0) {
+          this.completeRaiderDungeonVictory();
+        }
+      }
+    }
+
     if (landedHit) {
       this.hitstopTimer = 0.04;
       this.trauma = Math.min(1, this.trauma + 0.32);
@@ -3092,6 +3701,23 @@ export class BasteraGameEngine {
   }
 
   private executeSkill(slotIndex: 0 | 1 | 2): void {
+    const targetSkillId = this.player.skillSlots[slotIndex];
+    if (targetSkillId === 'stand_rush') {
+      if (this.simTime - this.lastStandTapTime <= 0.55 && activateStandGuard(this.player)) {
+        this.lastStandTapTime = -10;
+        this.standGuardTickTimer = 0.14;
+        this.trauma = Math.min(1, this.trauma + 0.35);
+        gameAudio.playSkill('stand_rush');
+        gameAudio.playHit(false);
+        this.spawnBurst(this.player.x + 8, this.player.y + 12, 24, '#f0abfc');
+        this.spawnFloatingText(this.player.x + 8, this.player.y - 18, 'STAND GUARD COUNTER!', '#f0abfc');
+        this.resolveStandGuardTick(this.realm === 'citadel' ? this.getActiveChunks() : []);
+        this.emitHud(true);
+        return;
+      }
+      this.lastStandTapTime = this.simTime;
+    }
+
     const res = triggerSkillSlot(this.player, slotIndex);
     if (!res.ok) return;
     const skill = SKILLS[res.skillId];
@@ -3119,7 +3745,7 @@ export class BasteraGameEngine {
         vx: this.player.facing * 260,
         vy: 0,
         radius: 9,
-        damage: calculateAttackDamage(this.player, skill.damageMultiplier, true),
+        damage: this.getPlayerAttackDamage(skill.damageMultiplier, true),
         fromPlayer: true,
         color: '#f97316',
         life: 1.1,
@@ -3176,13 +3802,19 @@ export class BasteraGameEngine {
       if (this.realm === 'dueling_arena' && this.arenaDuel && this.arenaDuel.hp > 0) {
         checkCandidate(this.arenaDuel.x + this.arenaDuel.w / 2, this.arenaDuel.y + this.arenaDuel.h / 2);
       }
+      if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+        checkCandidate(
+          this.raiderDemonicBoss.x + this.raiderDemonicBoss.w / 2,
+          this.raiderDemonicBoss.y + this.raiderDemonicBoss.h / 2,
+        );
+      }
       if (tx === null || ty === null) return;
       const len = Math.max(1, Math.hypot(tx - px, ty - py));
       dirX = (tx - px) / len;
       dirY = (ty - py) / len;
     }
 
-    const boltDmg = Math.max(6, Math.round(calculateAttackDamage(this.player, synchronizedWithAttack ? 0.55 : 0.42, true)));
+    const boltDmg = Math.max(6, Math.round(this.getPlayerAttackDamage(synchronizedWithAttack ? 0.55 : 0.42, true)));
     this.projectiles.push({
       id: `cp_${this.simTime}_${Math.random()}`,
       x: px + this.player.facing * 10,
@@ -3203,31 +3835,31 @@ export class BasteraGameEngine {
     chunks: GeneratedChunk[],
     maxRange = 420,
   ): {
-    kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king';
+    kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king' | 'raider_boss';
     x: number;
     y: number;
     w: number;
     h: number;
-    ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity;
+    ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity | RaiderDemonicBossEntity;
   } | null {
     const px = this.player.x + this.player.w / 2;
     let bestDist = maxRange;
     let best: {
-      kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king';
+      kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king' | 'raider_boss';
       x: number;
       y: number;
       w: number;
       h: number;
-      ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity;
+      ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity | RaiderDemonicBossEntity;
     } | null = null;
 
     const consider = (
-      kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king',
+      kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king' | 'raider_boss',
       x: number,
       y: number,
       w: number,
       h: number,
-      ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity,
+      ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity | RaiderDemonicBossEntity,
     ) => {
       const dist = Math.hypot(x + w / 2 - px, y + h / 2 - (this.player.y + this.player.h / 2));
       if (dist <= bestDist) {
@@ -3254,13 +3886,23 @@ export class BasteraGameEngine {
     if (this.realm === 'dueling_arena' && this.arenaDuel && this.arenaDuel.hp > 0) {
       consider('duel', this.arenaDuel.x, this.arenaDuel.y, this.arenaDuel.w, this.arenaDuel.h, this.arenaDuel);
     }
+    if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+      consider(
+        'raider_boss',
+        this.raiderDemonicBoss.x,
+        this.raiderDemonicBoss.y,
+        this.raiderDemonicBoss.w,
+        this.raiderDemonicBoss.h,
+        this.raiderDemonicBoss,
+      );
+    }
     return best;
   }
 
   private applyDirectStandHit(
     target: {
-      kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king';
-      ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity;
+      kind: 'enemy' | 'isekai_enemy' | 'boss' | 'duel' | 'raid' | 'demon_king' | 'raider_boss';
+      ref: EnemyState | ActiveBoss | ActiveArenaDuel | ActiveTownRaid | DemonKingEntity | RaiderDemonicBossEntity;
     },
     dmg: number,
     kb: number,
@@ -3305,6 +3947,14 @@ export class BasteraGameEngine {
       const dk = target.ref as DemonKingEntity;
       if (stunSeconds > 0) dk.stunTimer = Math.max(dk.stunTimer ?? 0, stunSeconds);
       this.damageDemonKing(dk, dmg, kb * 0.3);
+    } else if (target.kind === 'raider_boss') {
+      const rb = target.ref as RaiderDemonicBossEntity;
+      if (stunSeconds > 0) rb.stunTimer = Math.max(rb.stunTimer, stunSeconds);
+      rb.hp = Math.max(0, rb.hp - dmg);
+      rb.hitFlash = 0.2;
+      rb.vx = kb * 0.28;
+      this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 14, label, color);
+      if (rb.hp <= 0) this.completeRaiderDungeonVictory();
     }
   }
 
@@ -3458,7 +4108,7 @@ export class BasteraGameEngine {
     const zoneX =
       this.player.facing === 1 ? this.player.x - 4 : this.player.x - zoneW + this.player.w + 4;
     const zoneY = this.player.y - 24;
-    const dmg = Math.max(6, Math.round(calculateAttackDamage(this.player, 0.52, true)));
+    const dmg = Math.max(6, Math.round(this.getPlayerAttackDamage(0.52, true)));
     const kb = 48 * this.player.facing;
     let landedHit = false;
 
@@ -3566,8 +4216,150 @@ export class BasteraGameEngine {
       }
     }
 
+    if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+      const rb = this.raiderDemonicBoss;
+      if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, rb.x, rb.y, rb.w, rb.h)) {
+        rb.hp = Math.max(0, rb.hp - dmg);
+        rb.hitFlash = 0.14;
+        rb.vx = kb * 0.22;
+        this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 8, `ORA! ${dmg}`, '#d8b4fe');
+        this.spawnBurst(rb.x + rb.w / 2, rb.y + 20, 10, '#fbbf24');
+        landedHit = true;
+        if (rb.hp <= 0) this.completeRaiderDungeonVictory();
+      }
+    }
+
     if (landedHit) {
       this.trauma = Math.min(1, this.trauma + 0.16);
+      gameAudio.playHit(true);
+      this.emitHud();
+    }
+  }
+
+  private resolveStandGuardTick(chunks: GeneratedChunk[]): void {
+    const zoneW = 220;
+    const zoneH = 104;
+    const zoneX =
+      this.player.facing === 1 ? this.player.x - 44 : this.player.x + this.player.w + 44 - zoneW;
+    const zoneY = this.player.y - 36;
+    const dmg = Math.max(12, Math.round(this.getPlayerAttackDamage(1.15, true)));
+    let landedHit = false;
+
+    const standId = this.player.equippedStand ?? 'star_platinum';
+    const standDef = STANDS[standId];
+    this.standSummonFx = { standId, timer: 0.38, facing: this.player.facing };
+    this.spawnBurst(this.player.x + 8 + this.player.facing * 32, this.player.y + 8, 7, standDef.accentColor);
+    this.projectiles.push({
+      id: `sg_wave_${this.simTime}_${Math.random()}`,
+      x: this.player.x + 8 + this.player.facing * 16,
+      y: this.player.y + 10,
+      vx: this.player.facing * 350,
+      vy: 0,
+      radius: 9,
+      damage: dmg,
+      fromPlayer: true,
+      color: standDef.accentColor,
+      life: 0.34,
+      kind: 'slash_wave',
+    });
+
+    for (const ch of chunks) {
+      for (const en of ch.enemies) {
+        if (en.state === 'ko') continue;
+        if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, en.x, en.y, en.w, en.h)) {
+          const kb = Math.sign(en.x + en.w / 2 - (this.player.x + 8) || this.player.facing) * 65;
+          const res = applyDamageToEnemy(en, dmg, kb);
+          this.spawnFloatingText(en.x + en.w / 2, en.y - 8, `GUARD! ${dmg}`, '#f0abfc');
+          this.spawnBurst(en.x + en.w / 2, en.y + 10, 6, '#f0abfc');
+          landedHit = true;
+          if (res.killed) this.onEnemyKilled(en);
+        }
+      }
+      if (ch.boss && !ch.boss.defeated && this.bossCooldownSeconds <= 0 && canPlayerEngageBoss(this.worldRole)) {
+        const b = ch.boss;
+        if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, b.x, b.y, b.w, b.h)) {
+          const kb = Math.sign(b.x + b.w / 2 - (this.player.x + 8) || this.player.facing) * 32;
+          const res = applyDamageToBoss(b, dmg, kb);
+          this.spawnFloatingText(b.x + b.w / 2, b.y - 10, `GUARD! ${dmg}`, '#f0abfc');
+          this.spawnBurst(b.x + b.w / 2, b.y + 16, 8, '#fbbf24');
+          landedHit = true;
+          if (res.defeatedNow) this.onBossDefeated(b);
+        }
+      }
+    }
+
+    for (const en of this.isekaiEnemies) {
+      if (en.state === 'ko') continue;
+      if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, en.x, en.y, en.w, en.h)) {
+        const kb = Math.sign(en.x + en.w / 2 - (this.player.x + 8) || this.player.facing) * 65;
+        const res = applyDamageToEnemy(en, dmg, kb);
+        this.spawnFloatingText(en.x + en.w / 2, en.y - 8, `GUARD! ${dmg}`, '#f0abfc');
+        this.spawnBurst(en.x + en.w / 2, en.y + 10, 6, '#f0abfc');
+        landedHit = true;
+        if (res.killed) this.onIsekaiEnemyKilled(en);
+      }
+    }
+
+    for (const dk of this.demonKings) {
+      if (dk.defeated || dk.hp <= 0 || dk.index !== this.activeDemonKingStage) continue;
+      if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, dk.x, dk.y, dk.w, dk.h)) {
+        const kb = Math.sign(dk.x + dk.w / 2 - (this.player.x + 8) || this.player.facing) * 28;
+        const dkDmg = dk.windVulnerable ? Math.round(dmg * (1 + WIND_ORB_DAMAGE_BONUS)) : dmg;
+        this.damageDemonKing(dk, dkDmg, kb);
+        landedHit = true;
+      }
+    }
+
+    if (this.realm === 'isekai_town' && this.townRaid && this.townRaid.hp > 0) {
+      const raid = this.townRaid;
+      if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, raid.x, raid.y, raid.w, raid.h)) {
+        const kb = Math.sign(raid.x + raid.w / 2 - (this.player.x + 8) || this.player.facing) * 28;
+        const rDmg = raid.windVulnerable ? Math.round(dmg * (1 + WIND_ORB_DAMAGE_BONUS)) : dmg;
+        raid.hp = Math.max(0, raid.hp - rDmg);
+        raid.hitFlash = 0.14;
+        raid.vx = kb;
+        this.spawnFloatingText(raid.x + raid.w / 2, raid.y - 8, `GUARD! ${rDmg}`, '#f0abfc');
+        this.spawnBurst(raid.x + raid.w / 2, raid.y + 18, 8, '#fbbf24');
+        landedHit = true;
+        if (raid.hp <= 0) this.onTownRaidDefeated();
+      }
+    }
+
+    if (this.realm === 'dueling_arena' && this.arenaDuel && this.arenaDuel.hp > 0) {
+      const duel = this.arenaDuel;
+      if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, duel.x, duel.y, duel.w, duel.h)) {
+        if (duel.invulnTimer > 0) {
+          this.spawnFloatingText(duel.x + duel.w / 2, duel.y - 12, 'DODGED!', '#cbd5e1');
+        } else {
+          const rawDmg = duel.windVulnerable ? Math.round(dmg * (1 + WIND_ORB_DAMAGE_BONUS)) : dmg;
+          const aDmg = duel.guardTimer > 0 ? Math.max(1, Math.round(rawDmg * 0.3)) : rawDmg;
+          duel.hp = Math.max(0, duel.hp - aDmg);
+          duel.hitFlash = 0.14;
+          duel.vx = Math.sign(duel.x + duel.w / 2 - (this.player.x + 8) || this.player.facing) * 35;
+          this.arenaCrowdHypeTimer = 0.75;
+          this.spawnFloatingText(duel.x + duel.w / 2, duel.y - 8, `GUARD! ${aDmg}`, '#f0abfc');
+          this.spawnBurst(duel.x + duel.w / 2, duel.y + 16, 8, '#fbbf24');
+          landedHit = true;
+          if (duel.hp <= 0) this.handleArenaRoundEnd('player');
+        }
+      }
+    }
+
+    if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+      const rb = this.raiderDemonicBoss;
+      if (rectsOverlap(zoneX, zoneY, zoneW, zoneH, rb.x, rb.y, rb.w, rb.h)) {
+        rb.hp = Math.max(0, rb.hp - dmg);
+        rb.hitFlash = 0.14;
+        rb.vx = Math.sign(rb.x + rb.w / 2 - (this.player.x + 8) || this.player.facing) * 28;
+        this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 8, `GUARD! ${dmg}`, '#f0abfc');
+        this.spawnBurst(rb.x + rb.w / 2, rb.y + 20, 8, '#fbbf24');
+        landedHit = true;
+        if (rb.hp <= 0) this.completeRaiderDungeonVictory();
+      }
+    }
+
+    if (landedHit) {
+      this.trauma = Math.min(1, this.trauma + 0.15);
       gameAudio.playHit(true);
       this.emitHud();
     }
@@ -3666,6 +4458,61 @@ export class BasteraGameEngine {
     } else if (prop.kind === 'citadel_portal') {
       gameAudio.playSecretFound();
       this.returnToCitadel();
+    } else if (prop.kind === 'raider_guild_door') {
+      gameAudio.playSecretFound();
+      this.enterIsekaiRoom('raider_guild', 90);
+    } else if (prop.kind === 'raider_guild_desk') {
+      gameAudio.playSecretFound();
+      this.uiCallbacks.onOpenRaiderGuild?.();
+    } else if (prop.kind === 'raider_floor_stairs') {
+      this.ascendRaiderDungeonStairs();
+    } else if (prop.kind === 'raider_dungeon_exit') {
+      gameAudio.playSecretFound();
+      this.enterIsekaiRoom('raider_guild', 460);
+    } else if (prop.kind === 'elf_herald') {
+      this.elfKingdomInvited = true;
+      if (this.elfKingdomStage === 'uninvited') {
+        this.elfKingdomStage = 'invited';
+      }
+      gameAudio.playSecretFound();
+      this.showSecretCaption(
+        'ROYAL ELF KINGDOM INVITATION!',
+        'Aethelgard’s Silver-Bough Banquet unlocked! Ride via Caravan Rider Vance to attend!',
+      );
+      this.openDialogue(prop.speaker, 'npc', '#34d399', [
+        ...prop.dialogue,
+        'Speak [F] to Caravan Rider Vance right beside the plaza fountain to travel to the Elf Kingdom of Aethelgard!',
+      ]);
+      void this.saveCurrentGame('autosave', true);
+      this.emitHud(true);
+    } else if (prop.kind === 'elf_caravan_return') {
+      gameAudio.playSecretFound();
+      this.uiCallbacks.onOpenCaravanRider?.();
+    } else if (prop.kind === 'elf_banquet_table') {
+      this.startElfDinnerPartyCutscene();
+    } else if (prop.kind === 'elf_queen_dais') {
+      if (this.elfKingdomStage === 'celebration') {
+        this.openDialogue('Queen Sylvaria', 'throne', '#34d399', [
+          'The Emerald Crown gleams brightly upon your brow, Hero of Aethelgard.',
+          'May peace, Star-Wine, and sharp steel forever unite Solaris and our Silver-Bough realm!',
+        ]);
+      } else if (this.elfKingdomStage === 'ambush_active') {
+        this.openDialogue('Queen Sylvaria', 'throne', '#fb7185', [
+          'Cut down those eldritch horrors beside Sword Saint Kaelen before they reach the high dais!',
+        ]);
+      } else {
+        this.openDialogue('Queen Sylvaria', 'throne', '#34d399', [
+          'Welcome to Aethelgard, honored Knight! Step just left to the Grand Banquet Table and press [F] to begin tonight’s Royal Feast!',
+        ]);
+      }
+    } else if (prop.kind === 'elf_swordsman_npc') {
+      if (this.elfKingdomStage === 'celebration') {
+        this.openDialogue('Sword Saint Kaelen', 'npc', '#34d399', [
+          'Next time a horror tears through our marble floor, I expect you to save half the slaughter for me, Sovereign Knight.',
+        ]);
+      } else {
+        this.openDialogue('Sword Saint Kaelen', 'npc', '#34d399', prop.dialogue);
+      }
     } else if (prop.kind === 'town_exit_door') {
       gameAudio.playSecretFound();
       const targetX =
@@ -3677,7 +4524,9 @@ export class BasteraGameEngine {
               ? 1180
               : this.realm === 'dueling_arena'
                 ? 3260
-                : 340;
+                : this.realm === 'raider_guild'
+                  ? 1365
+                  : 340;
       this.enterIsekaiRoom('isekai_town', targetX);
     } else if (prop.kind === 'guild_reception') {
       gameAudio.playSecretFound();
@@ -3751,8 +4600,18 @@ export class BasteraGameEngine {
         kills: 0,
         twistRevealed: false,
         bossSpawned: false,
+        clueUncovered: false,
+        chosenOptionIds: [],
+        confronted: false,
       };
       this.sideQuestProgress[quest.id] = prog;
+      if (this.uiCallbacks.onOpenSideQuestDialogue) {
+        this.trackedSideQuestId = quest.id;
+        this.spawnPendingSideQuestBossesInRealm();
+        this.emitHud(true);
+        this.uiCallbacks.onOpenSideQuestDialogue(quest.id);
+        return;
+      }
       if (prog.stage === 0) {
         prog.stage = 1;
         this.trackedSideQuestId = quest.id;
@@ -3976,11 +4835,13 @@ export class BasteraGameEngine {
     if (!this.foughtIsekaiEnemies.includes(enemy.archetype)) {
       this.foughtIsekaiEnemies.push(enemy.archetype);
     }
-    this.player.gold += enemy.rewardGold;
+    const rankGoldBonus = 1 + getRaiderRankDef(this.raiderRank).goldBonusPct / 100;
+    const goldEarned = Math.round(enemy.rewardGold * rankGoldBonus);
+    this.player.gold += goldEarned;
     grantKillStatPoints(this.player, 'monster');
     this.isekaiKillsDone += 1;
     this.tryRollOrbDrop(enemy.x + enemy.w / 2, enemy.y);
-    this.spawnFloatingText(enemy.x + enemy.w / 2, enemy.y - 12, `+${enemy.rewardGold}G`, '#fbbf24');
+    this.spawnFloatingText(enemy.x + enemy.w / 2, enemy.y - 12, `+${goldEarned}G`, '#fbbf24');
 
     if (enemy.sideQuestId) {
       const quest = SIDE_QUESTS.find((q) => q.id === enemy.sideQuestId);
@@ -4061,6 +4922,23 @@ export class BasteraGameEngine {
       this.activeCastBannerTimer = 2.0;
       this.spawnFloatingText(dk.x + dk.w / 2, dk.y - 18, `REWIND +${heal}`, '#fda4af');
       this.spawnBurst(dk.x + dk.w / 2, dk.y + 16, 18, '#f43f5e');
+    }
+
+    // Cast 1 signature Demon King skill automatically every 12% HP drop
+    dk.lastSkillThresholdPct ??= 100;
+    const dkHpPct = (dk.hp / Math.max(1, dk.maxHp)) * 100;
+    if (dk.hp > 0 && dkHpPct <= dk.lastSkillThresholdPct - 12) {
+      while (dk.lastSkillThresholdPct - 12 >= dkHpPct && dk.lastSkillThresholdPct > 0) {
+        dk.lastSkillThresholdPct -= 12;
+      }
+      dk.castIndex += 1;
+      const cast = createDemonKingPurpleFlameCast(dk, dk.castIndex, this.player.x, FLOOR_Y);
+      this.purpleFlameZones.push(...cast.zones);
+      this.projectiles.push(...cast.projectiles);
+      this.activeCastBanner = `${cast.skillBanner} (12% RAGE!)`;
+      this.activeCastBannerTimer = 1.9;
+      gameAudio.playSkill('candlefire_wave');
+      this.spawnFloatingText(dk.x + dk.w / 2, dk.y - 24, `${cast.skillBanner}!`, '#e879f9');
     }
 
     if (dk.hp <= 0) {
@@ -4308,7 +5186,7 @@ export class BasteraGameEngine {
         'Nyo-ho...! Not bad at all! Lesson 5 complete—that golden spin opened a Dimensional Portal right beside you!',
         'Step into the swirling Isekai Gate ahead to awaken in the sunny Medieval Fantasy Town!',
       ]);
-      gameAudio.startMusic(this.getCurrentBiome(), null);
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
       void this.saveCurrentGame('autosave', true);
       this.emitHud(true);
       return;
@@ -4339,7 +5217,7 @@ export class BasteraGameEngine {
         boss.def.defeatLine,
         `[SYSTEM] MEGA BOSS BOUNTY: +${bonusPts} Ability Stat Points, +450G & +2 Crimson Vials!`,
       ]);
-      gameAudio.startMusic(this.getCurrentBiome(), null);
+      gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
       void this.saveCurrentGame('autosave', true);
       this.emitHud(true);
       return;
@@ -4449,7 +5327,7 @@ export class BasteraGameEngine {
       lines.push(`All ${TOTAL_BOSSES} Citadel Bosses defeated! Defeat Gyro Zeppeli or step through the Escape Gate!`);
     }
     this.openDialogue(boss.def.name, 'boss', boss.def.primaryColor, lines);
-    gameAudio.startMusic(this.getCurrentBiome(), null);
+    gameAudio.startMusic(this.getCurrentBiome(), null, this.realm);
     this.emitHud(true);
   }
 
@@ -4702,6 +5580,60 @@ export class BasteraGameEngine {
       b.barrageCooldown ??= 5.2;
       b.burstPunchCooldown ??= 1.0;
       b.burstHitStreak ??= 0;
+      b.lastSkillThresholdPct ??= 100;
+
+      // Every 12% HP lost, every Citadel/Mega/Gyro boss automatically unleashes 1 skill!
+      const bossHpPct = (b.hp / Math.max(1, b.maxHp)) * 100;
+      if (b.hp > 0 && bossHpPct <= b.lastSkillThresholdPct - 12) {
+        while (b.lastSkillThresholdPct - 12 >= bossHpPct && b.lastSkillThresholdPct > 0) {
+          b.lastSkillThresholdPct -= 12;
+        }
+        const burstDmg = calculateCitadelBossHalfAtk(playerAtk, 0.85);
+        const dirToPlayer = playerCenter >= bossCenter ? 1 : -1;
+        b.facing = dirToPlayer;
+        if (b.skillPhase === 'none') {
+          if (Math.floor(b.lastSkillThresholdPct / 12) % 2 === 0) {
+            b.skillPhase = 'barrage_unleash';
+            b.state = 'attack';
+            b.stateTimer = 0.85;
+            b.barrageWaveTimer = 0;
+            b.activeSkillName = 'Stand Barrage';
+          } else {
+            b.skillPhase = 'ram_windup';
+            b.state = 'windup';
+            b.stateTimer = 0.28;
+            b.activeSkillName = 'Ram n Charge';
+          }
+        } else {
+          // Even mid-animation, unleash an instant Stand Barrage spread!
+          [-32, 0, 32].forEach((vyOff) => {
+            this.projectiles.push({
+              id: `sb_thresh_${b.def.index}_${this.simTime}_${vyOff}`,
+              x: bossCenter + dirToPlayer * 20,
+              y: b.y + Math.round(b.h * 0.45) + vyOff * 0.2,
+              vx: dirToPlayer * 245,
+              vy: vyOff,
+              radius: 12,
+              damage: burstDmg,
+              fromPlayer: false,
+              color: b.def.primaryColor || '#f97316',
+              life: 1.4,
+              kind: 'fireball',
+            });
+          });
+          b.activeSkillName = 'Stand Barrage';
+        }
+        b.activeDialogue = pickJoJoSkillDialogue(
+          b.activeSkillName === 'Ram n Charge' ? 'Ram n Charge' : 'Stand Barrage',
+          b.def.name,
+          b.def.standName,
+          b.def.index + Math.round(b.lastSkillThresholdPct),
+        );
+        b.activeDialogueTimer = 3.2;
+        gameAudio.playSkill('stand_rush');
+        this.spawnFloatingText(bossCenter, b.y - 22, `12% HP SKILL: ${b.activeSkillName.toUpperCase()}!`, '#fde047');
+        this.spawnBurst(bossCenter, b.y + Math.round(b.h * 0.5), 14, '#fde047');
+      }
 
       b.x = Math.max(b.arenaMinX, Math.min(b.arenaMaxX, b.x + b.vx * dt));
       b.vx *= b.skillPhase === 'ram_charge' ? 0.96 : 0.86;
@@ -5203,7 +6135,9 @@ export class BasteraGameEngine {
       ? GUILD_MISSIONS.find((m) => m.id === this.activeMissionId)
       : null;
     const isOutskirtsZone = this.realm === 'outskirts_forest' || this.realm === 'outskirts_caves';
-    if (!mission && !isOutskirtsZone) return;
+    const isElfAmbush = this.realm === 'elf_kingdom' && this.elfKingdomStage === 'ambush_active';
+    const isRaiderDungeon = this.realm === 'raider_dungeon';
+    if (!mission && !isOutskirtsZone && !isElfAmbush && !isRaiderDungeon) return;
 
     // 1. Update Carriage Escort progress, burning oil zones & coordinated bandit waves (B-Rank Escorts)
     if (this.realm === 'carriage_escort' && this.carriageEscort) {
@@ -5272,6 +6206,163 @@ export class BasteraGameEngine {
       }
     }
 
+    if (isElfAmbush) {
+      for (let i = this.purpleFlameZones.length - 1; i >= 0; i--) {
+        const z = this.purpleFlameZones[i];
+        if (!frozen) z.life -= dt;
+        if (
+          !z.hasHit &&
+          rectsOverlap(z.x + 2, z.y + 8, z.w - 4, z.h - 8, this.player.x, this.player.y, this.player.w, this.player.h)
+        ) {
+          z.hasHit = true;
+          this.damagePlayer(z.damage, this.player.facing * -85);
+        }
+        if (z.life <= 0) this.purpleFlameZones.splice(i, 1);
+      }
+
+      // Autonomous OP Ally: Sword Saint Kaelen slices & fires Starlight Tempests in real time!
+      for (const ally of this.alliedNpcs) {
+        if (ally.hp <= 0) continue;
+        ally.hitFlash = Math.max(0, ally.hitFlash - dt);
+        ally.attackCooldown = Math.max(0, ally.attackCooldown - dt);
+        ally.slashBurstTimer = Math.max(0, (ally.slashBurstTimer ?? 0) - dt);
+        ally.dashTimer = Math.max(0, (ally.dashTimer ?? 0) - dt);
+        if ((ally.calloutTimer ?? 0) > 0) {
+          ally.calloutTimer = Math.max(0, (ally.calloutTimer ?? 0) - dt);
+          if (ally.calloutTimer === 0) ally.callout = undefined;
+        }
+        if (frozen) continue;
+
+        const liveTargets = this.isekaiEnemies.filter((e) => e.state !== 'ko' && e.hp > 0);
+        const target = liveTargets.sort((a, b) => Math.abs(a.x - ally.x) - Math.abs(b.x - ally.x))[0];
+        if (target) {
+          const dx = target.x + target.w / 2 - (ally.x + 8);
+          const dist = Math.abs(dx);
+          ally.facing = dx >= 0 ? 1 : -1;
+          if (dist > 34) {
+            ally.vx = ally.facing * (dist > 140 ? 168 : 118);
+            ally.walkCycle += dt * 11;
+          } else {
+            ally.vx *= 0.72;
+          }
+          ally.x = Math.max(1220, Math.min(2420, ally.x + ally.vx * dt));
+
+          if (ally.attackCooldown <= 0) {
+            if (dist < 62) {
+              ally.attackCooldown = 0.62;
+              ally.slashBurstTimer = 0.25;
+              const kDmg = target.archetype === 'eldritch_feast_boss' ? 54 : 68;
+              const res = applyDamageToEnemy(target, kDmg, ally.facing * 85);
+              this.spawnFloatingText(target.x + target.w / 2, target.y - 10, `STARLIGHT ${kDmg}`, '#34d399');
+              this.spawnBurst(target.x + target.w / 2, target.y + 14, 10, '#6ee7b7');
+              if (res.killed) this.onIsekaiEnemyKilled(target);
+              if (!ally.callout && Math.random() < 0.28) {
+                ally.callout = 'Emerald Crescent — scatter!';
+                ally.calloutTimer = 1.9;
+              }
+            } else if (dist < 280) {
+              ally.attackCooldown = 0.95;
+              ally.dashTimer = 0.2;
+              this.projectiles.push({
+                id: `kaelen_wave_${this.simTime}_${Math.random()}`,
+                x: ally.x + 8 + ally.facing * 10,
+                y: ally.y + 10,
+                vx: ally.facing * 290,
+                vy: 0,
+                radius: 8,
+                damage: 46,
+                fromPlayer: true,
+                color: '#34d399',
+                life: 1.05,
+                kind: 'slash_wave',
+              });
+              this.spawnBurst(ally.x + 8, ally.y + 12, 6, '#34d399');
+            }
+          }
+        } else {
+          const followDx = this.player.x - 42 * this.player.facing - ally.x;
+          if (Math.abs(followDx) > 24) {
+            ally.facing = followDx >= 0 ? 1 : -1;
+            ally.vx = ally.facing * 92;
+            ally.walkCycle += dt * 8;
+            ally.x = Math.max(1220, Math.min(2420, ally.x + ally.vx * dt));
+          }
+        }
+      }
+
+      // Eldritch Feast Boss spawns pixel-gore ichor pools and bone spurs periodically
+      const feastBoss = this.isekaiEnemies.find(
+        (e) => e.archetype === 'eldritch_feast_boss' && e.state !== 'ko' && e.hp > 0,
+      );
+      if (feastBoss && !frozen && Math.random() < dt * 0.45 && this.purpleFlameZones.length < 4) {
+        const isIchor = Math.random() < 0.55;
+        this.purpleFlameZones.push({
+          id: `elf_haz_${this.simTime}_${Math.random()}`,
+          x: Math.max(1280, Math.min(2380, this.player.x - 24)),
+          y: FLOOR_Y - (isIchor ? 38 : 48),
+          w: isIchor ? 58 : 44,
+          h: isIchor ? 38 : 48,
+          life: 2.3,
+          maxLife: 2.3,
+          damage: isIchor ? 16 : 19,
+          kind: isIchor ? 'eldritch_ichor_pool' : 'eldritch_bone_spurs',
+          hasHit: false,
+        });
+      }
+    }
+
+    if (isRaiderDungeon) {
+      for (let i = this.purpleFlameZones.length - 1; i >= 0; i--) {
+        const z = this.purpleFlameZones[i];
+        if (!frozen) z.life -= dt;
+        if (
+          !z.hasHit &&
+          rectsOverlap(z.x + 2, z.y + 8, z.w - 4, z.h - 8, this.player.x, this.player.y, this.player.w, this.player.h)
+        ) {
+          z.hasHit = true;
+          this.damagePlayer(z.damage, this.player.facing * -95);
+        }
+        if (z.life <= 0) this.purpleFlameZones.splice(i, 1);
+      }
+
+      if (this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0 && !frozen) {
+        const step = stepRaiderDemonicBoss(
+          this.raiderDemonicBoss,
+          this.player.x + this.player.w / 2,
+          this.player.y,
+          dt,
+          this.simTime,
+        );
+        if (step.spawnProjectiles.length > 0) {
+          this.projectiles.push(...step.spawnProjectiles);
+        }
+        for (const z of step.spawnZones) {
+          this.purpleFlameZones.push({
+            id: `rdz_${this.simTime}_${Math.random()}`,
+            x: z.x,
+            y: z.y,
+            w: z.w,
+            h: z.h,
+            life: z.life,
+            maxLife: z.life,
+            damage: z.damage,
+            kind: z.kind,
+            hasHit: false,
+          });
+        }
+        if (step.screenShake > 0) {
+          this.trauma = Math.min(1, this.trauma + step.screenShake);
+        }
+        if (step.hitPlayerDamage > 0) {
+          this.damagePlayer(step.hitPlayerDamage, step.hitPlayerKnockbackX);
+        }
+        if (this.raiderDemonicBoss.activeSkillBanner) {
+          this.activeCastBanner = this.raiderDemonicBoss.activeSkillBanner;
+          this.activeCastBannerTimer = 1.6;
+        }
+      }
+    }
+
     // 2. Step Isekai Enemies (Goblins, Hobgoblins, 5-Class Coordinated Bandits, Succubi, Demon Tanks, Lightning Fighters, Cave Horrors)
     for (const en of this.isekaiEnemies) {
       en.hitFlash = Math.max(0, en.hitFlash - dt);
@@ -5303,14 +6394,63 @@ export class BasteraGameEngine {
       en.stateTimer -= dt * speedMult;
       en.facing = dx >= 0 ? 1 : -1;
 
+      if (en.isDungeonBoss && en.hp > 0) {
+        en.lastSkillThresholdPct ??= 100;
+        const bossHpPct = (en.hp / Math.max(1, en.maxHp)) * 100;
+        if (bossHpPct <= en.lastSkillThresholdPct - 12) {
+          while (en.lastSkillThresholdPct - 12 >= bossHpPct && en.lastSkillThresholdPct > 0) {
+            en.lastSkillThresholdPct -= 12;
+          }
+          const isEldritch = en.archetype === 'eldritch_feast_boss';
+          const skillDmg = Math.max(14, Math.round(dmg * 1.15));
+          [-38, 0, 38].forEach((vyOff) => {
+            this.projectiles.push({
+              id: `ib_thresh_${en.id}_${this.simTime}_${vyOff}`,
+              x: en.x + en.w / 2 + en.facing * 12,
+              y: en.y + en.h * 0.45,
+              vx: en.facing * 205,
+              vy: vyOff,
+              radius: isEldritch ? 8 : 7,
+              damage: skillDmg,
+              fromPlayer: false,
+              color: isEldritch ? '#991b1b' : '#e879f9',
+              life: 1.8,
+              kind: isEldritch ? 'eldritch_ichor' : 'purple_flame',
+            });
+          });
+          this.purpleFlameZones.push({
+            id: `ibz_${en.id}_${this.simTime}`,
+            x: Math.max(60, this.player.x - 24),
+            y: FLOOR_Y - (isEldritch ? 48 : 42),
+            w: 54,
+            h: isEldritch ? 48 : 42,
+            life: 2.0,
+            maxLife: 2.0,
+            damage: skillDmg,
+            kind: isEldritch ? 'eldritch_bone_spire' : 'abyssal_nova',
+            hasHit: false,
+          });
+          const skillTitle = isEldritch ? 'ABYSSAL GORE ERUPTION!' : 'CRIMSON OVERDRIVE!';
+          this.activeCastBanner = `${en.name}: ${skillTitle}`;
+          this.activeCastBannerTimer = 1.65;
+          gameAudio.playSkill('candlefire_wave');
+          this.spawnFloatingText(en.x + en.w / 2, en.y - 18, `12% SKILL: ${skillTitle}`, '#fde047');
+        }
+      }
+
       if (
         en.archetype === 'bandit_archer' ||
         en.archetype === 'demon_succubus' ||
         en.archetype === 'bandit_pyromancer' ||
-        en.archetype === 'cultist_mage'
+        en.archetype === 'cultist_mage' ||
+        en.archetype === 'raider_void_acolyte' ||
+        en.archetype === 'raider_abyssal_imp'
       ) {
-        const isSuccubus = en.archetype === 'demon_succubus';
-        const isPyro = en.archetype === 'bandit_pyromancer' || en.archetype === 'cultist_mage';
+        const isSuccubus = en.archetype === 'demon_succubus' || en.archetype === 'raider_abyssal_imp';
+        const isPyro =
+          en.archetype === 'bandit_pyromancer' ||
+          en.archetype === 'cultist_mage' ||
+          en.archetype === 'raider_void_acolyte';
         if (isSuccubus) {
           const hoverY = FLOOR_Y - 68 + Math.sin(this.simTime * 3 + en.patrolOriginX) * 10;
           en.y += (hoverY - en.y) * 4 * dt;
@@ -5326,6 +6466,7 @@ export class BasteraGameEngine {
           en.state = 'attack';
           en.stateTimer = 0.25;
           if (isPyro) {
+            const isVoid = en.archetype === 'cultist_mage' || en.archetype === 'raider_void_acolyte';
             this.projectiles.push({
               id: `pyro_${this.simTime}_${en.id}`,
               x: en.x + en.w / 2,
@@ -5335,9 +6476,9 @@ export class BasteraGameEngine {
               radius: 6,
               damage: dmg,
               fromPlayer: false,
-              color: en.archetype === 'cultist_mage' ? '#c084fc' : '#f97316',
+              color: isVoid ? '#c084fc' : '#f97316',
               life: 1.9,
-              kind: en.archetype === 'cultist_mage' ? 'succubus_orb' : 'fireball',
+              kind: isVoid ? 'succubus_orb' : 'fireball',
             });
             this.purpleFlameZones.push({
               id: `bfz_${this.simTime}_${en.id}`,
@@ -5348,7 +6489,7 @@ export class BasteraGameEngine {
               life: 1.25,
               maxLife: 1.25,
               damage: Math.max(8, Math.round(dmg * 0.8)),
-              kind: en.archetype === 'cultist_mage' ? 'abyssal_nova' : 'bandit_firebomb',
+              kind: isVoid ? 'abyssal_nova' : 'bandit_firebomb',
               hasHit: false,
             });
           } else {
@@ -5373,37 +6514,61 @@ export class BasteraGameEngine {
           en.state = 'patrol';
         }
       } else {
-        if (en.archetype === 'shadow_bat') {
+        if (en.archetype === 'shadow_bat' || en.archetype === 'raider_frost_wraith') {
           const hoverY = FLOOR_Y - 56 + Math.sin(this.simTime * 5 + en.patrolOriginX) * 14;
           en.y += (hoverY - en.y) * 5 * dt;
         }
         const spd =
-          en.archetype === 'demon_lightning' || en.archetype === 'shadow_bat'
-            ? 84
-            : en.archetype === 'bandit_assassin' || en.archetype === 'gargoyle_charger'
+          en.archetype === 'demon_lightning' ||
+          en.archetype === 'shadow_bat' ||
+          en.archetype === 'raider_frost_wraith' ||
+          en.archetype === 'eldritch_ichor_hound'
+            ? 88
+            : en.archetype === 'bandit_assassin' ||
+                en.archetype === 'gargoyle_charger' ||
+                en.archetype === 'raider_spore_stalker'
               ? 94
-              : en.archetype === 'demon_tank' || en.archetype === 'bandit_brute' || en.archetype === 'cursed_armor'
-                ? 44
-                : en.archetype === 'hobgoblin'
-                  ? 48
+              : en.archetype === 'demon_tank' ||
+                  en.archetype === 'bandit_brute' ||
+                  en.archetype === 'cursed_armor' ||
+                  en.archetype === 'raider_iron_golem' ||
+                  en.archetype === 'eldritch_feast_boss'
+                ? 46
+                : en.archetype === 'hobgoblin' || en.archetype === 'raider_hell_executioner' || en.archetype === 'eldritch_tendril_fiend'
+                  ? 54
                   : 58;
         if (en.state === 'patrol') {
           if (dist > 26 && dist < 340) en.vx = en.facing * spd;
           else if (dist <= 26) {
             en.vx = 0;
             en.state = 'windup';
-            en.stateTimer = en.archetype === 'demon_lightning' || en.archetype === 'bandit_assassin' ? 0.24 : 0.42;
+            en.stateTimer =
+              en.archetype === 'demon_lightning' ||
+              en.archetype === 'bandit_assassin' ||
+              en.archetype === 'eldritch_ichor_hound'
+                ? 0.24
+                : 0.42;
           }
         } else if (en.state === 'windup' && en.stateTimer <= 0) {
           en.state = 'attack';
           en.stateTimer = 0.24;
-          en.vx = en.facing * (en.archetype === 'demon_lightning' || en.archetype === 'bandit_assassin' || en.archetype === 'gargoyle_charger' ? 185 : 70);
+          en.vx =
+            en.facing *
+            (en.archetype === 'demon_lightning' ||
+            en.archetype === 'bandit_assassin' ||
+            en.archetype === 'gargoyle_charger' ||
+            en.archetype === 'eldritch_ichor_hound'
+              ? 185
+              : 74);
           if (targetIsCarriage && targetCar && dist < 40) {
             targetCar.hp = Math.max(0, targetCar.hp - dmg);
             targetCar.hitFlash = 0.2;
             this.spawnFloatingText(targetCar.x + 28, targetCar.y - 6, `-${dmg}`, '#f87171');
-          } else if (Math.abs(this.player.x - en.x) < 36 && Math.abs(this.player.y - en.y) < 36) {
-            this.damagePlayer(dmg, en.facing * (en.archetype === 'bandit_brute' || en.archetype === 'demon_tank' ? 180 : 120));
+          } else if (Math.abs(this.player.x - en.x) < 42 && Math.abs(this.player.y - en.y) < 42) {
+            this.damagePlayer(
+              dmg,
+              en.facing * (en.archetype === 'bandit_brute' || en.archetype === 'demon_tank' || en.archetype === 'eldritch_feast_boss' ? 180 : 120),
+            );
           }
         } else if (en.state === 'attack' && en.stateTimer <= 0) {
           en.state = 'recover';
@@ -5415,13 +6580,67 @@ export class BasteraGameEngine {
         en.vx *= 0.86;
       }
       const rb = ISEKAI_ROOM_BOUNDS[this.realm];
-      if (this.realm !== 'goblin_dungeon' && this.realm !== 'demon_realm') {
+      if (this.realm !== 'goblin_dungeon' && this.realm !== 'demon_realm' && this.realm !== 'raider_dungeon') {
         en.x = Math.max(rb.minX, Math.min(rb.maxX - en.w, en.x));
+      } else if (this.realm === 'raider_dungeon') {
+        const rd = this.activeRaiderDungeonId ? getRaiderDungeonById(this.activeRaiderDungeonId) : null;
+        const maxFloorX = rd && this.activeRaiderFloor >= rd.floors ? 1260 : 1680;
+        en.x = Math.max(40, Math.min(maxFloorX - en.w, en.x));
       } else {
         en.x = Math.max(120, en.x);
       }
     }
     this.isekaiEnemies = this.isekaiEnemies.filter((e) => !(e.state === 'ko' && e.koTimer <= 0));
+
+    // Elf Kingdom Wave 1 -> Wave 2 -> Emerald Coronation Cutscene
+    if (isElfAmbush) {
+      const aliveCount = this.isekaiEnemies.filter((e) => e.state !== 'ko' && e.hp > 0).length;
+      if (aliveCount === 0) {
+        if (this.elfAmbushWave === 1) {
+          this.elfAmbushWave = 2;
+          this.elfAmbushBossName = 'Malakor, the Feast-Devourer';
+          this.isekaiEnemies = createElfAmbushWave(2, this.player.level);
+          const kaelen = this.alliedNpcs[0];
+          if (kaelen) {
+            kaelen.hp = Math.min(kaelen.maxHp, kaelen.hp + 450);
+            kaelen.callout = 'Here comes their Feast-Devourer! Cut its marrow loose!';
+            kaelen.calloutTimer = 2.8;
+          }
+          this.trauma = 0.7;
+          gameAudio.playMegaGlitchCrash();
+          this.showSecretCaption(
+            'WAVE 2/2 · MALAKOR, THE FEAST-DEVOURER!',
+            'The grotesque eldritch Alpha erupts from the ruined banquet table!',
+          );
+        } else {
+          this.isekaiEnemies = [];
+          this.purpleFlameZones = [];
+          this.elfAmbushBossName = null;
+          this.elfCutscene = {
+            act: 'coronation',
+            beats: buildElfCoronationCutsceneBeats(),
+            beatIndex: 0,
+            chosenReply: null,
+          };
+          gameAudio.playSecretFound();
+          this.emitHud(true);
+        }
+      }
+    }
+
+    // Raider Guild Dungeon: unlock floor stairs once all floor monsters are slain
+    if (isRaiderDungeon && this.activeRaiderDungeonId) {
+      const aliveCount = this.isekaiEnemies.filter((e) => e.state !== 'ko' && e.hp > 0).length;
+      const stairsProp = this.isekaiInteractables.find((p) => p.kind === 'raider_floor_stairs');
+      if (stairsProp && !stairsProp.activated && aliveCount === 0) {
+        stairsProp.activated = true;
+        gameAudio.playSecretFound();
+        this.spawnBurst(stairsProp.x + stairsProp.w / 2, stairsProp.y + 18, 18, '#fbbf24');
+        this.showAnnouncement(`Floor ${this.activeRaiderFloor} Cleared! Ascending Staircase UNLOCKED!`);
+        this.emitHud(true);
+      }
+    }
+
     if (!mission) return;
 
     // 3. Step 1-by-1 Demon Kings + Allied Vanguard Squad (Harold, Elise & Arch-Cleric Aria!)
@@ -5875,6 +7094,20 @@ export class BasteraGameEngine {
             hit = true;
           }
         }
+        if ((!hit || isBoomerang) && this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+          const rb = this.raiderDemonicBoss;
+          const rbKey = `raider_boss_${rb.dungeonId}`;
+          if (!alreadyHit?.includes(rbKey) && rectsOverlap(pr.x - pr.radius, pr.y - pr.radius, pr.radius * 2, pr.radius * 2, rb.x, rb.y, rb.w, rb.h)) {
+            alreadyHit?.push(rbKey);
+            rb.hp = Math.max(0, rb.hp - pr.damage);
+            rb.hitFlash = 0.14;
+            if (isBoomerang) rb.vx = (Math.sign(pr.vx) || 1) * 110;
+            this.spawnFloatingText(rb.x + rb.w / 2, rb.y - 6, `${pr.damage}`, '#fde047');
+            this.spawnBurst(pr.x, pr.y, 12, rb.auraColor);
+            if (rb.hp <= 0) this.completeRaiderDungeonVictory();
+            hit = true;
+          }
+        }
         if (hit) {
           gameAudio.playHit(isBoomerang);
           if (pr.id.startsWith('kq_')) {
@@ -5919,8 +7152,18 @@ export class BasteraGameEngine {
             this.player.h,
           )
         ) {
-          // Parry reflects enemy projectiles!
-          if (this.player.parryTimer > 0) {
+          if ((this.player.whiteAuraTimer ?? 0) > 0) {
+            continue;
+          }
+          // Parry or Stand Guard reflects enemy projectiles!
+          if ((this.player.standGuardTimer ?? 0) > 0) {
+            pr.fromPlayer = true;
+            pr.vx = -pr.vx * 1.45;
+            pr.damage = Math.round(pr.damage * 1.8);
+            pr.color = '#f0abfc';
+            gameAudio.playHit(true);
+            this.spawnFloatingText(this.player.x + 8, this.player.y - 12, 'STAND DEFLECT!', '#f0abfc');
+          } else if (this.player.parryTimer > 0) {
             pr.fromPlayer = true;
             pr.vx = -pr.vx * 1.4;
             pr.damage = Math.round(pr.damage * 2);
@@ -5944,6 +7187,16 @@ export class BasteraGameEngine {
   }
 
   private damagePlayer(amount: number, knockbackX: number): void {
+    if ((this.player.whiteAuraTimer ?? 0) > 0) return;
+
+    if ((this.player.standGuardTimer ?? 0) > 0) {
+      gameAudio.playHit(false);
+      this.spawnBurst(this.player.x + 8, this.player.y + 10, 10, '#f0abfc');
+      this.spawnFloatingText(this.player.x + 8, this.player.y - 14, 'STAND GUARD!', '#f0abfc');
+      this.resolveStandGuardTick(this.realm === 'citadel' ? this.getActiveChunks() : []);
+      return;
+    }
+
     if (this.player.invulnTimer > 0) return;
 
     if (this.player.parryTimer > 0) {
@@ -6170,15 +7423,40 @@ export class BasteraGameEngine {
         drawOutskirtsForestBackdrop(ctx, renderCamX, this.simTime, dayNight.nightFactor, this.labelCtx);
       } else if (this.realm === 'outskirts_caves') {
         drawOutskirtsCavesBackdrop(ctx, renderCamX, this.simTime, this.labelCtx);
+      } else if (this.realm === 'elf_kingdom') {
+        drawElfKingdomBackdrop(ctx, renderCamX, this.simTime, this.elfKingdomStage, this.labelCtx);
+      } else if (this.realm === 'raider_guild') {
+        drawRaiderGuildInterior(ctx, renderCamX, this.simTime, this.raiderRank, this.labelCtx);
+      } else if (this.realm === 'raider_dungeon') {
+        const activeRd = this.activeRaiderDungeonId ? getRaiderDungeonById(this.activeRaiderDungeonId) : null;
+        drawRaiderDungeonBackdrop(
+          ctx,
+          renderCamX,
+          this.simTime,
+          activeRd?.design ?? 'sunken_crypt',
+          this.activeRaiderFloor,
+          activeRd?.floors ?? 3,
+          this.labelCtx,
+        );
       }
 
+      const activeRdDesign =
+        this.realm === 'raider_dungeon' && this.activeRaiderDungeonId
+          ? getRaiderDungeonById(this.activeRaiderDungeonId).design
+          : undefined;
       const platBiome: BiomeId =
-        this.realm === 'demon_realm' || this.realm === 'demon_king_arena' || this.realm === 'outskirts_caves'
+        this.realm === 'demon_realm' ||
+        this.realm === 'demon_king_arena' ||
+        this.realm === 'outskirts_caves' ||
+        this.realm === 'raider_dungeon'
           ? 'volcano'
-          : this.realm === 'carriage_escort' || this.realm === 'dungeon_exterior' || this.realm === 'outskirts_forest'
+          : this.realm === 'carriage_escort' ||
+              this.realm === 'dungeon_exterior' ||
+              this.realm === 'outskirts_forest' ||
+              this.realm === 'elf_kingdom'
             ? 'forest'
             : 'castle';
-      drawIsekaiFloors(ctx, this.realm, renderCamX, this.simTime);
+      drawIsekaiFloors(ctx, this.realm, renderCamX, this.simTime, activeRdDesign);
       drawPlatforms(
         ctx,
         this.isekaiPlatforms.filter((p) => p.kind !== 'floor'),
@@ -6192,6 +7470,8 @@ export class BasteraGameEngine {
         drawCaravanRider(ctx, 482, renderCamX, this.simTime, dayNight.nightFactor, 1, this.labelCtx);
       } else if (this.realm === 'dungeon_exterior') {
         drawCaravanRider(ctx, 78, renderCamX, this.simTime, dayNight.nightFactor, 1, this.labelCtx);
+      } else if (this.realm === 'elf_kingdom') {
+        drawCaravanRider(ctx, 78, renderCamX, this.simTime, 0, 1, this.labelCtx);
       }
 
       for (const peer of this.peers.values()) {
@@ -6209,6 +7489,13 @@ export class BasteraGameEngine {
       }
       for (const en of this.isekaiEnemies) {
         drawEnemy(ctx, en, renderCamX, this.simTime, frozen);
+      }
+      if (this.realm === 'raider_dungeon' && this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0) {
+        drawRaiderDemonicBoss(ctx, this.raiderDemonicBoss, renderCamX, this.simTime, frozen, this.labelCtx);
+        drawPurpleFlameZones(ctx, this.purpleFlameZones, renderCamX, this.simTime);
+      }
+      if (this.realm === 'elf_kingdom') {
+        drawPurpleFlameZones(ctx, this.purpleFlameZones, renderCamX, this.simTime);
       }
       if (this.realm === 'isekai_town') {
         if (this.townRaid && this.townRaid.hp > 0) {
@@ -6330,7 +7617,21 @@ export class BasteraGameEngine {
       null,
       (this.player.dinoFormTimer ?? 0) > 0,
       this.player.equippedStand ?? 'star_platinum',
+      (this.player.whiteAuraTimer ?? 0) > 0,
     );
+
+    if ((this.player.standGuardTimer ?? 0) > 0) {
+      drawStandGuardBarrier(
+        ctx,
+        this.player.equippedStand ?? 'star_platinum',
+        this.player.x,
+        this.player.y,
+        this.player.facing,
+        renderCamX,
+        this.simTime,
+        this.player.standGuardTimer ?? 0,
+      );
+    }
 
     if (this.starPlatinumTimer > 0) {
       drawStarPlatinumGuardian(
@@ -6445,7 +7746,7 @@ export class BasteraGameEngine {
     }
 
     // Subtle candle-lit perimeter vignette only inside Citadel / Demon Dungeons (keep sunny Isekai town crisp & bright!)
-    if (!isIsekai || this.realm === 'goblin_dungeon' || this.realm === 'demon_realm' || this.realm === 'demon_king_arena') {
+    if (!isIsekai || this.realm === 'goblin_dungeon' || this.realm === 'demon_realm' || this.realm === 'demon_king_arena' || this.realm === 'raider_dungeon') {
       if (!this.vignetteCanvas) {
         const vc = document.createElement('canvas');
         const vw = PIXEL_W * RENDER_SCALE;
@@ -6620,12 +7921,30 @@ export class BasteraGameEngine {
     const biome = this.getCurrentBiome();
     const nearbyBoss = this.realm === 'citadel' ? this.getActiveNearbyBoss() : null;
     const nearbyPrompt = this.getNearbyInteractableLabel();
-    const custSig = `${this.player.customization.cloakColor},${this.player.customization.armorColor},${this.player.customization.visorColor},${this.player.customization.plumeColor},${this.player.customization.outfitStyle ?? ''},${this.player.customization.headgearStyle ?? ''},${this.player.customization.crownEquipped ? '1' : '0'}`;
+    const custSig = `${this.player.customization.cloakColor},${this.player.customization.armorColor},${this.player.customization.visorColor},${this.player.customization.plumeColor},${this.player.customization.outfitStyle ?? ''},${this.player.customization.headgearStyle ?? ''},${this.player.customization.crownEquipped ? '1' : '0'},${this.player.customization.crownStyle ?? ''}`;
     const secCapSig = this.secretCaption ? `${this.secretCaption.title}:${this.secretCaption.detail}` : 'none';
     const megaCutSig = this.megaCutscene
       ? `${this.megaCutscene.archetype}:${this.megaCutscene.timer.toFixed(1)}`
       : 'none';
     const corSig = this.coronationCutscene ? this.coronationCutscene.timer.toFixed(1) : 'none';
+    const elfCutSig = this.elfCutscene
+      ? `${this.elfCutscene.act}:${this.elfCutscene.beatIndex}:${this.elfCutscene.chosenReply ? 1 : 0}`
+      : 'none';
+    const elfAmbushEnemiesLeft =
+      this.realm === 'elf_kingdom' && this.elfKingdomStage === 'ambush_active'
+        ? this.isekaiEnemies.filter((e) => e.state !== 'ko' && e.hp > 0).length
+        : 0;
+    const elfFeastBoss =
+      this.realm === 'elf_kingdom'
+        ? this.isekaiEnemies.find((e) => e.archetype === 'eldritch_feast_boss' && e.state !== 'ko')
+        : null;
+    const kaelenAlly =
+      this.realm === 'elf_kingdom' ? this.alliedNpcs.find((a) => a.role === 'elf_swordsman') : null;
+    const raiderEnemiesLeft =
+      this.realm === 'raider_dungeon'
+        ? this.isekaiEnemies.filter((e) => e.state !== 'ko' && e.hp > 0).length
+        : 0;
+    const raiderSig = `${this.raiderRank}:${this.raiderPoints}:${this.clearedRaiderDungeons.length}:${this.activeRaiderDungeonId ?? 0}:${this.activeRaiderFloor}:${raiderEnemiesLeft}:${this.raiderDemonicBoss ? Math.round(this.raiderDemonicBoss.hp) : 0}:${this.raiderDemonicBoss?.berserk ? 1 : 0}:${this.raiderDemonicBoss?.activeSkillBanner ?? ''}`;
     const rideSig = this.caravanRide ? `${this.caravanRide.target}:${this.caravanRide.timer.toFixed(2)}` : 'none';
     const arenaSig = this.arenaDuel
       ? `${this.arenaDuel.challengerId}:${Math.round(this.arenaDuel.hp)}:${this.arenaDuel.roundNumber}:${this.arenaDuel.playerRoundWins}:${this.arenaDuel.opponentRoundWins}:${this.arenaDuel.roundPhase}:${Math.ceil(this.arenaDuel.roundPhaseTimer)}:${this.arenaDuel.fightBannerTimer > 0 ? 1 : 0}:${this.arenaDuel.activeSkillBanner ?? ''}:${this.arenaDuel.aiActionTag ?? ''}:${this.arenaDuel.domainActive ? Math.ceil(this.arenaDuel.domainTimer) : 0}`
@@ -6675,6 +7994,12 @@ export class BasteraGameEngine {
       orbSig,
       this.unlockedWardrobe.join(','),
       this.crownUnlocked ? '1' : '0',
+      this.elfCrownUnlocked ? '1' : '0',
+      this.elfKingdomInvited ? '1' : '0',
+      this.elfKingdomStage,
+      elfCutSig,
+      `${this.elfAmbushWave}:${elfAmbushEnemiesLeft}:${elfFeastBoss ? Math.round(elfFeastBoss.hp) : 0}:${kaelenAlly ? Math.round(kaelenAlly.hp) : 0}:${kaelenAlly?.callout ?? ''}`,
+      raiderSig,
       this.gyroDefeated ? '1' : '0',
       this.isekaiPortalOpen ? '1' : '0',
       idleLeft,
@@ -6708,6 +8033,10 @@ export class BasteraGameEngine {
       this.player.skillSlots.join(','),
       this.player.skillCooldowns.map((c) => c.toFixed(1)).join(','),
       this.player.dashCooldown.toFixed(1),
+      (this.player.whiteAuraTimer ?? 0).toFixed(1),
+      (this.player.whiteAuraCooldown ?? 0).toFixed(1),
+      (this.player.standGuardTimer ?? 0).toFixed(1),
+      (this.player.standGuardCooldown ?? 0).toFixed(1),
       this.starPlatinumTimer > 0 ? '1' : '0',
       this.player.starStones ?? 0,
       this.player.equippedStand ?? 'star_platinum',
@@ -6776,6 +8105,11 @@ export class BasteraGameEngine {
       };
     }
 
+    const activeRdHud =
+      this.realm === 'raider_dungeon' && this.activeRaiderDungeonId
+        ? getRaiderDungeonById(this.activeRaiderDungeonId)
+        : null;
+    const activeElfBeat = this.elfCutscene ? this.elfCutscene.beats[this.elfCutscene.beatIndex] : null;
     const totalDkStages = Math.max(3, this.demonKings.length);
     const realmLabelMap: Record<RealmMode, string> = {
       citadel: getBiomeDisplayName(biome),
@@ -6792,6 +8126,16 @@ export class BasteraGameEngine {
       dueling_arena: 'Solaris Grand Colosseum',
       outskirts_forest: 'Outskirts Blood-Trail Forest',
       outskirts_caves: 'Outskirts Crimson Caves',
+      elf_kingdom:
+        this.elfKingdomStage === 'celebration'
+          ? 'Aethelgard · Eternal Royal Feast'
+          : this.elfKingdomStage === 'ambush_active'
+            ? 'Aethelgard · Eldritch Siege!'
+            : 'Elf Kingdom of Aethelgard',
+      raider_guild: `Dungeon Raider Guild (${this.raiderRank})`,
+      raider_dungeon: activeRdHud
+        ? `${activeRdHud.code} ${activeRdHud.name} · F${this.activeRaiderFloor}/${activeRdHud.floors}`
+        : 'Raider Guild Dungeon',
     };
 
     const snapshot: HudSnapshot = {
@@ -6818,6 +8162,10 @@ export class BasteraGameEngine {
       skillSlots: [...this.player.skillSlots],
       skillCooldowns: [...this.player.skillCooldowns],
       dashCooldown: Number(this.player.dashCooldown.toFixed(2)),
+      whiteAuraSeconds: Number((this.player.whiteAuraTimer ?? 0).toFixed(2)),
+      whiteAuraCooldown: Number((this.player.whiteAuraCooldown ?? 0).toFixed(2)),
+      standGuardSeconds: Number((this.player.standGuardTimer ?? 0).toFixed(2)),
+      standGuardCooldown: Number((this.player.standGuardCooldown ?? 0).toFixed(2)),
       starPlatinumActive: this.starPlatinumTimer > 0,
       starStones: this.player.starStones ?? 0,
       equippedStand: this.player.equippedStand ?? 'star_platinum',
@@ -6846,6 +8194,79 @@ export class BasteraGameEngine {
       secondsToNightToggle: Math.ceil(dayNight.secondsToToggle),
       unlockedWardrobe: [...this.unlockedWardrobe],
       crownUnlocked: this.crownUnlocked,
+      elfCrownUnlocked: this.elfCrownUnlocked,
+      elfKingdomInvited: this.elfKingdomInvited,
+      elfKingdomStage: this.elfKingdomStage,
+      elfCutscene:
+        this.elfCutscene && activeElfBeat
+          ? {
+              act: this.elfCutscene.act,
+              beatIndex: this.elfCutscene.beatIndex,
+              totalBeats: this.elfCutscene.beats.length,
+              speaker: activeElfBeat.speaker,
+              speakerTitle: activeElfBeat.speakerTitle,
+              portraitKind: activeElfBeat.portraitKind,
+              moodLabel: activeElfBeat.moodLabel,
+              lines: activeElfBeat.lines,
+              choices: activeElfBeat.choices?.map((c) => ({
+                id: c.id,
+                label: c.label,
+                reply: c.reply,
+                bonusTag: c.bonusTag,
+              })),
+              chosenReply: this.elfCutscene.chosenReply,
+              canAdvance: !activeElfBeat.choices || Boolean(this.elfCutscene.chosenReply),
+            }
+          : null,
+      elfKingdomHud:
+        this.realm === 'elf_kingdom'
+          ? {
+              stage: this.elfKingdomStage,
+              wave: this.elfAmbushWave,
+              totalWaves: 2,
+              enemiesRemaining: elfAmbushEnemiesLeft,
+              bossName: elfFeastBoss ? elfFeastBoss.name : this.elfAmbushBossName,
+              bossHp: elfFeastBoss ? Math.round(elfFeastBoss.hp) : 0,
+              bossMaxHp: elfFeastBoss ? elfFeastBoss.maxHp : 0,
+              allySwordsman: kaelenAlly
+                ? {
+                    name: kaelenAlly.name,
+                    hp: Math.round(kaelenAlly.hp),
+                    maxHp: kaelenAlly.maxHp,
+                    callout: kaelenAlly.callout ?? null,
+                  }
+                : null,
+            }
+          : null,
+      raiderRank: this.raiderRank,
+      raiderPoints: this.raiderPoints,
+      clearedRaiderDungeons: [...this.clearedRaiderDungeons],
+      activeRaiderDungeon: activeRdHud
+        ? {
+            dungeonId: activeRdHud.id,
+            code: activeRdHud.code,
+            name: activeRdHud.name,
+            design: activeRdHud.design,
+            designLabel: activeRdHud.designLabel,
+            requiredRank: activeRdHud.requiredRank,
+            floor: this.activeRaiderFloor,
+            totalFloors: activeRdHud.floors,
+            floorCleared: raiderEnemiesLeft === 0,
+            stairsUnlocked: raiderEnemiesLeft === 0 && this.activeRaiderFloor < activeRdHud.floors,
+            enemiesRemaining: raiderEnemiesLeft,
+            boss:
+              this.raiderDemonicBoss && this.raiderDemonicBoss.hp > 0
+                ? {
+                    name: this.raiderDemonicBoss.name,
+                    title: this.raiderDemonicBoss.title,
+                    hp: Math.round(this.raiderDemonicBoss.hp),
+                    maxHp: this.raiderDemonicBoss.maxHp,
+                    berserk: this.raiderDemonicBoss.berserk,
+                    activeSkillBanner: this.raiderDemonicBoss.activeSkillBanner,
+                  }
+                : null,
+          }
+        : null,
       gyroDefeated: this.gyroDefeated,
       isekaiPortalOpen: this.isekaiPortalOpen,
       isekaiMission: missionHud,
@@ -7133,6 +8554,7 @@ export class BasteraGameEngine {
       this.bossBattle ||
       this.megaCutscene ||
       this.coronationCutscene ||
+      this.elfCutscene ||
       this.caravanRide ||
       this.volcanoBridgeFallTimer > 0
     ) {
